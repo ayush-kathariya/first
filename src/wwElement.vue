@@ -1,5 +1,5 @@
 <template>
-    <div class="ww-kanban" :style="kanbanStyle" v-bind="wwElementState?.$attrs">
+    <div class="ww-kanban" :style="kanbanStyle">
         <template v-if="content.uncategorizedStack">
             <wwLayoutItemContext :index="0" :item="null" :data="uncategorizedStack" is-repeat>
                 <wwElement
@@ -247,23 +247,8 @@ export default {
 
 <style lang="scss" scoped>
 .ww-kanban {
-    display: flex;
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
-    gap: 20px;
-    align-items: flex-start;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-    height: 100%;
-}
-
-:deep(.ww-kanban-stack) {
-    display: flex;
-    flex-direction: column;
-    max-height: 100%;
-    overflow: hidden;
 }
 
 :deep(.ww-draggable-area > *) {
