@@ -1,5 +1,5 @@
 <template>
-    <div class="ww-kanban" :style="kanbanStyle">
+    <div class="ww-kanban" :style="kanbanStyle" v-bind="wwElementState?.$attrs">
         <template v-if="content.uncategorizedStack">
             <wwLayoutItemContext :index="0" :item="null" :data="uncategorizedStack" is-repeat>
                 <wwElement
@@ -26,6 +26,7 @@
             </wwLayoutItemContext>
         </template>
     </div>
+
 </template>
 
 <script>
@@ -99,13 +100,15 @@ export default {
             { immediate: true }
         );
 
+
         const css = computed(() => `* { cursor: ${props.content.draggingCursor || "grabbing"} !important; }`);
         const styletag = wwLib.getFrontDocument().createElement("style");
+
         watch(
             isDragging,
             (value) => {
                 if (value) {
-                    styletag.textContent = css.value;
+                    styletag.appendChild(wwLib.getFrontDocument().createTextNode(css.value));
                     wwLib.getFrontDocument().body.appendChild(styletag);
                 } else {
                     styletag.remove();
@@ -116,6 +119,7 @@ export default {
 
         return { internalStacks, uncategorizedStack, isDragging };
     },
+
     computed: {
         stacks() {
             const stacks = wwLib.wwCollection.getCollectionData(this.content.stacks);
@@ -128,69 +132,21 @@ export default {
             return items;
         },
         stackConfig() {
-            const config = {
+            return {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
-                readonly: this.effectiveReadonly,
-                delay: this.content.longPress ? this.longPressDelayMs : 0,
+                readonly: this.content.readonly,
+                delay: this.content.longPress ? (this.content.longPressDelay || 500) : 0,
                 delayOnTouchOnly: true,
             };
-
-            if (this.isTouchDevice) {
-                config.touchStartThreshold = 20;
-                config.forceFallback = true;
-                config.fallbackOnBody = true;
-                config.fallbackTolerance = 10;
-            }
-
-            return config;
         },
+
         kanbanStyle() {
             return {
                 "--wrap-stacks": this.content.wrapStacks ? "wrap" : "nowrap",
-                "--kanban-user-select": this.content.longPress ? "none" : "auto",
-                "--kanban-touch-callout": this.content.longPress ? "none" : "initial",
             };
-        },
-        longPressDelayMs() {
-            return typeof this.content.longPressDelay === "number" && !isNaN(this.content.longPressDelay)
-                ? this.content.longPressDelay
-                : 400;
-        },
-        effectiveReadonly() {
-            return this.content.readonly;
-        },
-        isIOSDevice() {
-            try {
-                const frontWindow = wwLib.getFrontWindow ? wwLib.getFrontWindow() : window;
-                const ua = frontWindow?.navigator?.userAgent || "";
-                const platform = frontWindow?.navigator?.platform || "";
-                return (
-                    /iPad|iPhone|iPod/.test(ua) ||
-                    (platform === "MacIntel" && frontWindow?.navigator?.maxTouchPoints > 1)
-                );
-            } catch (e) {
-                return false;
-            }
-        },
-        isAndroidDevice() {
-            try {
-                const frontWindow = wwLib.getFrontWindow ? wwLib.getFrontWindow() : window;
-                const ua = frontWindow?.navigator?.userAgent || "";
-                return /Android/i.test(ua);
-            } catch (e) {
-                return false;
-            }
-        },
-        isTouchDevice() {
-            try {
-                const frontWindow = wwLib.getFrontWindow ? wwLib.getFrontWindow() : window;
-                return this.isIOSDevice || this.isAndroidDevice || (frontWindow?.navigator?.maxTouchPoints || 0) > 0;
-            } catch (e) {
-                return false;
-            }
         },
         isReadonly() {
             /* wwEditor:start */
@@ -198,7 +154,7 @@ export default {
                 return this.wwElementState.states.includes("readonly");
             }
             /* wwEditor:end */
-            return this.effectiveReadonly;
+            return this.content.readonly;
         },
     },
     watch: {
@@ -229,6 +185,7 @@ export default {
             },
             deep: true,
         },
+
         isReadonly: {
             immediate: true,
             handler(value) {
@@ -283,22 +240,45 @@ export default {
             };
         },
         /* wwEditor:end */
+
     },
     mounted() {
         this.refreshStacks();
     },
+
     beforeUnmount() {
-        // No manual listeners to cleanup.
+        // No manual listeners to cleanup now
     },
+
 };
 </script>
 
 <style lang="scss" scoped>
 .ww-kanban {
+    display: flex;
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
-    user-select: var(--kanban-user-select);
-    -webkit-user-select: var(--kanban-user-select);
-    -webkit-touch-callout: var(--kanban-touch-callout);
+    gap: 20px;
+    align-items: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    height: 100%;
 }
+
+
+:deep(.ww-kanban-stack) {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+:deep(.ww-draggable-area > *) {
+    touch-action: auto; /* Allow both horizontal and vertical scrolling */
+}
+
+
+
 </style>
