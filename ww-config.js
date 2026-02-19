@@ -1,4 +1,4 @@
-function showObjectPropertyPath(basePropertyKey, { content, boundProps }) {
+﻿function showObjectPropertyPath(basePropertyKey, { content, boundProps }) {
     return (
         boundProps[basePropertyKey] &&
         content[basePropertyKey] &&
@@ -55,14 +55,6 @@ export default {
         },
     ],
     properties: {
-        stackElement: {
-            hidden: true,
-            //ww-stack
-            defaultValue: {
-                isWwObject: true,
-                type: "5a88036f-22ea-4f8d-b4a5-bc226ef95061",
-            },
-        },
         wrapStacks: {
             label: {
                 en: "Wrap stacks",
@@ -293,7 +285,7 @@ export default {
             propertyHelp: {
                 tooltip: `By default, dragging is triggered when a user clicks anywhere on a Kanban item. To trigger the dragging behavior on click of a specific element inside the item:
 * Enable this option
-* Go to that element’s Settings > HTML attributes
+* Go to that element's Settings > HTML attributes
 * Add the class you choose to its Class attribute (default: 'draggable'))`,
             },
             hidden: (content, sidePanelContent, boundProps, wwProps) => wwProps?.handle?.length,
@@ -349,3 +341,4 @@ export default {
         },
     },
 };
+
