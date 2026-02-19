@@ -140,8 +140,8 @@ export default {
                 // On touch devices, require long press before drag starts.
                 delay: normalizedDelay,
                 delayOnTouchOnly: true,
-                // Prevent tiny finger jitters from triggering drag start.
-                touchStartThreshold: 20,
+                // Keep threshold low so finger movement cancels drag-delay and allows normal scrolling.
+                touchStartThreshold: 4,
             };
         },
         kanbanStyle() {
