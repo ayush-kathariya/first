@@ -135,7 +135,7 @@ export default {
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
-                readonly: this.content.readonly,
+                readonly: this.effectiveReadonly,
             };
 
             // iOS: rely on native Sortable touch delay for long-press behavior.
@@ -161,6 +161,10 @@ export default {
                 ? this.content.longPressDelay
                 : 400;
         },
+        effectiveReadonly() {
+            // Requested behavior: iOS is always read-only; other platforms use configured value.
+            return this.isIOSDevice ? true : this.content.readonly;
+        },
         isIOSDevice() {
             try {
                 const frontWindow = wwLib.getFrontWindow ? wwLib.getFrontWindow() : window;
@@ -184,7 +188,7 @@ export default {
             }
         },
         longPressStrategy() {
-            if (!this.content.longPress) return "disabled";
+            if (!this.content.longPress || this.effectiveReadonly) return "disabled";
             if (this.isIOSDevice) return "ios-native-delay";
             if (this.isAndroidDevice) return "android-custom";
             return "default-custom";
@@ -201,7 +205,7 @@ export default {
                 return this.wwElementState.states.includes("readonly");
             }
             /* wwEditor:end */
-            return this.content.readonly;
+            return this.effectiveReadonly;
         },
     },
     watch: {
