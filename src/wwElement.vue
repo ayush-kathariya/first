@@ -2,36 +2,106 @@
     <div class="ww-kanban" :style="kanbanStyle">
         <template v-if="content.uncategorizedStack">
             <wwLayoutItemContext :index="0" :item="null" :data="uncategorizedStack" is-repeat>
-                <wwElement
-                    v-bind="content.stackElement"
-                    :ww-props="{
-                        ...stackConfig,
-                        items: uncategorizedStack.items,
-                        stack: null,
-                    }"
-                    class="ww-kanban-stack"
-                    :states="isDragging ? ['dragging'] : []"
-                ></wwElement>
+                <section class="ww-kanban-stack">
+                    <header class="ww-kanban-stack__header">{{ uncategorizedStack.label }}</header>
+                    <draggable
+                        class="ww-draggable-area"
+                        :list="uncategorizedStack.items"
+                        :group="dragGroup"
+                        :item-key="draggableItemKey"
+                        :disabled="isReadonly || !content.sortable"
+                        :handle="handleSelector"
+                        :delay="dragDelay"
+                        :delay-on-touch-only="true"
+                        :touch-start-threshold="4"
+                        ghost-class="ww-kanban-item--ghost"
+                        chosen-class="ww-kanban-item--chosen"
+                        drag-class="ww-kanban-item--dragging"
+                        @change="onStackChange($event, null)"
+                        @start="onDragStart(null)"
+                        @end="onDragEnd(null)"
+                    >
+                        <template #item="{ element, index }">
+                            <wwLayoutItemContext
+                                :index="index"
+                                :item="element"
+                                :data="element"
+                                is-repeat
+                                :repeated-items="uncategorizedStack.items"
+                            >
+                                <article class="ww-kanban-item">
+                                    <span
+                                        v-if="content.customDragHandle"
+                                        class="ww-kanban-item__handle"
+                                        :class="handleClassName"
+                                    >
+                                        ::
+                                    </span>
+                                    <span class="ww-kanban-item__label">{{ getItemLabel(element) }}</span>
+                                </article>
+                            </wwLayoutItemContext>
+                        </template>
+                    </draggable>
+                </section>
             </wwLayoutItemContext>
         </template>
 
         <template v-for="(stack, index) in internalStacks" :key="'ww-stack-' + index">
             <wwLayoutItemContext :index="index" :item="null" is-repeat :data="stack" :repeated-items="internalStacks">
-                <wwElement
-                    v-bind="content.stackElement"
-                    :ww-props="{ ...stackConfig, items: stack.items, stack: stack.value }"
-                    class="ww-kanban-stack"
-                    :states="isDragging ? ['dragging'] : []"
-                ></wwElement>
+                <section class="ww-kanban-stack">
+                    <header class="ww-kanban-stack__header">{{ stack.label }}</header>
+                    <draggable
+                        class="ww-draggable-area"
+                        :list="stack.items"
+                        :group="dragGroup"
+                        :item-key="draggableItemKey"
+                        :disabled="isReadonly || !content.sortable"
+                        :handle="handleSelector"
+                        :delay="dragDelay"
+                        :delay-on-touch-only="true"
+                        :touch-start-threshold="4"
+                        ghost-class="ww-kanban-item--ghost"
+                        chosen-class="ww-kanban-item--chosen"
+                        drag-class="ww-kanban-item--dragging"
+                        @change="onStackChange($event, stack.value)"
+                        @start="onDragStart(stack.value)"
+                        @end="onDragEnd(stack.value)"
+                    >
+                        <template #item="{ element, index: itemIndex }">
+                            <wwLayoutItemContext
+                                :index="itemIndex"
+                                :item="element"
+                                :data="element"
+                                is-repeat
+                                :repeated-items="stack.items"
+                            >
+                                <article class="ww-kanban-item">
+                                    <span
+                                        v-if="content.customDragHandle"
+                                        class="ww-kanban-item__handle"
+                                        :class="handleClassName"
+                                    >
+                                        ::
+                                    </span>
+                                    <span class="ww-kanban-item__label">{{ getItemLabel(element) }}</span>
+                                </article>
+                            </wwLayoutItemContext>
+                        </template>
+                    </draggable>
+                </section>
             </wwLayoutItemContext>
         </template>
     </div>
 </template>
 
 <script>
-import { provide, reactive, ref, watch, computed } from "vue";
+import draggable from "vuedraggable";
+import { reactive, ref, watch, computed } from "vue";
 
 export default {
+    components: {
+        draggable,
+    },
     props: {
         content: { type: Object, required: true },
         uid: { type: String, required: true },
@@ -41,7 +111,7 @@ export default {
         /* wwEditor:end */
     },
     emits: ["trigger-event", "update:content:effect"],
-    setup(props, { emit }) {
+    setup(props) {
         const internalStacks = ref([]);
         const uncategorizedStack = reactive({
             label: "Uncategorized",
@@ -49,38 +119,7 @@ export default {
             items: [],
         });
 
-        provide("customHandler", (change, { stack: stackValue, updatedStackItems }) => {
-            if (change.moved) {
-                emit("trigger-event", {
-                    name: "item:moved",
-                    event: {
-                        item: change.moved.element,
-                        from: stackValue,
-                        to: stackValue,
-                        oldIndex: change.moved.oldIndex,
-                        newIndex: change.moved.newIndex,
-                        updatedList: updatedStackItems,
-                    },
-                });
-            }
-
-            if (change.added) {
-                emit("trigger-event", {
-                    name: "item:moved",
-                    event: {
-                        item: change.added.element,
-                        from: wwLib.resolveObjectPropertyPath(change.added.element, props.content.stackedBy),
-                        to: stackValue,
-                        oldIndex: null,
-                        newIndex: change.added.newIndex,
-                        updatedList: updatedStackItems,
-                    },
-                });
-            }
-        });
-
         const isDraggingManager = reactive({});
-        provide("customDragHandler", (isDragging, { stack }) => (isDraggingManager[stack] = isDragging));
 
         const { setValue: setDrag } = wwLib.wwVariable.useComponentVariable({
             uid: props.uid,
@@ -106,7 +145,7 @@ export default {
             isDragging,
             (value) => {
                 if (value) {
-                    styletag.appendChild(wwLib.getFrontDocument().createTextNode(css.value));
+                    styletag.textContent = css.value;
                     wwLib.getFrontDocument().body.appendChild(styletag);
                 } else {
                     styletag.remove();
@@ -115,7 +154,7 @@ export default {
             { deep: true }
         );
 
-        return { internalStacks, uncategorizedStack, isDragging };
+        return { internalStacks, uncategorizedStack, isDragging, isDraggingManager };
     },
     computed: {
         stacks() {
@@ -128,21 +167,21 @@ export default {
             if (!Array.isArray(items)) return [];
             return items;
         },
-        stackConfig() {
+        dragGroup() {
+            return "kanban-" + this.uid;
+        },
+        dragDelay() {
+            if (!this.content.longPress) return 0;
             const dragDelay = Number(this.content.longPressDelay);
-            const normalizedDelay = Number.isFinite(dragDelay) && dragDelay >= 0 ? dragDelay : 500;
-            return {
-                sortable: this.content.sortable,
-                group: "kanban-" + this.uid,
-                itemKey: this.content.itemKey,
-                handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
-                readonly: this.content.readonly,
-                // On touch devices, require long press before drag starts.
-                delay: normalizedDelay,
-                delayOnTouchOnly: true,
-                // Keep threshold low so finger movement cancels drag-delay and allows normal scrolling.
-                touchStartThreshold: 4,
-            };
+            return Number.isFinite(dragDelay) && dragDelay >= 0 ? dragDelay : 500;
+        },
+        handleClassName() {
+            const rawClass = String(this.content.handleClass || "draggable").trim();
+            return rawClass.replace(/^\./, "");
+        },
+        handleSelector() {
+            if (!this.content.customDragHandle) return null;
+            return this.handleClassName ? `.${this.handleClassName}` : null;
         },
         kanbanStyle() {
             return {
@@ -198,6 +237,81 @@ export default {
         },
     },
     methods: {
+        draggableItemKey(item) {
+            if (this.content.itemKey) {
+                const resolved = wwLib.resolveObjectPropertyPath(item, this.content.itemKey);
+                if (resolved !== undefined && resolved !== null) return resolved;
+            }
+            return item?.id ?? item?._id ?? JSON.stringify(item);
+        },
+        getItemLabel(item) {
+            if (item === null || item === undefined) return "";
+            if (typeof item !== "object") return String(item);
+            return String(item.label ?? item.name ?? item.title ?? item.id ?? item._id ?? JSON.stringify(item));
+        },
+        getStackKey(stackValue) {
+            return stackValue === null ? "__uncategorized__" : String(stackValue);
+        },
+        getStackItems(stackValue) {
+            if (stackValue === null) return this.uncategorizedStack.items;
+            const stack = this.internalStacks.find((currentStack) => currentStack.value === stackValue);
+            return stack ? stack.items : [];
+        },
+        setStackedByValue(item, stackValue) {
+            if (!item || typeof item !== "object" || !this.content.stackedBy) return;
+            const path = String(this.content.stackedBy)
+                .split(".")
+                .filter(Boolean);
+            if (!path.length) return;
+
+            let cursor = item;
+            for (let index = 0; index < path.length - 1; index += 1) {
+                const key = path[index];
+                if (cursor[key] === null || typeof cursor[key] !== "object") {
+                    cursor[key] = {};
+                }
+                cursor = cursor[key];
+            }
+            cursor[path[path.length - 1]] = stackValue;
+        },
+        onDragStart(stackValue) {
+            this.isDraggingManager[this.getStackKey(stackValue)] = true;
+        },
+        onDragEnd(stackValue) {
+            this.isDraggingManager[this.getStackKey(stackValue)] = false;
+        },
+        onStackChange(change, stackValue) {
+            const updatedStackItems = this.getStackItems(stackValue);
+            if (change.moved) {
+                this.$emit("trigger-event", {
+                    name: "item:moved",
+                    event: {
+                        item: change.moved.element,
+                        from: stackValue,
+                        to: stackValue,
+                        oldIndex: change.moved.oldIndex,
+                        newIndex: change.moved.newIndex,
+                        updatedList: updatedStackItems,
+                    },
+                });
+            }
+
+            if (change.added) {
+                const fromValue = wwLib.resolveObjectPropertyPath(change.added.element, this.content.stackedBy);
+                this.setStackedByValue(change.added.element, stackValue);
+                this.$emit("trigger-event", {
+                    name: "item:moved",
+                    event: {
+                        item: change.added.element,
+                        from: fromValue,
+                        to: stackValue,
+                        oldIndex: null,
+                        newIndex: change.added.newIndex,
+                        updatedList: updatedStackItems,
+                    },
+                });
+            }
+        },
         refreshStacks() {
             this.internalStacks = this.stacks
                 .map((stack) => ({
@@ -245,14 +359,85 @@ export default {
         this.refreshStacks();
     },
     beforeUnmount() {
-        // No manual listeners to cleanup now
+        // No manual listeners to cleanup
     },
 };
 </script>
 
 <style lang="scss" scoped>
 .ww-kanban {
+    display: flex;
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
+    gap: 20px;
+    align-items: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    height: 100%;
+}
+
+.ww-kanban-stack {
+    display: flex;
+    flex-direction: column;
+    min-width: 260px;
+    max-width: 340px;
+    max-height: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #f5f6fa;
+}
+
+.ww-kanban-stack__header {
+    padding: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.ww-draggable-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 60px;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+.ww-kanban-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.ww-kanban-item__handle {
+    user-select: none;
+    cursor: grab;
+    font-weight: 700;
+    line-height: 1;
+    color: #6b7280;
+}
+
+.ww-kanban-item__label {
+    overflow-wrap: anywhere;
+}
+
+.ww-kanban-item--ghost {
+    opacity: 0.45;
+}
+
+.ww-kanban-item--chosen {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
+.ww-kanban-item--dragging {
+    cursor: grabbing;
 }
 </style>
