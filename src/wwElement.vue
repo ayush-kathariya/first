@@ -10,10 +10,14 @@
                         :group="dragGroup"
                         :item-key="draggableItemKey"
                         :disabled="isReadonly || content.sortable === false"
+                        :sort="content.sortable !== false"
                         :handle="handleSelector"
                         :delay="dragDelay"
                         :delay-on-touch-only="true"
                         :touch-start-threshold="4"
+                        :force-fallback="true"
+                        :fallback-on-body="true"
+                        :fallback-tolerance="3"
                         :animation="160"
                         ghost-class="ww-kanban-item--ghost"
                         chosen-class="ww-kanban-item--chosen"
@@ -57,10 +61,14 @@
                         :group="dragGroup"
                         :item-key="draggableItemKey"
                         :disabled="isReadonly || content.sortable === false"
+                        :sort="content.sortable !== false"
                         :handle="handleSelector"
                         :delay="dragDelay"
                         :delay-on-touch-only="true"
                         :touch-start-threshold="4"
+                        :force-fallback="true"
+                        :fallback-on-body="true"
+                        :fallback-tolerance="3"
                         :animation="160"
                         ghost-class="ww-kanban-item--ghost"
                         chosen-class="ww-kanban-item--chosen"
@@ -192,12 +200,13 @@ export default {
             };
         },
         isReadonly() {
+            const contentReadonly = !!this.content.readonly;
             /* wwEditor:start */
-            if (this.wwEditorState.isSelected) {
-                return this.wwElementState.states.includes("readonly");
-            }
+            const stateReadonly =
+                Array.isArray(this.wwElementState?.states) && this.wwElementState.states.includes("readonly");
+            return contentReadonly || stateReadonly;
             /* wwEditor:end */
-            return this.content.readonly;
+            return contentReadonly;
         },
     },
     watch: {
