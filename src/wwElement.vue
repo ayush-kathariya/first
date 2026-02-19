@@ -1,32 +1,3 @@
-<!-- <template>
-  <div class="my-element">
-    <p :style="textStyle">I am a custom element Hello from custom component!</p>
-  </div>
-</template>
-
-<script>
-export default {
-  props: {
-    content: { type: Object, required: true },
-  },
-  computed: {
-    textStyle() {
-      return {
-        color: this.content.textColor,
-      };
-    },
-  },
-};
-</script>
-
-<style lang="scss" scoped>
-.my-element {
-  p {
-    font-size: 30px;
-  }
-}
-</style> -->
-
 <template>
     <div class="ww-kanban" :style="kanbanStyle">
         <template v-if="content.uncategorizedStack">
