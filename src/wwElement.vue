@@ -141,6 +141,8 @@ export default {
         kanbanStyle() {
             return {
                 "--wrap-stacks": this.content.wrapStacks ? "wrap" : "nowrap",
+                "--kanban-user-select": this.content.longPress ? "none" : "auto",
+                "--kanban-touch-callout": this.content.longPress ? "none" : "initial",
             };
         },
         isReadonly() {
@@ -301,6 +303,8 @@ export default {
             this._longPressTarget = null;
             this._longPressEventInit = null;
             this._longPressPointerId = null;
+            this._longPressStartX = null;
+            this._longPressStartY = null;
 
             // Release pointer capture if we took it on touch start
             if (this._longPressCapturedTarget && this._longPressCapturedPointerId !== null) {
@@ -349,39 +353,19 @@ export default {
             if (!this.content.longPress || this.isReadonly) return;
             if (event.pointerType !== "touch") return;
 
-            // Prevent immediate drag / click; we'll re-dispatch later
-            event.preventDefault();
+            // Prevent immediate drag start in nested stack element while keeping native scroll behavior.
             event.stopPropagation();
 
             this.cleanupLongPress();
-
-            // While long press is pending, disable touch scroll so the page doesn't move too fast
-            try {
-                const body = wwLib.getFrontDocument().body;
-                this._previousTouchAction = body.style.touchAction;
-                body.style.touchAction = "none";
-                this._previousOverscrollBehavior = body.style.overscrollBehavior;
-                body.style.overscrollBehavior = "none";
-            } catch (e) {
-                // fail silently if front document is not available
-            }
             const delay =
                 typeof this.content.longPressDelay === "number" && !isNaN(this.content.longPressDelay)
                     ? this.content.longPressDelay
                     : 400;
+            const moveTolerance = 10;
             this._longPressTarget = event.target;
             this._longPressPointerId = event.pointerId;
-
-            // Capture the pointer so we keep receiving move events even if the browser tries to scroll
-            // This is a key fix for the "freeze" issue when the finger pauses mid-drag.
-            try {
-                event.target?.setPointerCapture?.(event.pointerId);
-                this._longPressCapturedTarget = event.target;
-                this._longPressCapturedPointerId = event.pointerId;
-            } catch (e) {
-                this._longPressCapturedTarget = null;
-                this._longPressCapturedPointerId = null;
-            }
+            this._longPressStartX = event.clientX;
+            this._longPressStartY = event.clientY;
 
             // While long-press is pending (and while dragging), prevent the browser from taking over scrolling.
             // passive:false is required for preventDefault to work on iOS/Android.
@@ -390,8 +374,16 @@ export default {
                 this._onLongPressDocPointerMove = (e) => {
                     if (e.pointerType !== "touch") return;
                     if (this._longPressPointerId !== null && e.pointerId !== this._longPressPointerId) return;
-                    if (this._longPressTimer || this._longPressDragPending || this.isLongPressDragging) {
-                        if (e.cancelable) e.preventDefault();
+                    if (this._longPressTimer) {
+                        const dx = Math.abs((this._longPressStartX ?? e.clientX) - e.clientX);
+                        const dy = Math.abs((this._longPressStartY ?? e.clientY) - e.clientY);
+                        if (dx > moveTolerance || dy > moveTolerance) {
+                            this.cleanupLongPress(false, true);
+                        }
+                        return;
+                    }
+                    if ((this._longPressDragPending || this.isLongPressDragging) && e.cancelable) {
+                        e.preventDefault();
                     }
                 };
                 doc.addEventListener("pointermove", this._onLongPressDocPointerMove, { capture: true, passive: false });
@@ -412,9 +404,28 @@ export default {
             this._longPressTimer = setTimeout(() => {
                 if (!this._longPressTarget || !this._longPressEventInit) return;
 
-                // Cleanup only when touch is actually released/cancelled on the device.
+                // Lock body touch interactions only once long-press is validated.
+                try {
+                    const body = wwLib.getFrontDocument().body;
+                    this._previousTouchAction = body.style.touchAction;
+                    body.style.touchAction = "none";
+                    this._previousOverscrollBehavior = body.style.overscrollBehavior;
+                    body.style.overscrollBehavior = "none";
+                } catch (e) {
+                    // fail silently if front document is not available
+                }
+
+                // Capture pointer after long-press activation for better iOS drag continuity.
+                try {
+                    this._longPressTarget?.setPointerCapture?.(this._longPressPointerId);
+                    this._longPressCapturedTarget = this._longPressTarget;
+                    this._longPressCapturedPointerId = this._longPressPointerId;
+                } catch (e) {
+                    this._longPressCapturedTarget = null;
+                    this._longPressCapturedPointerId = null;
+                }
+
                 const doc = wwLib.getFrontDocument();
-                this.detachLongPressDocumentListeners();
                 this._onLongPressDocPointerUp = (e) => {
                     if (e.pointerType !== "touch") return;
                     if (this._longPressPointerId !== null && e.pointerId !== this._longPressPointerId) return;
@@ -437,15 +448,6 @@ export default {
                 doc.addEventListener("touchend", this._onLongPressDocTouchEnd, true);
                 doc.addEventListener("touchcancel", this._onLongPressDocTouchCancel, true);
 
-                // Re-add pointermove prevention during drag (detachLongPressDocumentListeners removed it)
-                if (this._onLongPressDocPointerMove) {
-                    try {
-                        doc.addEventListener("pointermove", this._onLongPressDocPointerMove, { capture: true, passive: false });
-                    } catch (e) {
-                        // ignore
-                    }
-                }
-
                 try {
                     const syntheticEvent = new PointerEvent("pointerdown", this._longPressEventInit);
                     this._longPressTarget.dispatchEvent(syntheticEvent);
@@ -465,6 +467,7 @@ export default {
 
                 // Mark drag as pending; it will be confirmed via managerIsDragging watcher.
                 this._longPressDragPending = true;
+                this._longPressTimer = null;
                 if (this.isDragging) {
                     this.isLongPressDragging = true;
                     this._longPressDragPending = false;
@@ -510,6 +513,9 @@ export default {
 .ww-kanban {
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
+    user-select: var(--kanban-user-select);
+    -webkit-user-select: var(--kanban-user-select);
+    -webkit-touch-callout: var(--kanban-touch-callout);
 }
 </style>
 
