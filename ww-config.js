@@ -1,20 +1,3 @@
-// export default {
-//   editor: {
-//     label: {
-//       en: "My Element",
-//     },
-//   },
-//   properties: {
-//     textColor: {
-//       label: {
-//         en: "Text color",
-//       },
-//       type: "Color",
-//       defaultValue: "#F23636",
-//     },
-//   },
-// };
-
 function showObjectPropertyPath(basePropertyKey, { content, boundProps }) {
     return (
         boundProps[basePropertyKey] &&
@@ -34,7 +17,7 @@ function getObjectPropertyPathOptions(basePropertyKey, { content }) {
 export default {
     editor: {
         label: {
-            en: "My Element",
+            en: "Kanban",
         },
         bubble: {
             icon: "template",
