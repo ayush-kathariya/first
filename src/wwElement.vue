@@ -130,20 +130,12 @@ export default {
             return items;
         },
         stackConfig() {
-            const delay = this.content.longPress
-                ? Number.isFinite(Number(this.content.longPressDelay)) && Number(this.content.longPressDelay) >= 0
-                    ? Number(this.content.longPressDelay)
-                    : 400
-                : 0;
             return {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
                 readonly: this.content.readonly,
-                delay,
-                delayOnTouchOnly: true,
-                touchStartThreshold: 4,
             };
         },
         kanbanStyle() {
@@ -191,9 +183,11 @@ export default {
             deep: true,
         },
         "content.longPress"(value) {
-            // Long-press is handled by Sortable delay options passed in stackConfig.
-            // Keep custom long-press state reset when toggling option.
-            if (!value) this.cleanupLongPress(true, true);
+            if (value) {
+                this.setupLongPressListeners();
+            } else {
+                this.cleanupLongPress();
+            }
         },
         managerIsDragging(value) {
             if (value && this._longPressDragPending) {
@@ -260,7 +254,12 @@ export default {
         },
         /* wwEditor:end */
         setupLongPressListeners() {
-            // Deprecated: handled natively by Sortable delay settings in stackConfig.
+            if (this._longPressListenersAttached || !this.$el) return;
+            this._longPressListenersAttached = true;
+            const el = this.$el;
+            el.addEventListener("pointerdown", this.onPointerDown, true);
+            el.addEventListener("pointerup", this.onPointerUp, true);
+            el.addEventListener("pointercancel", this.onPointerCancel, true);
         },
         detachLongPressDocumentListeners() {
             try {
@@ -494,8 +493,17 @@ export default {
     },
     mounted() {
         this.refreshStacks();
+        if (this.content.longPress) {
+            this.setupLongPressListeners();
+        }
     },
     beforeUnmount() {
+        if (this._longPressListenersAttached && this.$el) {
+            const el = this.$el;
+            el.removeEventListener("pointerdown", this.onPointerDown, true);
+            el.removeEventListener("pointerup", this.onPointerUp, true);
+            el.removeEventListener("pointercancel", this.onPointerCancel, true);
+        }
         this.cleanupLongPress(true, true);
     },
 };
