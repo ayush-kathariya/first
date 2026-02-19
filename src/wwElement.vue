@@ -174,8 +174,26 @@ export default {
                 return false;
             }
         },
+        isAndroidDevice() {
+            try {
+                const frontWindow = wwLib.getFrontWindow ? wwLib.getFrontWindow() : window;
+                const ua = frontWindow?.navigator?.userAgent || "";
+                return /Android/i.test(ua);
+            } catch (e) {
+                return false;
+            }
+        },
+        longPressStrategy() {
+            if (!this.content.longPress) return "disabled";
+            if (this.isIOSDevice) return "ios-native-delay";
+            if (this.isAndroidDevice) return "android-custom";
+            return "default-custom";
+        },
         shouldUseNativeTouchDelay() {
-            return !!this.content.longPress && this.isIOSDevice;
+            return this.longPressStrategy === "ios-native-delay";
+        },
+        shouldUseCustomLongPress() {
+            return this.longPressStrategy === "android-custom" || this.longPressStrategy === "default-custom";
         },
         isReadonly() {
             /* wwEditor:start */
@@ -215,14 +233,16 @@ export default {
             deep: true,
         },
         "content.longPress"(value) {
+            if (!value) {
+                this.cleanupLongPress(true, true);
+                return;
+            }
             if (this.shouldUseNativeTouchDelay) {
                 this.cleanupLongPress(true, true);
                 return;
             }
-            if (value) {
+            if (this.shouldUseCustomLongPress) {
                 this.setupLongPressListeners();
-            } else {
-                this.cleanupLongPress();
             }
         },
         managerIsDragging(value) {
@@ -290,7 +310,7 @@ export default {
         },
         /* wwEditor:end */
         setupLongPressListeners() {
-            if (this.shouldUseNativeTouchDelay) return;
+            if (!this.shouldUseCustomLongPress) return;
             if (this._longPressListenersAttached || !this.$el) return;
             this._longPressListenersAttached = true;
             const el = this.$el;
@@ -396,7 +416,7 @@ export default {
             // Only intercept real touch events when long press is enabled
             if (!event.isTrusted) return;
             if (!this.content.longPress || this.isReadonly) return;
-            if (this.shouldUseNativeTouchDelay) return;
+            if (!this.shouldUseCustomLongPress) return;
             if (event.pointerType !== "touch") return;
 
             // Prevent immediate drag start in nested stack element while keeping native scroll behavior.
@@ -566,7 +586,7 @@ export default {
     },
     mounted() {
         this.refreshStacks();
-        if (this.content.longPress && !this.shouldUseNativeTouchDelay) {
+        if (this.shouldUseCustomLongPress) {
             this.setupLongPressListeners();
         }
     },
