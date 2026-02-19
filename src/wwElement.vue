@@ -130,13 +130,24 @@ export default {
             return items;
         },
         stackConfig() {
-            return {
+            const config = {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
                 readonly: this.content.readonly,
             };
+
+            // iOS: rely on native Sortable touch delay for long-press behavior.
+            // Synthetic pointer/mouse dispatch is unreliable in WebKit.
+            if (this.shouldUseNativeTouchDelay) {
+                config.delay = this.longPressDelayMs;
+                config.delayOnTouchOnly = true;
+                config.touchStartThreshold = 8;
+                config.fallbackTolerance = 8;
+            }
+
+            return config;
         },
         kanbanStyle() {
             return {
@@ -144,6 +155,27 @@ export default {
                 "--kanban-user-select": this.content.longPress ? "none" : "auto",
                 "--kanban-touch-callout": this.content.longPress ? "none" : "initial",
             };
+        },
+        longPressDelayMs() {
+            return typeof this.content.longPressDelay === "number" && !isNaN(this.content.longPressDelay)
+                ? this.content.longPressDelay
+                : 400;
+        },
+        isIOSDevice() {
+            try {
+                const frontWindow = wwLib.getFrontWindow ? wwLib.getFrontWindow() : window;
+                const ua = frontWindow?.navigator?.userAgent || "";
+                const platform = frontWindow?.navigator?.platform || "";
+                return (
+                    /iPad|iPhone|iPod/.test(ua) ||
+                    (platform === "MacIntel" && frontWindow?.navigator?.maxTouchPoints > 1)
+                );
+            } catch (e) {
+                return false;
+            }
+        },
+        shouldUseNativeTouchDelay() {
+            return !!this.content.longPress && this.isIOSDevice;
         },
         isReadonly() {
             /* wwEditor:start */
@@ -183,6 +215,10 @@ export default {
             deep: true,
         },
         "content.longPress"(value) {
+            if (this.shouldUseNativeTouchDelay) {
+                this.cleanupLongPress(true, true);
+                return;
+            }
             if (value) {
                 this.setupLongPressListeners();
             } else {
@@ -254,6 +290,7 @@ export default {
         },
         /* wwEditor:end */
         setupLongPressListeners() {
+            if (this.shouldUseNativeTouchDelay) return;
             if (this._longPressListenersAttached || !this.$el) return;
             this._longPressListenersAttached = true;
             const el = this.$el;
@@ -359,6 +396,7 @@ export default {
             // Only intercept real touch events when long press is enabled
             if (!event.isTrusted) return;
             if (!this.content.longPress || this.isReadonly) return;
+            if (this.shouldUseNativeTouchDelay) return;
             if (event.pointerType !== "touch") return;
 
             // Prevent immediate drag start in nested stack element while keeping native scroll behavior.
@@ -528,7 +566,7 @@ export default {
     },
     mounted() {
         this.refreshStacks();
-        if (this.content.longPress) {
+        if (this.content.longPress && !this.shouldUseNativeTouchDelay) {
             this.setupLongPressListeners();
         }
     },
