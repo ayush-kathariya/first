@@ -129,14 +129,19 @@ export default {
             return items;
         },
         stackConfig() {
+            const dragDelay = Number(this.content.longPressDelay);
+            const normalizedDelay = Number.isFinite(dragDelay) && dragDelay >= 0 ? dragDelay : 500;
             return {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
                 readonly: this.content.readonly,
-                delay: this.content.longPress ? (this.content.longPressDelay || 500) : 0,
+                // On touch devices, require long press before drag starts.
+                delay: normalizedDelay,
                 delayOnTouchOnly: true,
+                // Prevent tiny finger jitters from triggering drag start.
+                touchStartThreshold: 20,
             };
         },
         kanbanStyle() {
