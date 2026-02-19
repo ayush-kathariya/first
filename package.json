@@ -5,6 +5,9 @@
     "build": "weweb build",
     "serve": "weweb serve"
   },
+  "dependencies": {
+    "vuedraggable": "^4.1.0"
+  },
   "devDependencies": {
     "@weweb/cli": "latest"
   }
