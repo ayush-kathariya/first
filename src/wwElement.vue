@@ -281,6 +281,10 @@ export default {
                     doc.removeEventListener("pointermove", this._onLongPressDocPointerMove, true);
                     this._onLongPressDocPointerMove = null;
                 }
+                if (this._onLongPressDocTouchMove) {
+                    doc.removeEventListener("touchmove", this._onLongPressDocTouchMove, true);
+                    this._onLongPressDocTouchMove = null;
+                }
             } catch (e) {
                 // fail silently if front document is not available
             }
@@ -299,6 +303,10 @@ export default {
             if (this._longPressTimer) {
                 clearTimeout(this._longPressTimer);
                 this._longPressTimer = null;
+            }
+            if (this._longPressActivationGuardTimer) {
+                clearTimeout(this._longPressActivationGuardTimer);
+                this._longPressActivationGuardTimer = null;
             }
             this._longPressTarget = null;
             this._longPressEventInit = null;
@@ -387,6 +395,23 @@ export default {
                     }
                 };
                 doc.addEventListener("pointermove", this._onLongPressDocPointerMove, { capture: true, passive: false });
+
+                this._onLongPressDocTouchMove = (e) => {
+                    const touch = e?.touches?.[0] || e?.changedTouches?.[0];
+                    if (!touch) return;
+                    if (this._longPressTimer) {
+                        const dx = Math.abs((this._longPressStartX ?? touch.clientX) - touch.clientX);
+                        const dy = Math.abs((this._longPressStartY ?? touch.clientY) - touch.clientY);
+                        if (dx > moveTolerance || dy > moveTolerance) {
+                            this.cleanupLongPress(false, true);
+                        }
+                        return;
+                    }
+                    if ((this._longPressDragPending || this.isLongPressDragging) && e.cancelable) {
+                        e.preventDefault();
+                    }
+                };
+                doc.addEventListener("touchmove", this._onLongPressDocTouchMove, { capture: true, passive: false });
             } catch (e) {
                 // ignore
             }
@@ -395,6 +420,8 @@ export default {
                 cancelable: true,
                 pointerId: event.pointerId,
                 pointerType: event.pointerType,
+                isPrimary: true,
+                button: 0,
                 clientX: event.clientX,
                 clientY: event.clientY,
                 screenX: event.screenX,
@@ -456,6 +483,7 @@ export default {
                     const mouseEvent = new MouseEvent("mousedown", {
                         bubbles: true,
                         cancelable: true,
+                        button: 0,
                         clientX: this._longPressEventInit.clientX,
                         clientY: this._longPressEventInit.clientY,
                         screenX: this._longPressEventInit.screenX,
@@ -472,6 +500,13 @@ export default {
                     this.isLongPressDragging = true;
                     this._longPressDragPending = false;
                 }
+
+                // Safety net: if drag never starts, force cleanup to avoid stuck "no-scroll" state on iOS.
+                this._longPressActivationGuardTimer = setTimeout(() => {
+                    if (this._longPressDragPending && !this.managerIsDragging && !this.isLongPressDragging) {
+                        this.cleanupLongPress(true, true);
+                    }
+                }, 700);
             }, delay);
         },
         onPointerUp(event) {
@@ -480,7 +515,7 @@ export default {
             if (this._longPressPointerId !== null && event.pointerId !== this._longPressPointerId) return;
             // During active drag, ignore pointerup here to avoid premature cleanup.
             // Real release cleanup is handled via document touchend/touchcancel.
-            if (this.isLongPressDragging || this._longPressDragPending) return;
+            if (this.isLongPressDragging || this.managerIsDragging) return;
             this.requestLongPressCleanupOnRelease();
         },
         onPointerCancel(event) {
