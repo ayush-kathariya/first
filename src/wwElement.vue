@@ -137,6 +137,10 @@ export default {
             touchDragCapturedEl: null,
             touchLastClientX: 0,
             touchLastClientY: 0,
+            touchAutoScrollRaf: null,
+            touchAutoScrollEdgeSize: 72,
+            touchAutoScrollMaxStepX: 26,
+            touchAutoScrollMaxStepY: 22,
         };
     },
     computed: {
@@ -496,6 +500,7 @@ export default {
         },
         clearTouchInteraction() {
             this.clearTouchPress();
+            this.stopTouchAutoScroll();
             if (this.touchDragCapturedEl && this.touchPointerId !== null) {
                 try {
                     this.touchDragCapturedEl.releasePointerCapture?.(this.touchPointerId);
@@ -512,6 +517,110 @@ export default {
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
+        },
+        computeEdgeAutoScrollDelta(pointer, start, end, edgeSize, maxStep) {
+            if (!Number.isFinite(pointer) || !Number.isFinite(start) || !Number.isFinite(end)) return 0;
+            const safeEdge = Math.max(24, Number(edgeSize) || 64);
+            const safeMaxStep = Math.max(2, Number(maxStep) || 18);
+            if (end <= start) return 0;
+
+            const minTrigger = start + safeEdge;
+            const maxTrigger = end - safeEdge;
+
+            if (pointer < minTrigger) {
+                const ratio = Math.min(1, (minTrigger - pointer) / safeEdge);
+                return -Math.max(2, Math.round(safeMaxStep * ratio * ratio));
+            }
+
+            if (pointer > maxTrigger) {
+                const ratio = Math.min(1, (pointer - maxTrigger) / safeEdge);
+                return Math.max(2, Math.round(safeMaxStep * ratio * ratio));
+            }
+
+            return 0;
+        },
+        getNearestStackBody(clientX, clientY) {
+            const root = this.$refs.kanbanRoot;
+            if (!root) return null;
+
+            const doc = wwLib.getFrontDocument();
+            const pointElement = doc.elementFromPoint(clientX, clientY);
+            const directBody = pointElement?.closest(".ww-kanban-stack-body");
+            if (directBody && root.contains(directBody)) return directBody;
+
+            const directStack = pointElement?.closest(".ww-kanban-stack");
+            if (directStack && root.contains(directStack)) {
+                const body = directStack.querySelector(".ww-kanban-stack-body");
+                if (body) return body;
+            }
+
+            const stackElements = Array.from(root.querySelectorAll(".ww-kanban-stack"));
+            if (!stackElements.length) return null;
+
+            const nearestStack = stackElements.reduce((nearestEl, currentEl) => {
+                if (!nearestEl) return currentEl;
+                const nearestRect = nearestEl.getBoundingClientRect();
+                const currentRect = currentEl.getBoundingClientRect();
+                const nearestDistance = Math.abs(clientX - (nearestRect.left + nearestRect.width / 2));
+                const currentDistance = Math.abs(clientX - (currentRect.left + currentRect.width / 2));
+                return currentDistance < nearestDistance ? currentEl : nearestEl;
+            }, null);
+
+            return nearestStack?.querySelector(".ww-kanban-stack-body") || null;
+        },
+        runTouchAutoScrollStep() {
+            if (!this.touchDragContext) return;
+            const root = this.$refs.kanbanRoot;
+            if (!root) return;
+
+            const clientX = this.touchLastClientX;
+            const clientY = this.touchLastClientY;
+
+            const rootRect = root.getBoundingClientRect();
+            const deltaX = this.computeEdgeAutoScrollDelta(
+                clientX,
+                rootRect.left,
+                rootRect.right,
+                this.touchAutoScrollEdgeSize,
+                this.touchAutoScrollMaxStepX
+            );
+            if (deltaX !== 0) {
+                root.scrollLeft += deltaX;
+            }
+
+            const stackBody = this.getNearestStackBody(clientX, clientY);
+            if (!stackBody) return;
+            const stackRect = stackBody.getBoundingClientRect();
+            const deltaY = this.computeEdgeAutoScrollDelta(
+                clientY,
+                stackRect.top,
+                stackRect.bottom,
+                this.touchAutoScrollEdgeSize,
+                this.touchAutoScrollMaxStepY
+            );
+            if (deltaY !== 0) {
+                stackBody.scrollTop += deltaY;
+            }
+        },
+        startTouchAutoScroll() {
+            if (this.touchAutoScrollRaf !== null) return;
+            const frontWindow = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+            if (!frontWindow?.requestAnimationFrame) return;
+
+            const tick = () => {
+                this.touchAutoScrollRaf = null;
+                if (!this.touchDragContext) return;
+                this.runTouchAutoScrollStep();
+                this.touchAutoScrollRaf = frontWindow.requestAnimationFrame(tick);
+            };
+
+            this.touchAutoScrollRaf = frontWindow.requestAnimationFrame(tick);
+        },
+        stopTouchAutoScroll() {
+            if (this.touchAutoScrollRaf === null) return;
+            const frontWindow = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+            frontWindow?.cancelAnimationFrame?.(this.touchAutoScrollRaf);
+            this.touchAutoScrollRaf = null;
         },
         isCardDragSource(stackValue, itemIndex) {
             if (!this.touchDragContext) return false;
@@ -582,6 +691,7 @@ export default {
             this.lockTouchScroll();
             this.touchLastClientX = clientX;
             this.touchLastClientY = clientY;
+            this.startTouchAutoScroll();
         },
         onTouchPointerDown(event) {
             if (!event.isTrusted) return;
@@ -775,7 +885,8 @@ export default {
 }
 
 .ww-kanban.is-touch-dragging {
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     touch-action: none;
 }
 
@@ -809,10 +920,6 @@ export default {
     padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
-}
-
-.ww-kanban.is-touch-dragging .ww-kanban-stack-body {
-    overflow: hidden;
 }
 
 .ww-kanban-card {
