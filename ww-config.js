@@ -25,7 +25,7 @@ export default {
         icon: "template",
         customSettingsPropertiesOrder: [
             "items",
-            ["itemKey", "itemLabel", "stackedBy", "sortedBy", "sortOrder"],
+            ["itemKey", "itemLabel", "itemImage", "stackedBy", "sortedBy", "sortOrder"],
             "readonly",
             "draggingCursor",
             "customDragHandle",
@@ -102,6 +102,17 @@ export default {
                 !showObjectPropertyPath("items", { content, boundProps }),
             label: {
                 en: "Card label",
+            },
+            type: "ObjectPropertyPath",
+            options: (content) => getObjectPropertyPathOptions("items", { content }),
+            defaultValue: null,
+            section: "settings",
+        },
+        itemImage: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Card image",
             },
             type: "ObjectPropertyPath",
             options: (content) => getObjectPropertyPathOptions("items", { content }),

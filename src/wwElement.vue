@@ -14,7 +14,7 @@
                     @dragover.prevent="onStackDragOver"
                     @drop.prevent="onStackDrop($event, stack.value)"
                 >
-                    <header class="ww-kanban-stack-header">{{ stack.label || "Untitled" }}</header>
+                    <header class="ww-kanban-stack-header">{{ getStackLabel(stack) }}</header>
 
                     <div class="ww-kanban-stack-body">
                         <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
@@ -47,7 +47,17 @@
                                     >
                                         ::
                                     </button>
-                                    <div class="ww-kanban-card-content">{{ getItemLabel(item, itemIndex) }}</div>
+                                    <div class="ww-kanban-card-content">
+                                        <img
+                                            v-if="getItemImage(item)"
+                                            class="ww-kanban-card-image"
+                                            :src="getItemImage(item)"
+                                            alt=""
+                                            loading="lazy"
+                                            draggable="false"
+                                        />
+                                        <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
+                                    </div>
                                 </article>
                             </wwLayoutItemContext>
                         </template>
@@ -264,15 +274,93 @@ export default {
         getCardKey(item, index, stackValue) {
             return `${this.getStackDomKey(stackValue)}::${this.getItemIdentity(item, index)}::${index}`;
         },
-        getItemLabel(item, index) {
-            if (item === null || item === undefined) return "";
-            if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") return String(item);
+        stripHtml(value) {
+            const text = typeof value === "string" ? value : String(value ?? "");
+            if (!text) return "";
+            if (!/[<>]/.test(text)) return text.trim();
 
-            const preferredPaths = [this.content.itemLabel, "title", "name", "label", this.content.itemKey].filter(Boolean);
+            try {
+                const doc = wwLib.getFrontDocument?.();
+                if (!doc) return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+                const temp = doc.createElement("div");
+                temp.innerHTML = text;
+                return (temp.textContent || temp.innerText || "").replace(/\s+/g, " ").trim();
+            } catch (e) {
+                return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+            }
+        },
+        normalizeDisplayValue(value) {
+            if (value === null || value === undefined) return "";
+            if (typeof value === "string") return this.stripHtml(value);
+            if (typeof value === "number" || typeof value === "boolean") return String(value);
+            return "";
+        },
+        getStackLabel(stack) {
+            const value = this.normalizeDisplayValue(stack?.label);
+            return value || "Untitled";
+        },
+        isLikelyImageUrl(value) {
+            if (typeof value !== "string") return false;
+            const text = value.trim();
+            if (!text) return false;
+            if (/^data:image\//i.test(text)) return true;
+            return /\.(apng|avif|bmp|gif|ico|jpe?g|png|svg|webp)(\?.*)?$/i.test(text);
+        },
+        getItemImage(item) {
+            if (!item || typeof item !== "object") return "";
+            const imagePaths = [
+                this.content.itemImage,
+                "image",
+                "imageUrl",
+                "img",
+                "thumbnail",
+                "photo",
+                "avatar",
+                "cover",
+            ].filter(Boolean);
+            for (const path of imagePaths) {
+                const value = wwLib.resolveObjectPropertyPath(item, path);
+                const normalizedValue = typeof value === "string" ? value.trim() : "";
+                if (normalizedValue && (path === this.content.itemImage || this.isLikelyImageUrl(normalizedValue))) {
+                    return normalizedValue;
+                }
+            }
+            return "";
+        },
+        getAutoLabelFromItemObject(item) {
+            const preferredPaths = ["title", "name", "label", "text", "content", "description", "summary", "task"];
             for (const path of preferredPaths) {
                 const value = wwLib.resolveObjectPropertyPath(item, path);
-                if (value !== undefined && value !== null && value !== "") return String(value);
+                const normalized = this.normalizeDisplayValue(value);
+                if (normalized) return normalized;
             }
+
+            for (const [key, value] of Object.entries(item)) {
+                if (key === this.content.itemKey) continue;
+                if (/^id$|_id$|Id$|status$|state$|stack$|column$/i.test(key)) continue;
+                if (typeof value !== "string") continue;
+                const normalized = this.normalizeDisplayValue(value);
+                if (!normalized) continue;
+                if (this.isLikelyImageUrl(normalized)) continue;
+                return normalized;
+            }
+
+            return "";
+        },
+        getItemLabel(item, index) {
+            if (item === null || item === undefined) return "";
+            if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") {
+                return this.normalizeDisplayValue(item);
+            }
+
+            if (this.content.itemLabel) {
+                const configuredLabel = wwLib.resolveObjectPropertyPath(item, this.content.itemLabel);
+                const normalizedConfiguredLabel = this.normalizeDisplayValue(configuredLabel);
+                if (normalizedConfiguredLabel) return normalizedConfiguredLabel;
+            }
+
+            const inferredLabel = this.getAutoLabelFromItemObject(item);
+            if (inferredLabel) return inferredLabel;
 
             try {
                 const text = JSON.stringify(item);
@@ -941,10 +1029,25 @@ export default {
 }
 
 .ww-kanban-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ww-kanban-card-image {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid rgba(20, 24, 33, 0.1);
+}
+
+.ww-kanban-card-text {
     font-size: 13px;
     line-height: 1.35;
     overflow-wrap: anywhere;
-    flex: 1 1 auto;
 }
 
 .ww-kanban-card-handle {
