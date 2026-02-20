@@ -146,7 +146,7 @@ export default {
         },
         kanbanStyle() {
             return {
-                "--wrap-stacks": this.content.wrapStacks ? "wrap" : "nowrap",
+                "--wrap-stacks": "nowrap",
             };
         },
         isReadonly() {
@@ -158,7 +158,7 @@ export default {
             return this.content.readonly;
         },
         canDrag() {
-            return !!this.content.sortable && !this.isReadonly;
+            return this.content.sortable !== false && !this.isReadonly;
         },
         canDesktopDrag() {
             return this.canDrag;
@@ -332,10 +332,6 @@ export default {
         },
         onDesktopDragStart(event, item, fromStack, oldIndex) {
             if (!this.canDesktopDrag) {
-                event.preventDefault();
-                return;
-            }
-            if (this.isTouchDevice && this.content.longPress) {
                 event.preventDefault();
                 return;
             }
@@ -644,7 +640,7 @@ export default {
     flex-direction: column;
     flex-shrink: 0;
     width: min(320px, 85vw);
-    max-height: 100%;
+    height: 520px;
     border: 1px solid rgba(20, 24, 33, 0.12);
     border-radius: 12px;
     background: #f5f7fb;
@@ -663,10 +659,12 @@ export default {
 .ww-kanban-stack-body {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     gap: 10px;
     padding: 10px;
     overflow-y: auto;
-    min-height: 54px;
+    overflow-x: hidden;
 }
 
 .ww-kanban-card {
