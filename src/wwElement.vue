@@ -1214,9 +1214,22 @@ export default {
     background: #fbfdff;
     color: #0f172a;
     padding: 12px;
+    min-height: 74px;
+    box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
     touch-action: auto;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.ww-kanban-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
+}
+
+.ww-kanban-card:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
 }
 
 .ww-kanban-card.is-drag-source {
