@@ -335,12 +335,6 @@ export default {
             }
 
             const workingEntries = [...entries];
-            if (this.valuesEqual(dragContext.fromStack, stackValue)) {
-                const sourceIndex = workingEntries.findIndex(entry => entry.itemIndex === dragContext.oldIndex);
-                if (sourceIndex !== -1) {
-                    workingEntries.splice(sourceIndex, 1);
-                }
-            }
 
             const placeholderIndex = this.clampIndex(this.dropIndicator.newIndex, workingEntries.length);
             const placeholderItem =
@@ -465,19 +459,14 @@ export default {
             if (!Number.isFinite(index)) return 0;
             return Math.max(0, Math.min(index, length));
         },
-        updateDropIndicator(toStack, newIndex, options = {}) {
+        updateDropIndicator(toStack, newIndex) {
             const dragContext = this.getActiveDragContext();
             if (!dragContext) {
                 this.dropIndicator = null;
                 return;
             }
 
-            const sourceIncluded = !!options.sourceIncluded;
             let normalizedIndex = Number.isFinite(newIndex) ? newIndex : 0;
-
-            if (sourceIncluded && this.valuesEqual(dragContext.fromStack, toStack) && normalizedIndex > dragContext.oldIndex) {
-                normalizedIndex -= 1;
-            }
 
             const targetLength = this.getStackItemsByValue(toStack).length;
             const finalIndex = this.clampIndex(normalizedIndex, targetLength);
@@ -624,7 +613,7 @@ export default {
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
             const rect = event.currentTarget.getBoundingClientRect();
             const insertIndex = cardIndex + (event.clientY > rect.top + rect.height / 2 ? 1 : 0);
-            this.updateDropIndicator(toStack, insertIndex, { sourceIncluded: true });
+            this.updateDropIndicator(toStack, insertIndex);
         },
         onCardDrop(event, toStack, cardIndex) {
             if (!this.desktopDrag) return;
@@ -639,7 +628,7 @@ export default {
         onStackDragOver(event, toStack) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            this.updateDropIndicator(toStack, this.getStackItemsByValue(toStack).length, { sourceIncluded: true });
+            this.updateDropIndicator(toStack, this.getStackItemsByValue(toStack).length);
         },
         onStackDrop(_event, toStack) {
             if (!this.desktopDrag) return;
@@ -909,7 +898,11 @@ export default {
 
             const target = this.getTouchDropTarget(clientX, clientY);
             if (target) {
-                this.updateDropIndicator(target.toStack, target.newIndex);
+                let displayIndex = target.newIndex;
+                if (this.valuesEqual(this.touchDragContext.fromStack, target.toStack) && target.newIndex > this.touchDragContext.oldIndex) {
+                    displayIndex += 1;
+                }
+                this.updateDropIndicator(target.toStack, displayIndex);
             }
         },
         startTouchAutoScroll() {
@@ -1072,7 +1065,11 @@ export default {
                 this.moveGhost(event.clientX, event.clientY);
                 const target = this.getTouchDropTarget(event.clientX, event.clientY);
                 if (target) {
-                    this.updateDropIndicator(target.toStack, target.newIndex);
+                    let displayIndex = target.newIndex;
+                    if (this.valuesEqual(this.touchDragContext.fromStack, target.toStack) && target.newIndex > this.touchDragContext.oldIndex) {
+                        displayIndex += 1;
+                    }
+                    this.updateDropIndicator(target.toStack, displayIndex);
                 }
             }
         },
@@ -1098,7 +1095,11 @@ export default {
                 if (primaryTouch) {
                     const target = this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY);
                     if (target) {
-                        this.updateDropIndicator(target.toStack, target.newIndex);
+                        let displayIndex = target.newIndex;
+                        if (this.valuesEqual(this.touchDragContext.fromStack, target.toStack) && target.newIndex > this.touchDragContext.oldIndex) {
+                            displayIndex += 1;
+                        }
+                        this.updateDropIndicator(target.toStack, displayIndex);
                     }
                 }
                 if (event.cancelable) event.preventDefault();
@@ -1446,7 +1447,7 @@ export default {
 }
 
 .ww-kanban-card.is-drag-source {
-    opacity: 0.35;
+    opacity: 0.06;
 }
 
 .ww-kanban-card-content {
