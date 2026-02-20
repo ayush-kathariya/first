@@ -1,5 +1,5 @@
 <template>
-    <div class="ww-kanban" :style="kanbanStyle">
+    <div class="ww-kanban" :style="kanbanStyle" v-bind="wwElementState?.$attrs">
         <template v-if="content.uncategorizedStack">
             <wwLayoutItemContext :index="0" :item="null" :data="uncategorizedStack" is-repeat>
                 <wwElement
@@ -26,6 +26,7 @@
             </wwLayoutItemContext>
         </template>
     </div>
+
 </template>
 
 <script>
@@ -99,6 +100,7 @@ export default {
             { immediate: true }
         );
 
+
         const css = computed(() => `* { cursor: ${props.content.draggingCursor || "grabbing"} !important; }`);
         const styletag = wwLib.getFrontDocument().createElement("style");
 
@@ -117,6 +119,7 @@ export default {
 
         return { internalStacks, uncategorizedStack, isDragging };
     },
+
     computed: {
         stacks() {
             const stacks = wwLib.wwCollection.getCollectionData(this.content.stacks);
@@ -129,20 +132,17 @@ export default {
             return items;
         },
         stackConfig() {
-            const configuredLongPressDelay = Number(this.content.longPressDelay);
-            const longPressDelay = Number.isFinite(configuredLongPressDelay) ? configuredLongPressDelay : 400;
-
             return {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
                 readonly: this.content.readonly,
-                delay: this.content.longPress ? Math.max(0, longPressDelay) : 0,
+                delay: this.content.longPress ? (this.content.longPressDelay || 500) : 0,
                 delayOnTouchOnly: true,
-                touchStartThreshold: 10,
             };
         },
+
         kanbanStyle() {
             return {
                 "--wrap-stacks": this.content.wrapStacks ? "wrap" : "nowrap",
@@ -185,6 +185,7 @@ export default {
             },
             deep: true,
         },
+
         isReadonly: {
             immediate: true,
             handler(value) {
@@ -239,24 +240,45 @@ export default {
             };
         },
         /* wwEditor:end */
+
     },
     mounted() {
         this.refreshStacks();
     },
+
+    beforeUnmount() {
+        // No manual listeners to cleanup now
+    },
+
 };
 </script>
 
 <style lang="scss" scoped>
 .ww-kanban {
+    display: flex;
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
+    gap: 20px;
+    align-items: flex-start;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    width: 100%;
+    height: 100%;
+}
+
+
+:deep(.ww-kanban-stack) {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    overflow: hidden;
 }
 
 :deep(.ww-draggable-area > *) {
-    touch-action: auto;
+    touch-action: auto; /* Allow both horizontal and vertical scrolling */
 }
+
+
+
 </style>
