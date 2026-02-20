@@ -418,15 +418,16 @@ export default {
         },
         stackConfig() {
             const isTouchDevice = typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
+            const useCustomTouchEngine = isTouchDevice && this.content.longPress;
             return {
-                sortable: this.content.sortable,
+                sortable: useCustomTouchEngine ? false : this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
-                readonly: this.content.readonly,
-                // On touch: disable SortableJS drag entirely — our pointer engine handles it.
+                readonly: this.content.readonly || useCustomTouchEngine,
+                // On touch: disable SortableJS drag entirely - our pointer engine handles it.
                 // On mouse: SortableJS works as normal with zero delay.
-                ...(isTouchDevice && this.content.longPress
+                ...(useCustomTouchEngine
                     ? { delay: 99999, delayOnTouchOnly: true, touchStartThreshold: 999 }
                     : { delay: 0, delayOnTouchOnly: false }),
             };
