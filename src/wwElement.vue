@@ -149,6 +149,7 @@ export default {
         return {
             desktopDrag: null,
             touchPointerId: null,
+            touchIdentifier: null,
             touchPressTimer: null,
             touchPressStartX: 0,
             touchPressStartY: 0,
@@ -658,9 +659,66 @@ export default {
             }
             this.touchDragContext = null;
             this.touchPointerId = null;
+            this.touchIdentifier = null;
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
+        },
+        supportsNativeTouchEvents() {
+            try {
+                const win = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+                if (!win) return false;
+                return "ontouchstart" in win || typeof win.TouchEvent !== "undefined";
+            } catch (e) {
+                return false;
+            }
+        },
+        getTouchByIdentifier(touchList, identifier) {
+            if (!touchList || identifier === null || identifier === undefined) return null;
+            const touches = Array.from(touchList);
+            return touches.find(touch => touch.identifier === identifier) || null;
+        },
+        getNearestTouch(touchList, referenceX, referenceY) {
+            if (!touchList) return null;
+            const touches = Array.from(touchList);
+            if (!touches.length) return null;
+            return touches.reduce((nearestTouch, currentTouch) => {
+                if (!nearestTouch) return currentTouch;
+                const nearestDistance = Math.hypot(nearestTouch.clientX - referenceX, nearestTouch.clientY - referenceY);
+                const currentDistance = Math.hypot(currentTouch.clientX - referenceX, currentTouch.clientY - referenceY);
+                return currentDistance < nearestDistance ? currentTouch : nearestTouch;
+            }, null);
+        },
+        resolveActiveTouch(event) {
+            if (!event) return null;
+            if (this.touchIdentifier !== null) {
+                return (
+                    this.getTouchByIdentifier(event.touches, this.touchIdentifier) ||
+                    this.getTouchByIdentifier(event.changedTouches, this.touchIdentifier)
+                );
+            }
+
+            const referenceX = Number.isFinite(this.touchLastClientX) ? this.touchLastClientX : this.touchPressStartX;
+            const referenceY = Number.isFinite(this.touchLastClientY) ? this.touchLastClientY : this.touchPressStartY;
+            const nearestTouch =
+                this.getNearestTouch(event.touches, referenceX, referenceY) ||
+                this.getNearestTouch(event.changedTouches, referenceX, referenceY);
+            if (nearestTouch) {
+                this.touchIdentifier = nearestTouch.identifier;
+            }
+            return nearestTouch;
+        },
+        didActiveTouchEnd(event) {
+            const changedTouches = Array.from(event?.changedTouches || []);
+            if (!changedTouches.length) return false;
+            if (this.touchIdentifier !== null) {
+                return changedTouches.some(touch => touch.identifier === this.touchIdentifier);
+            }
+            if (changedTouches.length === 1) {
+                this.touchIdentifier = changedTouches[0].identifier;
+                return true;
+            }
+            return false;
         },
         computeEdgeAutoScrollDelta(pointer, start, end, edgeSize, maxStep) {
             if (!Number.isFinite(pointer) || !Number.isFinite(start) || !Number.isFinite(end)) return 0;
@@ -864,6 +922,7 @@ export default {
             if (item === undefined) return;
 
             this.touchPointerId = event.pointerId;
+            this.touchIdentifier = null;
             this.touchPressStartX = event.clientX;
             this.touchPressStartY = event.clientY;
             this.touchLastClientX = event.clientX;
@@ -902,7 +961,7 @@ export default {
             }
         },
         onNativeTouchMove(event) {
-            const primaryTouch = event.changedTouches?.[0] || event.touches?.[0];
+            const primaryTouch = this.resolveActiveTouch(event);
             if (primaryTouch) {
                 this.touchLastClientX = primaryTouch.clientX;
                 this.touchLastClientY = primaryTouch.clientY;
@@ -918,14 +977,16 @@ export default {
                 }
             }
 
-            if (this.touchDragContext && event.cancelable) {
-                event.preventDefault();
+            if (this.touchDragContext) {
+                if (primaryTouch) this.moveGhost(primaryTouch.clientX, primaryTouch.clientY);
+                if (event.cancelable) event.preventDefault();
             }
         },
         onNativeTouchEnd(event) {
             if (this.touchPointerId === null) return;
+            if (!this.didActiveTouchEnd(event)) return;
             if (this.touchDragContext) {
-                const primaryTouch = event.changedTouches?.[0];
+                const primaryTouch = this.resolveActiveTouch(event) || event.changedTouches?.[0];
                 const clientX = primaryTouch?.clientX ?? this.touchLastClientX;
                 const clientY = primaryTouch?.clientY ?? this.touchLastClientY;
                 const target = this.getTouchDropTarget(clientX, clientY);
@@ -935,13 +996,15 @@ export default {
             }
             this.clearTouchInteraction();
         },
-        onNativeTouchCancel() {
+        onNativeTouchCancel(event) {
             if (this.touchPointerId === null && !this.touchDragContext && !this.touchPressTimer) return;
+            if (event && !this.didActiveTouchEnd(event)) return;
             this.clearTouchInteraction();
         },
         onTouchPointerUp(event) {
             if (event.pointerType !== "touch") return;
             if (this.touchPointerId === null || event.pointerId !== this.touchPointerId) return;
+            if (this.supportsNativeTouchEvents()) return;
 
             if (this.touchDragContext) {
                 const target = this.getTouchDropTarget(event.clientX, event.clientY);
@@ -955,6 +1018,7 @@ export default {
         onTouchPointerCancel(event) {
             if (event.pointerType !== "touch") return;
             if (this.touchPointerId === null || event.pointerId !== this.touchPointerId) return;
+            if (this.supportsNativeTouchEvents()) return;
             this.clearTouchInteraction();
         },
         attachTouchListeners() {
