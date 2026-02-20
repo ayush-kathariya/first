@@ -292,8 +292,15 @@ export default {
         },
         isStackDropActive(stackValue) {
             if (!this.isDragging) return false;
-            if (this.dropTargetStack === null && this.dropTargetStack !== 0) return false;
-            return this.valuesEqual(this.dropTargetStack, stackValue);
+            let targetStack = this.dropTargetStack;
+            if (targetStack === null || targetStack === undefined) {
+                targetStack = this.touchDragContext?.fromStack;
+                if (targetStack === null || targetStack === undefined) {
+                    targetStack = this.desktopDrag?.fromStack;
+                }
+            }
+            if (targetStack === undefined) return false;
+            return this.valuesEqual(targetStack, stackValue);
         },
         getItemIdentity(item, index) {
             if (this.content.itemKey) {
@@ -1178,11 +1185,21 @@ export default {
     background: transparent;
     overflow: visible;
     gap: 8px;
+    position: relative;
+    z-index: 0;
 }
 
 .ww-kanban-stack.is-drop-target {
-    outline: 2px solid #3b82f6;
+    z-index: 1;
+}
+
+.ww-kanban-stack.is-drop-target::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid #3b82f6;
     border-radius: 12px;
+    pointer-events: none;
 }
 
 .ww-kanban-stack.is-drop-target .ww-kanban-stack-panel {
