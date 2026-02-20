@@ -135,6 +135,8 @@ export default {
             previousOverscrollBehavior: undefined,
             touchListenersAttached: false,
             touchDragCapturedEl: null,
+            touchLastClientX: 0,
+            touchLastClientY: 0,
         };
     },
     computed: {
@@ -304,6 +306,53 @@ export default {
                 updatedList: targetItems,
             };
         },
+        setObjectPropertyByPath(target, path, value) {
+            if (!target || typeof target !== "object" || !path) return;
+            const normalizedPath = String(path).replace(/\[(\w+)\]/g, ".$1").replace(/^\./, "");
+            const keys = normalizedPath.split(".").filter(Boolean);
+            if (!keys.length) return;
+            let current = target;
+            for (let index = 0; index < keys.length - 1; index += 1) {
+                const key = keys[index];
+                if (!current[key] || typeof current[key] !== "object") {
+                    current[key] = {};
+                }
+                current = current[key];
+            }
+            current[keys[keys.length - 1]] = value;
+        },
+        applyLocalMove(payload) {
+            if (!payload) return;
+            const fromItems = this.getStackItemsByValue(payload.from);
+            const toItems = this.getStackItemsByValue(payload.to);
+            if (!Array.isArray(fromItems) || !Array.isArray(toItems)) return;
+
+            if (this.valuesEqual(payload.from, payload.to)) {
+                if (payload.oldIndex < 0 || payload.oldIndex >= fromItems.length) return;
+                const movedItem = fromItems.splice(payload.oldIndex, 1)[0];
+                const targetIndex = this.clampIndex(payload.newIndex, fromItems.length);
+                fromItems.splice(targetIndex, 0, movedItem);
+                return;
+            }
+
+            if (payload.oldIndex < 0 || payload.oldIndex >= fromItems.length) return;
+            const movedItem = fromItems.splice(payload.oldIndex, 1)[0];
+            const targetIndex = this.clampIndex(payload.newIndex, toItems.length);
+            toItems.splice(targetIndex, 0, movedItem);
+
+            if (this.content.stackedBy) {
+                this.setObjectPropertyByPath(movedItem, this.content.stackedBy, payload.to);
+            }
+        },
+        finalizeMove(dragContext, toStack, newIndex) {
+            const payload = this.prepareMovePayload(dragContext, toStack, newIndex);
+            if (!payload) return;
+            this.applyLocalMove(payload);
+            this.emitMove({
+                ...payload,
+                updatedList: [...this.getStackItemsByValue(payload.to)],
+            });
+        },
         emitMove(payload) {
             if (!payload) return;
             this.$emit("trigger-event", {
@@ -364,7 +413,7 @@ export default {
             if (this.valuesEqual(this.desktopDrag.fromStack, toStack) && insertIndex > this.desktopDrag.oldIndex) {
                 insertIndex -= 1;
             }
-            this.emitMove(this.prepareMovePayload(this.desktopDrag, toStack, insertIndex));
+            this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
         onStackDragOver(event) {
@@ -377,7 +426,7 @@ export default {
             if (this.valuesEqual(this.desktopDrag.fromStack, toStack) && insertIndex > this.desktopDrag.oldIndex) {
                 insertIndex -= 1;
             }
-            this.emitMove(this.prepareMovePayload(this.desktopDrag, toStack, insertIndex));
+            this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
         matchesHandleTarget(target) {
@@ -477,12 +526,30 @@ export default {
             if (sourceEl) sourceEl.style.visibility = previousVisibility || "";
             this.ghostCard.visible = prevGhostVisible;
 
-            if (!pointElement) return null;
+            let stackEl = pointElement?.closest(".ww-kanban-stack") || null;
+            if (!stackEl) {
+                const root = this.$refs.kanbanRoot;
+                const stackElements = Array.from(root?.querySelectorAll(".ww-kanban-stack") || []);
+                if (!stackElements.length) return null;
 
-            const stackEl = pointElement.closest(".ww-kanban-stack");
+                stackEl =
+                    stackElements.find(el => {
+                        const rect = el.getBoundingClientRect();
+                        return clientX >= rect.left && clientX <= rect.right;
+                    }) ||
+                    stackElements.reduce((nearestEl, currentEl) => {
+                        if (!nearestEl) return currentEl;
+                        const nearestRect = nearestEl.getBoundingClientRect();
+                        const currentRect = currentEl.getBoundingClientRect();
+                        const nearestDistance = Math.abs(clientX - (nearestRect.left + nearestRect.width / 2));
+                        const currentDistance = Math.abs(clientX - (currentRect.left + currentRect.width / 2));
+                        return currentDistance < nearestDistance ? currentEl : nearestEl;
+                    }, null);
+            }
             if (!stackEl) return null;
 
             const stackKey = stackEl.dataset.stackKey;
+            if (!(stackKey in this.stackKeyLookup)) return null;
             const toStack = this.stackKeyLookup[stackKey];
             const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(el => el !== sourceEl);
             let newIndex = cards.length;
@@ -509,6 +576,8 @@ export default {
             }
             this.showGhost(this.touchDragContext.sourceEl, clientX, clientY);
             this.lockTouchScroll();
+            this.touchLastClientX = clientX;
+            this.touchLastClientY = clientY;
         },
         onTouchPointerDown(event) {
             if (!event.isTrusted) return;
@@ -538,6 +607,8 @@ export default {
             this.touchPointerId = event.pointerId;
             this.touchPressStartX = event.clientX;
             this.touchPressStartY = event.clientY;
+            this.touchLastClientX = event.clientX;
+            this.touchLastClientY = event.clientY;
             this.clearTouchPress();
             this.touchPressContext = { item, fromStack, oldIndex, sourceEl: cardEl };
 
@@ -556,6 +627,8 @@ export default {
         onTouchPointerMove(event) {
             if (event.pointerType !== "touch") return;
             if (this.touchPointerId === null || event.pointerId !== this.touchPointerId) return;
+            this.touchLastClientX = event.clientX;
+            this.touchLastClientY = event.clientY;
 
             if (this.touchPressTimer) {
                 const dx = event.clientX - this.touchPressStartX;
@@ -573,8 +646,42 @@ export default {
             }
         },
         onNativeTouchMove(event) {
-            if (!this.touchDragContext) return;
-            if (event.cancelable) event.preventDefault();
+            const primaryTouch = event.changedTouches?.[0] || event.touches?.[0];
+            if (primaryTouch) {
+                this.touchLastClientX = primaryTouch.clientX;
+                this.touchLastClientY = primaryTouch.clientY;
+            }
+
+            if (this.touchPressTimer && primaryTouch) {
+                const dx = primaryTouch.clientX - this.touchPressStartX;
+                const dy = primaryTouch.clientY - this.touchPressStartY;
+                if (Math.hypot(dx, dy) > this.touchMoveThreshold) {
+                    this.clearTouchPress();
+                    this.touchPointerId = null;
+                    return;
+                }
+            }
+
+            if (this.touchDragContext && event.cancelable) {
+                event.preventDefault();
+            }
+        },
+        onNativeTouchEnd(event) {
+            if (this.touchPointerId === null) return;
+            if (this.touchDragContext) {
+                const primaryTouch = event.changedTouches?.[0];
+                const clientX = primaryTouch?.clientX ?? this.touchLastClientX;
+                const clientY = primaryTouch?.clientY ?? this.touchLastClientY;
+                const target = this.getTouchDropTarget(clientX, clientY);
+                if (target) {
+                    this.finalizeMove(this.touchDragContext, target.toStack, target.newIndex);
+                }
+            }
+            this.clearTouchInteraction();
+        },
+        onNativeTouchCancel() {
+            if (this.touchPointerId === null && !this.touchDragContext && !this.touchPressTimer) return;
+            this.clearTouchInteraction();
         },
         onTouchPointerUp(event) {
             if (event.pointerType !== "touch") return;
@@ -583,7 +690,7 @@ export default {
             if (this.touchDragContext) {
                 const target = this.getTouchDropTarget(event.clientX, event.clientY);
                 if (target) {
-                    this.emitMove(this.prepareMovePayload(this.touchDragContext, target.toStack, target.newIndex));
+                    this.finalizeMove(this.touchDragContext, target.toStack, target.newIndex);
                 }
             }
 
@@ -605,6 +712,8 @@ export default {
             doc.addEventListener("touchmove", this.onNativeTouchMove, { capture: true, passive: false });
             doc.addEventListener("pointerup", this.onTouchPointerUp, true);
             doc.addEventListener("pointercancel", this.onTouchPointerCancel, true);
+            doc.addEventListener("touchend", this.onNativeTouchEnd, true);
+            doc.addEventListener("touchcancel", this.onNativeTouchCancel, true);
             this.touchListenersAttached = true;
         },
         detachTouchListeners() {
@@ -618,6 +727,8 @@ export default {
             doc.removeEventListener("touchmove", this.onNativeTouchMove, true);
             doc.removeEventListener("pointerup", this.onTouchPointerUp, true);
             doc.removeEventListener("pointercancel", this.onTouchPointerCancel, true);
+            doc.removeEventListener("touchend", this.onNativeTouchEnd, true);
+            doc.removeEventListener("touchcancel", this.onNativeTouchCancel, true);
             this.touchListenersAttached = false;
         },
         /* wwEditor:start */
