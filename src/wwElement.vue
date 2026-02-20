@@ -1047,13 +1047,13 @@ export default {
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
     height: 100%;
     padding: 8px;
-    background: #f3f4f6;
+    background: #f1f3f6;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     -ms-overflow-style: none;
@@ -1091,9 +1091,11 @@ export default {
     flex-direction: column;
     flex: 0 1 auto;
     min-height: 0;
-    border-radius: 10px;
-    background: #e5e7eb;
-    padding: 8px;
+    border-radius: 11px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: #dfe3ea;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    padding: 10px;
     overflow: hidden;
 }
 
@@ -1110,7 +1112,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 6px 4px 10px;
+    padding: 2px 2px 10px;
     font-size: 13px;
     font-weight: 600;
     color: #0f172a;
@@ -1145,7 +1147,7 @@ export default {
     flex: 1 1 auto;
     min-height: 0;
     gap: 10px;
-    padding: 0 2px 2px;
+    padding: 0 1px 1px;
     overflow-y: auto;
     overflow-x: hidden;
     -ms-overflow-style: none;
@@ -1159,11 +1161,13 @@ export default {
 }
 
 .ww-kanban-stack-footer {
-    padding: 0;
-    border-top: none;
-    background: transparent;
+    padding: 1px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    background: #e5e7eb;
     height: var(--add-card-block-height);
     flex: 0 0 var(--add-card-block-height);
+    box-sizing: border-box;
 }
 
 .ww-kanban-add-card-button {
@@ -1175,16 +1179,16 @@ export default {
     gap: 8px;
     border: 1px solid rgba(15, 23, 42, 0.18);
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 7px 10px;
     font-size: 13px;
     font-weight: 600;
     color: #111827;
-    background: #f3f4f6;
+    background: #f8fafc;
     cursor: pointer;
 }
 
 .ww-kanban-add-card-button:hover {
-    background: #eceff3;
+    background: #f2f5fa;
 }
 
 .ww-kanban-add-card-icon {
@@ -1205,9 +1209,9 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.16);
+    border: 1px solid rgba(15, 23, 42, 0.14);
     border-radius: 8px;
-    background: #ffffff;
+    background: #fbfdff;
     color: #0f172a;
     padding: 12px;
     user-select: none;
