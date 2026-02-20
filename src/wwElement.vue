@@ -336,6 +336,14 @@ export default {
                 } catch (e) {
                     // fail silently if front document is not available
                 }
+                if (this.$el) {
+                    if (this._elPreviousTouchAction !== undefined) {
+                        this.$el.style.touchAction = this._elPreviousTouchAction;
+                    } else {
+                        this.$el.style.touchAction = "";
+                    }
+                }
+                this._elPreviousTouchAction = undefined;
             }
         },
         requestLongPressCleanupOnRelease() {
@@ -352,9 +360,22 @@ export default {
             if (!this.content.longPress || this.isReadonly) return;
             if (event.pointerType !== "touch") return;
 
-            // Let the browser handle native scroll detection before long-press confirms drag.
-
             this.cleanupLongPress();
+
+            // Ensure native vertical scrolling stays enabled while long-press is still pending.
+            try {
+                const body = wwLib.getFrontDocument().body;
+                this._previousTouchAction = body.style.touchAction;
+                this._previousOverscrollBehavior = body.style.overscrollBehavior;
+                body.style.touchAction = "pan-y";
+                body.style.overscrollBehavior = "auto";
+            } catch (e) {
+                // fail silently if front document is not available
+            }
+            if (this.$el) {
+                this._elPreviousTouchAction = this.$el.style.touchAction;
+                this.$el.style.touchAction = "pan-y";
+            }
 
             const delay =
                 typeof this.content.longPressDelay === "number" && !isNaN(this.content.longPressDelay)
@@ -415,6 +436,9 @@ export default {
                     body.style.overscrollBehavior = "none";
                 } catch (e) {
                     // fail silently if front document is not available
+                }
+                if (this.$el) {
+                    this.$el.style.touchAction = "none";
                 }
 
                 // Capture pointer once drag is about to begin to avoid losing events mid-drag.
@@ -525,5 +549,6 @@ export default {
 .ww-kanban {
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
+    touch-action: pan-y;
 }
 </style>
