@@ -352,8 +352,7 @@ export default {
             if (!this.content.longPress || this.isReadonly) return;
             if (event.pointerType !== "touch") return;
 
-            // Prevent immediate drag start, but keep native scrolling enabled.
-            event.stopPropagation();
+            // Let the browser handle native scroll detection before long-press confirms drag.
 
             this.cleanupLongPress();
 
