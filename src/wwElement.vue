@@ -91,6 +91,22 @@ export default {
         });
         const managerIsDragging = computed(() => Object.values(isDraggingManager).some((isDragging) => isDragging));
         const isDragging = computed(() => managerIsDragging.value);
+        const longPressUnlocked = ref(false);
+        const isCoarsePointer = ref(false);
+
+        try {
+            const frontWindow = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+            if (frontWindow?.matchMedia) {
+                isCoarsePointer.value =
+                    frontWindow.matchMedia("(pointer: coarse)").matches ||
+                    frontWindow.matchMedia("(any-pointer: coarse)").matches;
+            } else {
+                isCoarsePointer.value = !!frontWindow?.navigator?.maxTouchPoints;
+            }
+        } catch (e) {
+            isCoarsePointer.value = false;
+        }
+
         watch(
             isDragging,
             (value) => {
@@ -115,7 +131,7 @@ export default {
             { deep: true }
         );
 
-        return { internalStacks, uncategorizedStack, isDragging };
+        return { internalStacks, uncategorizedStack, isDragging, managerIsDragging, longPressUnlocked, isCoarsePointer };
     },
     computed: {
         stacks() {
@@ -131,13 +147,14 @@ export default {
         stackConfig() {
             const configuredLongPressDelay = Number(this.content.longPressDelay);
             const longPressDelay = Number.isFinite(configuredLongPressDelay) ? configuredLongPressDelay : 400;
+            const lockTouchDragUntilLongPress = this.content.longPress && this.isCoarsePointer && !this.longPressUnlocked;
 
             return {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
-                readonly: this.content.readonly,
+                readonly: this.content.readonly || lockTouchDragUntilLongPress,
                 delay: this.content.longPress ? Math.max(0, longPressDelay) : 0,
                 delayOnTouchOnly: true,
                 touchStartThreshold: 10,
@@ -185,13 +202,29 @@ export default {
             },
             deep: true,
         },
+        managerIsDragging(value) {
+            if (!value) {
+                this.longPressUnlocked = false;
+            }
+        },
+        "content.longPress"(value) {
+            if (value && this.isCoarsePointer && !this.content.readonly) {
+                this.setupLongPressGate();
+            } else {
+                this.cleanupLongPressGate();
+            }
+        },
         isReadonly: {
             immediate: true,
             handler(value) {
                 if (value) {
                     this.$emit("add-state", "readonly");
+                    this.cleanupLongPressGate();
                 } else {
                     this.$emit("remove-state", "readonly");
+                    if (this.content.longPress && this.isCoarsePointer) {
+                        this.setupLongPressGate();
+                    }
                 }
             },
         },
@@ -239,9 +272,138 @@ export default {
             };
         },
         /* wwEditor:end */
+        setupLongPressGate() {
+            if (this._longPressGateAttached || !this.$el) return;
+            this._longPressGateAttached = true;
+            const el = this.$el;
+            el.addEventListener("pointerdown", this.onLongPressGatePointerDown, true);
+            el.addEventListener("pointermove", this.onLongPressGatePointerMove, true);
+            el.addEventListener("pointerup", this.onLongPressGatePointerUp, true);
+            el.addEventListener("pointercancel", this.onLongPressGatePointerCancel, true);
+        },
+        clearLongPressGateTimer() {
+            if (this._longPressGateTimer) {
+                clearTimeout(this._longPressGateTimer);
+                this._longPressGateTimer = null;
+            }
+        },
+        resetLongPressGatePointerState() {
+            this._longPressGatePointerId = null;
+            this._longPressGateStartX = null;
+            this._longPressGateStartY = null;
+            this._longPressGateTarget = null;
+            this._longPressGateEventInit = null;
+        },
+        cleanupLongPressGate() {
+            this.clearLongPressGateTimer();
+            this.resetLongPressGatePointerState();
+            this.longPressUnlocked = false;
+
+            if (this._longPressGateAttached && this.$el) {
+                const el = this.$el;
+                el.removeEventListener("pointerdown", this.onLongPressGatePointerDown, true);
+                el.removeEventListener("pointermove", this.onLongPressGatePointerMove, true);
+                el.removeEventListener("pointerup", this.onLongPressGatePointerUp, true);
+                el.removeEventListener("pointercancel", this.onLongPressGatePointerCancel, true);
+            }
+            this._longPressGateAttached = false;
+        },
+        getLongPressDelay() {
+            const configuredDelay = Number(this.content.longPressDelay);
+            return Number.isFinite(configuredDelay) ? Math.max(0, configuredDelay) : 400;
+        },
+        onLongPressGatePointerDown(event) {
+            if (!event.isTrusted) return;
+            if (event.pointerType !== "touch") return;
+            if (!this.content.longPress || this.isReadonly || !this.isCoarsePointer) return;
+            if (this.managerIsDragging) return;
+            if (this._longPressGatePointerId !== null && event.pointerId !== this._longPressGatePointerId) return;
+
+            this.clearLongPressGateTimer();
+            this.longPressUnlocked = false;
+            this._longPressGatePointerId = event.pointerId;
+            this._longPressGateStartX = event.clientX;
+            this._longPressGateStartY = event.clientY;
+            this._longPressGateTarget = event.target;
+            this._longPressGateEventInit = {
+                bubbles: true,
+                cancelable: true,
+                pointerId: event.pointerId,
+                pointerType: event.pointerType,
+                clientX: event.clientX,
+                clientY: event.clientY,
+                screenX: event.screenX,
+                screenY: event.screenY,
+                buttons: 1,
+            };
+
+            this._longPressGateTimer = setTimeout(() => {
+                this._longPressGateTimer = null;
+                this.longPressUnlocked = true;
+
+                this.$nextTick(() => {
+                    if (!this.longPressUnlocked || !this._longPressGateTarget || this.isReadonly) return;
+
+                    try {
+                        const syntheticEvent = new PointerEvent("pointerdown", this._longPressGateEventInit);
+                        this._longPressGateTarget.dispatchEvent(syntheticEvent);
+                    } catch (e) {
+                        const mouseEvent = new MouseEvent("mousedown", {
+                            bubbles: true,
+                            cancelable: true,
+                            clientX: this._longPressGateEventInit.clientX,
+                            clientY: this._longPressGateEventInit.clientY,
+                            screenX: this._longPressGateEventInit.screenX,
+                            screenY: this._longPressGateEventInit.screenY,
+                            buttons: 1,
+                        });
+                        this._longPressGateTarget.dispatchEvent(mouseEvent);
+                    }
+                });
+            }, this.getLongPressDelay());
+        },
+        onLongPressGatePointerMove(event) {
+            if (event.pointerType !== "touch") return;
+            if (this._longPressGateTimer === null) return;
+            if (this._longPressGatePointerId !== null && event.pointerId !== this._longPressGatePointerId) return;
+
+            if (
+                this._longPressGateStartX !== null &&
+                this._longPressGateStartY !== null &&
+                Math.hypot(event.clientX - this._longPressGateStartX, event.clientY - this._longPressGateStartY) > 10
+            ) {
+                this.clearLongPressGateTimer();
+                this.longPressUnlocked = false;
+                this.resetLongPressGatePointerState();
+            }
+        },
+        onLongPressGatePointerUp(event) {
+            if (event.pointerType !== "touch") return;
+            if (this._longPressGatePointerId !== null && event.pointerId !== this._longPressGatePointerId) return;
+
+            this.clearLongPressGateTimer();
+            if (!this.managerIsDragging) {
+                this.longPressUnlocked = false;
+            }
+            this.resetLongPressGatePointerState();
+        },
+        onLongPressGatePointerCancel(event) {
+            if (event.pointerType !== "touch") return;
+            if (this._longPressGatePointerId !== null && event.pointerId !== this._longPressGatePointerId) return;
+
+            this.clearLongPressGateTimer();
+            this.longPressUnlocked = false;
+            this.resetLongPressGatePointerState();
+        },
     },
     mounted() {
         this.refreshStacks();
+        if (this.content.longPress && this.isCoarsePointer && !this.content.readonly) {
+            this.setupLongPressGate();
+        }
+    },
+    beforeUnmount() {
+        this.cleanupLongPressGate();
     },
 };
 </script>
