@@ -10,90 +10,56 @@
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
                     class="ww-kanban-stack"
-                    :class="{ 'has-add-card': content.showAddCardButton !== false && !isReadonly }"
                     :data-stack-key="getStackDomKey(stack.value)"
                     @dragover.prevent="onStackDragOver($event, stack.value)"
                     @drop.prevent="onStackDrop($event, stack.value)"
                 >
-                    <div class="ww-kanban-stack-panel">
-                        <header class="ww-kanban-stack-header">
-                            <span class="ww-kanban-stack-title">{{ getStackLabel(stack) }}</span>
-                            <span class="ww-kanban-stack-count">{{ stack.items.length }}</span>
-                        </header>
+                    <header class="ww-kanban-stack-header">{{ stack.label || "Untitled" }}</header>
 
-                        <div class="ww-kanban-stack-body">
-                            <template
-                                v-for="(entry, entryIndex) in getStackDisplayEntries(stack)"
-                                :key="getStackEntryKey(entry, entryIndex, stack.value)"
+                    <div class="ww-kanban-stack-body">
+                        <template
+                            v-for="(entry, entryIndex) in getStackDisplayEntries(stack)"
+                            :key="getStackEntryKey(entry, entryIndex, stack.value)"
+                        >
+                            <wwLayoutItemContext
+                                v-if="entry.type === 'item'"
+                                :index="entry.itemIndex"
+                                :item="entry.item"
+                                :data="entry.item"
+                                :repeated-items="stack.items"
+                                is-repeat
                             >
-                                <wwLayoutItemContext
-                                    v-if="entry.type === 'item'"
-                                    :index="entry.itemIndex"
-                                    :item="entry.item"
-                                    :data="entry.item"
-                                    :repeated-items="stack.items"
-                                    is-repeat
+                                <article
+                                    class="ww-kanban-card"
+                                    :class="{ 'is-drag-source': isCardDragSource(stack.value, entry.itemIndex) }"
+                                    :data-item-index="entry.itemIndex"
+                                    :data-item-key="String(getItemIdentity(entry.item, entry.itemIndex))"
+                                    :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
+                                    @dragstart="onDesktopDragStart($event, entry.item, stack.value, entry.itemIndex)"
+                                    @dragend="onDesktopDragEnd"
+                                    @dragover.prevent="onCardDragOver($event, stack.value, entry.itemIndex)"
+                                    @drop.prevent="onCardDrop($event, stack.value, entry.itemIndex)"
                                 >
-                                    <article
-                                        class="ww-kanban-card"
-                                        :class="{ 'is-drag-source': isCardDragSource(stack.value, entry.itemIndex) }"
-                                        :data-item-index="entry.itemIndex"
-                                        :data-item-key="String(getItemIdentity(entry.item, entry.itemIndex))"
-                                        :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
+                                    <button
+                                        v-if="content.customDragHandle"
+                                        type="button"
+                                        class="ww-kanban-card-handle"
+                                        :class="effectiveHandleClass"
+                                        :draggable="canDesktopDrag && !isTouchDevice"
                                         @dragstart="onDesktopDragStart($event, entry.item, stack.value, entry.itemIndex)"
                                         @dragend="onDesktopDragEnd"
-                                        @dragover.prevent="onCardDragOver($event, stack.value, entry.itemIndex)"
-                                        @drop.prevent="onCardDrop($event, stack.value, entry.itemIndex)"
-                                        @click="onCardClick(entry.item, stack.value, entry.itemIndex, $event)"
                                     >
-                                        <button
-                                            v-if="content.customDragHandle"
-                                            type="button"
-                                            class="ww-kanban-card-handle"
-                                            :class="effectiveHandleClass"
-                                            :draggable="canDesktopDrag && !isTouchDevice"
-                                            @dragstart="onDesktopDragStart($event, entry.item, stack.value, entry.itemIndex)"
-                                            @dragend="onDesktopDragEnd"
-                                        >
-                                            ::
-                                        </button>
-                                        <div class="ww-kanban-card-content">
-                                            <img
-                                                v-if="getItemImage(entry.item)"
-                                                class="ww-kanban-card-image"
-                                                :src="getItemImage(entry.item)"
-                                                alt=""
-                                                loading="lazy"
-                                                draggable="false"
-                                            />
-                                            <div class="ww-kanban-card-text">{{ getItemLabel(entry.item, entry.itemIndex) }}</div>
-                                        </div>
-                                    </article>
-                                </wwLayoutItemContext>
-
-                                <article v-else class="ww-kanban-card ww-kanban-card-placeholder">
-                                    <div class="ww-kanban-card-content">
-                                        <img
-                                            v-if="getItemImage(entry.item)"
-                                            class="ww-kanban-card-image"
-                                            :src="getItemImage(entry.item)"
-                                            alt=""
-                                            loading="lazy"
-                                            draggable="false"
-                                        />
-                                        <div class="ww-kanban-card-text">{{ getItemLabel(entry.item, entryIndex) }}</div>
-                                    </div>
+                                        ::
+                                    </button>
+                                    <div class="ww-kanban-card-content">{{ getItemLabel(entry.item, entry.itemIndex) }}</div>
                                 </article>
-                            </template>
-                        </div>
-                    </div>
+                            </wwLayoutItemContext>
 
-                    <footer v-if="content.showAddCardButton !== false && !isReadonly" class="ww-kanban-stack-footer">
-                        <button type="button" class="ww-kanban-add-card-button" @click="onAddCardClick(stack, $event)">
-                            <span class="ww-kanban-add-card-icon" aria-hidden="true">+</span>
-                            <span>{{ content.addCardButtonLabel || "Add Card" }}</span>
-                        </button>
-                    </footer>
+                            <article v-else class="ww-kanban-card ww-kanban-card-placeholder" aria-hidden="true">
+                                <div class="ww-kanban-card-content">{{ getItemLabel(entry.item, entryIndex) }}</div>
+                            </article>
+                        </template>
+                    </div>
                 </section>
             </wwLayoutItemContext>
         </template>
@@ -167,7 +133,6 @@ export default {
         return {
             desktopDrag: null,
             touchPointerId: null,
-            touchIdentifier: null,
             touchPressTimer: null,
             touchPressStartX: 0,
             touchPressStartY: 0,
@@ -181,10 +146,9 @@ export default {
             touchLastClientX: 0,
             touchLastClientY: 0,
             touchAutoScrollRaf: null,
-            touchAutoScrollEdgeSize: 104,
-            touchAutoScrollMaxStepX: 34,
-            touchAutoScrollMaxStepY: 28,
-            suppressClickUntil: 0,
+            touchAutoScrollEdgeSize: 72,
+            touchAutoScrollMaxStepX: 26,
+            touchAutoScrollMaxStepY: 22,
             dropIndicator: null,
         };
     },
@@ -309,6 +273,9 @@ export default {
             }
             return index;
         },
+        getCardKey(item, index, stackValue) {
+            return `${this.getStackDomKey(stackValue)}::${this.getItemIdentity(item, index)}::${index}`;
+        },
         getStackEntryKey(entry, entryIndex, stackValue) {
             if (entry?.type === "placeholder") {
                 return `${this.getStackDomKey(stackValue)}::placeholder::${entryIndex}`;
@@ -349,102 +316,15 @@ export default {
 
             return workingEntries;
         },
-        getCardKey(item, index, stackValue) {
-            return `${this.getStackDomKey(stackValue)}::${this.getItemIdentity(item, index)}::${index}`;
-        },
-        stripHtml(value) {
-            const text = typeof value === "string" ? value : String(value ?? "");
-            if (!text) return "";
-            if (!/[<>]/.test(text)) return text.trim();
-
-            try {
-                const doc = wwLib.getFrontDocument?.();
-                if (!doc) return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-                const temp = doc.createElement("div");
-                temp.innerHTML = text;
-                return (temp.textContent || temp.innerText || "").replace(/\s+/g, " ").trim();
-            } catch (e) {
-                return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-            }
-        },
-        normalizeDisplayValue(value) {
-            if (value === null || value === undefined) return "";
-            if (typeof value === "string") return this.stripHtml(value);
-            if (typeof value === "number" || typeof value === "boolean") return String(value);
-            return "";
-        },
-        getStackLabel(stack) {
-            const value = this.normalizeDisplayValue(stack?.label);
-            return value || "Untitled";
-        },
-        isLikelyImageUrl(value) {
-            if (typeof value !== "string") return false;
-            const text = value.trim();
-            if (!text) return false;
-            if (/^data:image\//i.test(text)) return true;
-            return /\.(apng|avif|bmp|gif|ico|jpe?g|png|svg|webp)(\?.*)?$/i.test(text);
-        },
-        getItemImage(item) {
-            if (!item || typeof item !== "object") return "";
-            const imagePaths = [
-                this.content.itemImage,
-                "image",
-                "imageUrl",
-                "img",
-                "thumbnail",
-                "photo",
-                "avatar",
-                "cover",
-            ].filter(Boolean);
-            for (const path of imagePaths) {
-                const value = wwLib.resolveObjectPropertyPath(item, path);
-                const normalizedValue = typeof value === "string" ? value.trim() : "";
-                if (normalizedValue && (path === this.content.itemImage || this.isLikelyImageUrl(normalizedValue))) {
-                    return normalizedValue;
-                }
-            }
-            return "";
-        },
-        getAutoLabelFromItemObject(item) {
-            const preferredPaths = ["title", "name", "label", "text", "content", "description", "summary", "task"];
-            for (const path of preferredPaths) {
-                const value = wwLib.resolveObjectPropertyPath(item, path);
-                const normalized = this.normalizeDisplayValue(value);
-                if (normalized) return normalized;
-            }
-
-            for (const [key, value] of Object.entries(item)) {
-                if (key === this.content.itemKey) continue;
-                if (/^id$|_id$|Id$|status$|state$|stack$|column$/i.test(key)) continue;
-                if (typeof value !== "string") continue;
-                const normalized = this.normalizeDisplayValue(value);
-                if (!normalized) continue;
-                if (this.isLikelyImageUrl(normalized)) continue;
-                return normalized;
-            }
-
-            return "";
-        },
         getItemLabel(item, index) {
             if (item === null || item === undefined) return "";
-            if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") {
-                return this.normalizeDisplayValue(item);
-            }
+            if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") return String(item);
 
-            let configuredNumericFallback = "";
-            if (this.content.itemLabel) {
-                const configuredLabel = wwLib.resolveObjectPropertyPath(item, this.content.itemLabel);
-                if (typeof configuredLabel === "string") {
-                    const normalizedConfiguredLabel = this.normalizeDisplayValue(configuredLabel);
-                    if (normalizedConfiguredLabel) return normalizedConfiguredLabel;
-                } else if (typeof configuredLabel === "number" || typeof configuredLabel === "boolean") {
-                    configuredNumericFallback = String(configuredLabel);
-                }
+            const preferredPaths = [this.content.itemKey, "title", "name", "label"].filter(Boolean);
+            for (const path of preferredPaths) {
+                const value = wwLib.resolveObjectPropertyPath(item, path);
+                if (value !== undefined && value !== null && value !== "") return String(value);
             }
-
-            const inferredLabel = this.getAutoLabelFromItemObject(item);
-            if (inferredLabel) return inferredLabel;
-            if (configuredNumericFallback) return configuredNumericFallback;
 
             try {
                 const text = JSON.stringify(item);
@@ -471,9 +351,10 @@ export default {
                 normalizedIndex -= 1;
             }
 
+            const targetLength = this.getStackItemsByValue(toStack).length;
             this.dropIndicator = {
                 toStack,
-                newIndex: this.clampIndex(normalizedIndex, this.getStackItemsByValue(toStack).length),
+                newIndex: this.clampIndex(normalizedIndex, targetLength),
             };
         },
         prepareMovePayload(dragContext, toStack, newIndex) {
@@ -591,7 +472,6 @@ export default {
                 return;
             }
             this.desktopDrag = { item, fromStack, oldIndex };
-            this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
             this.updateDropIndicator(fromStack, oldIndex);
             if (event.dataTransfer) {
@@ -634,40 +514,6 @@ export default {
             }
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
-        },
-        onCardClick(item, stackValue, itemIndex, event) {
-            if (!event?.isTrusted) return;
-            if (Date.now() < this.suppressClickUntil) return;
-            if (this.touchPressTimer || this.touchDragContext || this.desktopDrag || this.isDragging) return;
-            if (this.content.customDragHandle && this.matchesHandleTarget(event.target)) return;
-
-            this.$emit("trigger-event", {
-                name: "item:clicked",
-                event: {
-                    item,
-                    stack: stackValue,
-                    index: itemIndex,
-                    itemKey: this.getItemIdentity(item, itemIndex),
-                },
-            });
-        },
-        onAddCardClick(stack, event) {
-            if (!event?.isTrusted) return;
-            const stackValue = stack?.value ?? null;
-            const defaultItem = {};
-            if (this.content.stackedBy) {
-                this.setObjectPropertyByPath(defaultItem, this.content.stackedBy, stackValue);
-            }
-
-            this.$emit("trigger-event", {
-                name: "add-card:clicked",
-                event: {
-                    stack: stackValue,
-                    stackLabel: this.getStackLabel(stack),
-                    stackedBy: this.content.stackedBy || null,
-                    defaultItem,
-                },
-            });
         },
         matchesHandleTarget(target) {
             if (!this.content.customDragHandle) return true;
@@ -746,67 +592,10 @@ export default {
             }
             this.touchDragContext = null;
             this.touchPointerId = null;
-            this.touchIdentifier = null;
             this.dropIndicator = null;
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
-        },
-        supportsNativeTouchEvents() {
-            try {
-                const win = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
-                if (!win) return false;
-                return "ontouchstart" in win || typeof win.TouchEvent !== "undefined";
-            } catch (e) {
-                return false;
-            }
-        },
-        getTouchByIdentifier(touchList, identifier) {
-            if (!touchList || identifier === null || identifier === undefined) return null;
-            const touches = Array.from(touchList);
-            return touches.find(touch => touch.identifier === identifier) || null;
-        },
-        getNearestTouch(touchList, referenceX, referenceY) {
-            if (!touchList) return null;
-            const touches = Array.from(touchList);
-            if (!touches.length) return null;
-            return touches.reduce((nearestTouch, currentTouch) => {
-                if (!nearestTouch) return currentTouch;
-                const nearestDistance = Math.hypot(nearestTouch.clientX - referenceX, nearestTouch.clientY - referenceY);
-                const currentDistance = Math.hypot(currentTouch.clientX - referenceX, currentTouch.clientY - referenceY);
-                return currentDistance < nearestDistance ? currentTouch : nearestTouch;
-            }, null);
-        },
-        resolveActiveTouch(event) {
-            if (!event) return null;
-            if (this.touchIdentifier !== null) {
-                return (
-                    this.getTouchByIdentifier(event.touches, this.touchIdentifier) ||
-                    this.getTouchByIdentifier(event.changedTouches, this.touchIdentifier)
-                );
-            }
-
-            const referenceX = Number.isFinite(this.touchLastClientX) ? this.touchLastClientX : this.touchPressStartX;
-            const referenceY = Number.isFinite(this.touchLastClientY) ? this.touchLastClientY : this.touchPressStartY;
-            const nearestTouch =
-                this.getNearestTouch(event.touches, referenceX, referenceY) ||
-                this.getNearestTouch(event.changedTouches, referenceX, referenceY);
-            if (nearestTouch) {
-                this.touchIdentifier = nearestTouch.identifier;
-            }
-            return nearestTouch;
-        },
-        didActiveTouchEnd(event) {
-            const changedTouches = Array.from(event?.changedTouches || []);
-            if (!changedTouches.length) return false;
-            if (this.touchIdentifier !== null) {
-                return changedTouches.some(touch => touch.identifier === this.touchIdentifier);
-            }
-            if (changedTouches.length === 1) {
-                this.touchIdentifier = changedTouches[0].identifier;
-                return true;
-            }
-            return false;
         },
         computeEdgeAutoScrollDelta(pointer, start, end, edgeSize, maxStep) {
             if (!Number.isFinite(pointer) || !Number.isFinite(start) || !Number.isFinite(end)) return 0;
@@ -960,7 +749,9 @@ export default {
             const stackKey = stackEl.dataset.stackKey;
             if (!(stackKey in this.stackKeyLookup)) return null;
             const toStack = this.stackKeyLookup[stackKey];
-            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(el => el !== sourceEl);
+            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(
+                el => el !== sourceEl && !el.classList.contains("ww-kanban-card-placeholder")
+            );
             let newIndex = cards.length;
             for (let i = 0; i < cards.length; i += 1) {
                 const rect = cards[i].getBoundingClientRect();
@@ -975,7 +766,6 @@ export default {
             if (!this.touchPressContext) return;
             this.touchDragContext = this.touchPressContext;
             this.touchPressContext = null;
-            this.suppressClickUntil = Date.now() + 500;
             this.isDragging = true;
             this.touchDragContext.sourceEl.classList.add("is-drag-source");
             try {
@@ -1017,7 +807,6 @@ export default {
             if (item === undefined) return;
 
             this.touchPointerId = event.pointerId;
-            this.touchIdentifier = null;
             this.touchPressStartX = event.clientX;
             this.touchPressStartY = event.clientY;
             this.touchLastClientX = event.clientX;
@@ -1060,7 +849,7 @@ export default {
             }
         },
         onNativeTouchMove(event) {
-            const primaryTouch = this.resolveActiveTouch(event);
+            const primaryTouch = event.changedTouches?.[0] || event.touches?.[0];
             if (primaryTouch) {
                 this.touchLastClientX = primaryTouch.clientX;
                 this.touchLastClientY = primaryTouch.clientY;
@@ -1076,22 +865,18 @@ export default {
                 }
             }
 
-            if (this.touchDragContext) {
-                if (primaryTouch) this.moveGhost(primaryTouch.clientX, primaryTouch.clientY);
-                if (primaryTouch) {
-                    const target = this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY);
-                    if (target) {
-                        this.updateDropIndicator(target.toStack, target.newIndex);
-                    }
+            if (this.touchDragContext && event.cancelable) {
+                const target = primaryTouch ? this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY) : null;
+                if (target) {
+                    this.updateDropIndicator(target.toStack, target.newIndex);
                 }
-                if (event.cancelable) event.preventDefault();
+                event.preventDefault();
             }
         },
         onNativeTouchEnd(event) {
             if (this.touchPointerId === null) return;
-            if (!this.didActiveTouchEnd(event)) return;
             if (this.touchDragContext) {
-                const primaryTouch = this.resolveActiveTouch(event) || event.changedTouches?.[0];
+                const primaryTouch = event.changedTouches?.[0];
                 const clientX = primaryTouch?.clientX ?? this.touchLastClientX;
                 const clientY = primaryTouch?.clientY ?? this.touchLastClientY;
                 const target = this.getTouchDropTarget(clientX, clientY);
@@ -1101,15 +886,13 @@ export default {
             }
             this.clearTouchInteraction();
         },
-        onNativeTouchCancel(event) {
+        onNativeTouchCancel() {
             if (this.touchPointerId === null && !this.touchDragContext && !this.touchPressTimer) return;
-            if (event && !this.didActiveTouchEnd(event)) return;
             this.clearTouchInteraction();
         },
         onTouchPointerUp(event) {
             if (event.pointerType !== "touch") return;
             if (this.touchPointerId === null || event.pointerId !== this.touchPointerId) return;
-            if (this.supportsNativeTouchEvents()) return;
 
             if (this.touchDragContext) {
                 const target = this.getTouchDropTarget(event.clientX, event.clientY);
@@ -1123,7 +906,6 @@ export default {
         onTouchPointerCancel(event) {
             if (event.pointerType !== "touch") return;
             if (this.touchPointerId === null || event.pointerId !== this.touchPointerId) return;
-            if (this.supportsNativeTouchEvents()) return;
             this.clearTouchInteraction();
         },
         attachTouchListeners() {
@@ -1157,33 +939,6 @@ export default {
             this.touchListenersAttached = false;
         },
         /* wwEditor:start */
-        getTestAddCardEvent() {
-            if (!this.renderStacks.length) throw new Error("No stack found");
-            const firstStack = this.renderStacks[0];
-            const stackValue = firstStack?.value ?? null;
-            const defaultItem = {};
-            if (this.content.stackedBy) {
-                this.setObjectPropertyByPath(defaultItem, this.content.stackedBy, stackValue);
-            }
-            return {
-                stack: stackValue,
-                stackLabel: this.getStackLabel(firstStack),
-                stackedBy: this.content.stackedBy || null,
-                defaultItem,
-            };
-        },
-        getTestClickEvent() {
-            if (!this.renderStacks.length) throw new Error("No stack found");
-            const firstStack = this.renderStacks[0];
-            if (!firstStack?.items?.length) throw new Error("No item found");
-            const item = firstStack.items[0];
-            return {
-                item,
-                stack: firstStack.value,
-                index: 0,
-                itemKey: this.getItemIdentity(item, 0),
-            };
-        },
         getTestEvent() {
             if (!this.renderStacks.length) throw new Error("No stack found");
             const firstStack = this.renderStacks[0];
@@ -1216,23 +971,13 @@ export default {
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
     height: 100%;
-    padding: 8px;
-    background: #f1f3f6;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.ww-kanban::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
 }
 
 .ww-kanban.is-touch-dragging {
@@ -1242,72 +987,24 @@ export default {
 }
 
 .ww-kanban-stack {
-    --add-card-block-height: 34px;
-    --stack-block-gap: 8px;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    width: min(300px, 84vw);
+    width: min(320px, 85vw);
     height: 520px;
-    border: none;
-    background: transparent;
-    overflow: visible;
-    gap: 8px;
-}
-
-.ww-kanban-stack-panel {
-    display: flex;
-    flex-direction: column;
-    flex: 0 1 auto;
-    min-height: 0;
-    border-radius: 11px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: #dfe3ea;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    padding: 10px;
+    border: 1px solid rgba(20, 24, 33, 0.12);
+    border-radius: 12px;
+    background: #f5f7fb;
     overflow: hidden;
-}
-
-.ww-kanban-stack.has-add-card .ww-kanban-stack-panel {
-    max-height: calc(100% - var(--add-card-block-height) - var(--stack-block-gap));
-}
-
-.ww-kanban-stack:not(.has-add-card) .ww-kanban-stack-panel {
-    max-height: 100%;
 }
 
 .ww-kanban-stack-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 2px 2px 10px;
+    padding: 12px 14px;
     font-size: 13px;
     font-weight: 600;
-    color: #0f172a;
-    background: transparent;
-}
-
-.ww-kanban-stack-title {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ww-kanban-stack-count {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
-    border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.28);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: #111827;
-    background: #f8fafc;
+    color: #172033;
+    border-bottom: 1px solid rgba(20, 24, 33, 0.12);
+    background: #eaf0fb;
 }
 
 .ww-kanban-stack-body {
@@ -1316,101 +1013,34 @@ export default {
     flex: 1 1 auto;
     min-height: 0;
     gap: 10px;
-    padding: 0 1px 1px;
+    padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.ww-kanban-stack-body::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
-}
-
-.ww-kanban-stack-footer {
-    padding: 1px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 10px;
-    background: #e5e7eb;
-    height: var(--add-card-block-height);
-    flex: 0 0 var(--add-card-block-height);
-    box-sizing: border-box;
-}
-
-.ww-kanban-add-card-button {
-    width: 100%;
-    height: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
-    border: 1px solid rgba(15, 23, 42, 0.18);
-    border-radius: 8px;
-    padding: 7px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #111827;
-    background: #f8fafc;
-    cursor: pointer;
-}
-
-.ww-kanban-add-card-button:hover {
-    background: #f2f5fa;
-}
-
-.ww-kanban-add-card-icon {
-    width: 16px;
-    height: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    border: 1px solid rgba(17, 24, 39, 0.7);
-    font-size: 12px;
-    font-weight: 600;
-    color: #111827;
-    line-height: 1;
 }
 
 .ww-kanban-card {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.14);
-    border-radius: 8px;
-    background: #fbfdff;
-    color: #0f172a;
-    padding: 12px;
-    min-height: 74px;
-    box-sizing: border-box;
+    border: 1px solid rgba(20, 24, 33, 0.12);
+    border-radius: 10px;
+    background: #ffffff;
+    color: #151b2a;
+    padding: 10px 12px;
     user-select: none;
     -webkit-user-select: none;
     touch-action: auto;
-    transition: border-color 120ms ease, box-shadow 120ms ease;
-}
-
-.ww-kanban-card:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
-}
-
-.ww-kanban-card:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
 }
 
 .ww-kanban-card.ww-kanban-card-placeholder {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
-    background: #eff6ff;
-    opacity: 0.95;
+    background: #eef5ff;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.24);
     pointer-events: none;
 }
 
-.ww-kanban-card.ww-kanban-card-placeholder .ww-kanban-card-text {
-    opacity: 0.6;
+.ww-kanban-card.ww-kanban-card-placeholder .ww-kanban-card-content {
+    opacity: 0.7;
 }
 
 .ww-kanban-card.is-drag-source {
@@ -1418,26 +1048,10 @@ export default {
 }
 
 .ww-kanban-card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.ww-kanban-card-image {
-    width: 100%;
-    max-height: 160px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid rgba(20, 24, 33, 0.1);
-}
-
-.ww-kanban-card-text {
     font-size: 13px;
-    line-height: 1.3;
+    line-height: 1.35;
     overflow-wrap: anywhere;
-    white-space: pre-wrap;
+    flex: 1 1 auto;
 }
 
 .ww-kanban-card-handle {
