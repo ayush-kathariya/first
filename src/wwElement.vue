@@ -10,6 +10,7 @@
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
                     class="ww-kanban-stack"
+                    :class="{ 'has-add-card': content.showAddCardButton !== false && !isReadonly }"
                     :data-stack-key="getStackDomKey(stack.value)"
                     @dragover.prevent="onStackDragOver"
                     @drop.prevent="onStackDrop($event, stack.value)"
@@ -1072,6 +1073,8 @@ export default {
 }
 
 .ww-kanban-stack {
+    --add-card-block-height: 34px;
+    --stack-block-gap: 8px;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -1086,12 +1089,20 @@ export default {
 .ww-kanban-stack-panel {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
     border-radius: 10px;
     background: #e5e7eb;
     padding: 8px;
     overflow: hidden;
+}
+
+.ww-kanban-stack.has-add-card .ww-kanban-stack-panel {
+    max-height: calc(100% - var(--add-card-block-height) - var(--stack-block-gap));
+}
+
+.ww-kanban-stack:not(.has-add-card) .ww-kanban-stack-panel {
+    max-height: 100%;
 }
 
 .ww-kanban-stack-header {
@@ -1151,11 +1162,13 @@ export default {
     padding: 0;
     border-top: none;
     background: transparent;
-    flex: 0 0 auto;
+    height: var(--add-card-block-height);
+    flex: 0 0 var(--add-card-block-height);
 }
 
 .ww-kanban-add-card-button {
     width: 100%;
+    height: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
