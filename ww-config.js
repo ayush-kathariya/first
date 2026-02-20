@@ -26,6 +26,7 @@ export default {
         customSettingsPropertiesOrder: [
             "items",
             ["itemKey", "itemLabel", "itemImage", "stackedBy", "sortedBy", "sortOrder"],
+            ["showAddCardButton", "addCardButtonLabel"],
             "readonly",
             "draggingCursor",
             "customDragHandle",
@@ -39,6 +40,17 @@ export default {
         displayAllowedValues: ["flex", "inline-flex"],
     },
     triggerEvents: [
+        {
+            name: "add-card:clicked",
+            label: { en: "On add card clicked" },
+            event: {
+                stack: "",
+                stackLabel: "",
+                stackedBy: "",
+                defaultItem: {},
+            },
+            getTestEvent: "getTestAddCardEvent",
+        },
         {
             name: "item:clicked",
             label: { en: "On item clicked" },
@@ -192,6 +204,25 @@ export default {
             },
             type: "OnOff",
             defaultValue: false,
+            section: "settings",
+        },
+        showAddCardButton: {
+            label: {
+                en: "Show add card button",
+            },
+            type: "OnOff",
+            defaultValue: true,
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonLabel: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button label",
+            },
+            type: "Text",
+            defaultValue: "Add Card",
+            bindable: true,
             section: "settings",
         },
         stacks: {

@@ -63,6 +63,13 @@
                             </wwLayoutItemContext>
                         </template>
                     </div>
+
+                    <footer v-if="content.showAddCardButton !== false && !isReadonly" class="ww-kanban-stack-footer">
+                        <button type="button" class="ww-kanban-add-card-button" @click="onAddCardClick(stack, $event)">
+                            <span class="ww-kanban-add-card-icon" aria-hidden="true">+</span>
+                            <span>{{ content.addCardButtonLabel || "Add Card" }}</span>
+                        </button>
+                    </footer>
                 </section>
             </wwLayoutItemContext>
         </template>
@@ -550,6 +557,24 @@ export default {
                 },
             });
         },
+        onAddCardClick(stack, event) {
+            if (!event?.isTrusted) return;
+            const stackValue = stack?.value ?? null;
+            const defaultItem = {};
+            if (this.content.stackedBy) {
+                this.setObjectPropertyByPath(defaultItem, this.content.stackedBy, stackValue);
+            }
+
+            this.$emit("trigger-event", {
+                name: "add-card:clicked",
+                event: {
+                    stack: stackValue,
+                    stackLabel: this.getStackLabel(stack),
+                    stackedBy: this.content.stackedBy || null,
+                    defaultItem,
+                },
+            });
+        },
         matchesHandleTarget(target) {
             if (!this.content.customDragHandle) return true;
             return !!target.closest(`.${this.effectiveHandleClass}`);
@@ -957,6 +982,21 @@ export default {
             this.touchListenersAttached = false;
         },
         /* wwEditor:start */
+        getTestAddCardEvent() {
+            if (!this.renderStacks.length) throw new Error("No stack found");
+            const firstStack = this.renderStacks[0];
+            const stackValue = firstStack?.value ?? null;
+            const defaultItem = {};
+            if (this.content.stackedBy) {
+                this.setObjectPropertyByPath(defaultItem, this.content.stackedBy, stackValue);
+            }
+            return {
+                stack: stackValue,
+                stackLabel: this.getStackLabel(firstStack),
+                stackedBy: this.content.stackedBy || null,
+                defaultItem,
+            };
+        },
         getTestClickEvent() {
             if (!this.renderStacks.length) throw new Error("No stack found");
             const firstStack = this.renderStacks[0];
@@ -1046,6 +1086,44 @@ export default {
     padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.ww-kanban-stack-footer {
+    padding: 10px;
+    border-top: 1px solid rgba(20, 24, 33, 0.1);
+    background: #f7f9fd;
+}
+
+.ww-kanban-add-card-button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(20, 24, 33, 0.2);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1b2537;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.ww-kanban-add-card-button:hover {
+    background: #eef3ff;
+}
+
+.ww-kanban-add-card-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(20, 24, 33, 0.4);
+    font-size: 14px;
+    line-height: 1;
 }
 
 .ww-kanban-card {
