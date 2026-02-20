@@ -1,5 +1,11 @@
 <template>
-    <div class="ww-kanban" :style="kanbanStyle" v-bind="wwElementState?.$attrs" ref="kanbanRoot">
+    <div
+        class="ww-kanban"
+        :class="{ 'is-touch-dragging': !!touchDragContext }"
+        :style="kanbanStyle"
+        v-bind="wwElementState?.$attrs"
+        ref="kanbanRoot"
+    >
         <template v-for="(stack, stackIndex) in renderStacks" :key="getStackDomKey(stack.value)">
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
@@ -128,6 +134,7 @@ export default {
             previousTouchAction: undefined,
             previousOverscrollBehavior: undefined,
             touchListenersAttached: false,
+            touchDragCapturedEl: null,
         };
     },
     computed: {
@@ -436,6 +443,14 @@ export default {
         },
         clearTouchInteraction() {
             this.clearTouchPress();
+            if (this.touchDragCapturedEl && this.touchPointerId !== null) {
+                try {
+                    this.touchDragCapturedEl.releasePointerCapture?.(this.touchPointerId);
+                } catch (e) {
+                    // ignore
+                }
+            }
+            this.touchDragCapturedEl = null;
             if (this.touchDragContext?.sourceEl) {
                 this.touchDragContext.sourceEl.classList.remove("is-drag-source");
             }
@@ -486,6 +501,12 @@ export default {
             this.touchPressContext = null;
             this.isDragging = true;
             this.touchDragContext.sourceEl.classList.add("is-drag-source");
+            try {
+                this.touchDragContext.sourceEl.setPointerCapture?.(this.touchPointerId);
+                this.touchDragCapturedEl = this.touchDragContext.sourceEl;
+            } catch (e) {
+                this.touchDragCapturedEl = null;
+            }
             this.showGhost(this.touchDragContext.sourceEl, clientX, clientY);
             this.lockTouchScroll();
         },
@@ -551,6 +572,10 @@ export default {
                 this.moveGhost(event.clientX, event.clientY);
             }
         },
+        onNativeTouchMove(event) {
+            if (!this.touchDragContext) return;
+            if (event.cancelable) event.preventDefault();
+        },
         onTouchPointerUp(event) {
             if (event.pointerType !== "touch") return;
             if (this.touchPointerId === null || event.pointerId !== this.touchPointerId) return;
@@ -577,6 +602,7 @@ export default {
             const doc = wwLib.getFrontDocument();
             root.addEventListener("pointerdown", this.onTouchPointerDown, true);
             doc.addEventListener("pointermove", this.onTouchPointerMove, { capture: true, passive: false });
+            doc.addEventListener("touchmove", this.onNativeTouchMove, { capture: true, passive: false });
             doc.addEventListener("pointerup", this.onTouchPointerUp, true);
             doc.addEventListener("pointercancel", this.onTouchPointerCancel, true);
             this.touchListenersAttached = true;
@@ -589,6 +615,7 @@ export default {
                 root.removeEventListener("pointerdown", this.onTouchPointerDown, true);
             }
             doc.removeEventListener("pointermove", this.onTouchPointerMove, true);
+            doc.removeEventListener("touchmove", this.onNativeTouchMove, true);
             doc.removeEventListener("pointerup", this.onTouchPointerUp, true);
             doc.removeEventListener("pointercancel", this.onTouchPointerCancel, true);
             this.touchListenersAttached = false;
@@ -635,6 +662,11 @@ export default {
     touch-action: pan-x pan-y;
 }
 
+.ww-kanban.is-touch-dragging {
+    overflow: hidden;
+    touch-action: none;
+}
+
 .ww-kanban-stack {
     display: flex;
     flex-direction: column;
@@ -665,6 +697,10 @@ export default {
     padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.ww-kanban.is-touch-dragging .ww-kanban-stack-body {
+    overflow: hidden;
 }
 
 .ww-kanban-card {
