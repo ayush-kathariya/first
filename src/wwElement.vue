@@ -138,9 +138,9 @@ export default {
             touchLastClientX: 0,
             touchLastClientY: 0,
             touchAutoScrollRaf: null,
-            touchAutoScrollEdgeSize: 72,
-            touchAutoScrollMaxStepX: 26,
-            touchAutoScrollMaxStepY: 22,
+            touchAutoScrollEdgeSize: 104,
+            touchAutoScrollMaxStepX: 34,
+            touchAutoScrollMaxStepY: 28,
         };
     },
     computed: {
@@ -268,7 +268,7 @@ export default {
             if (item === null || item === undefined) return "";
             if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") return String(item);
 
-            const preferredPaths = [this.content.itemKey, "title", "name", "label"].filter(Boolean);
+            const preferredPaths = [this.content.itemLabel, "title", "name", "label", this.content.itemKey].filter(Boolean);
             for (const path of preferredPaths) {
                 const value = wwLib.resolveObjectPropertyPath(item, path);
                 if (value !== undefined && value !== null && value !== "") return String(value);
