@@ -35,6 +35,7 @@
                                     @dragend="onDesktopDragEnd"
                                     @dragover.prevent="onCardDragOver"
                                     @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
+                                    @click="onCardClick(item, stack.value, itemIndex, $event)"
                                 >
                                     <button
                                         v-if="content.customDragHandle"
@@ -151,6 +152,7 @@ export default {
             touchAutoScrollEdgeSize: 104,
             touchAutoScrollMaxStepX: 34,
             touchAutoScrollMaxStepY: 28,
+            suppressClickUntil: 0,
         };
     },
     computed: {
@@ -353,14 +355,20 @@ export default {
                 return this.normalizeDisplayValue(item);
             }
 
+            let configuredNumericFallback = "";
             if (this.content.itemLabel) {
                 const configuredLabel = wwLib.resolveObjectPropertyPath(item, this.content.itemLabel);
-                const normalizedConfiguredLabel = this.normalizeDisplayValue(configuredLabel);
-                if (normalizedConfiguredLabel) return normalizedConfiguredLabel;
+                if (typeof configuredLabel === "string") {
+                    const normalizedConfiguredLabel = this.normalizeDisplayValue(configuredLabel);
+                    if (normalizedConfiguredLabel) return normalizedConfiguredLabel;
+                } else if (typeof configuredLabel === "number" || typeof configuredLabel === "boolean") {
+                    configuredNumericFallback = String(configuredLabel);
+                }
             }
 
             const inferredLabel = this.getAutoLabelFromItemObject(item);
             if (inferredLabel) return inferredLabel;
+            if (configuredNumericFallback) return configuredNumericFallback;
 
             try {
                 const text = JSON.stringify(item);
@@ -488,6 +496,7 @@ export default {
                 return;
             }
             this.desktopDrag = { item, fromStack, oldIndex };
+            this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
@@ -524,6 +533,22 @@ export default {
             }
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
+        },
+        onCardClick(item, stackValue, itemIndex, event) {
+            if (!event?.isTrusted) return;
+            if (Date.now() < this.suppressClickUntil) return;
+            if (this.touchPressTimer || this.touchDragContext || this.desktopDrag || this.isDragging) return;
+            if (this.content.customDragHandle && this.matchesHandleTarget(event.target)) return;
+
+            this.$emit("trigger-event", {
+                name: "item:clicked",
+                event: {
+                    item,
+                    stack: stackValue,
+                    index: itemIndex,
+                    itemKey: this.getItemIdentity(item, itemIndex),
+                },
+            });
         },
         matchesHandleTarget(target) {
             if (!this.content.customDragHandle) return true;
@@ -767,6 +792,7 @@ export default {
             if (!this.touchPressContext) return;
             this.touchDragContext = this.touchPressContext;
             this.touchPressContext = null;
+            this.suppressClickUntil = Date.now() + 500;
             this.isDragging = true;
             this.touchDragContext.sourceEl.classList.add("is-drag-source");
             try {
@@ -931,6 +957,18 @@ export default {
             this.touchListenersAttached = false;
         },
         /* wwEditor:start */
+        getTestClickEvent() {
+            if (!this.renderStacks.length) throw new Error("No stack found");
+            const firstStack = this.renderStacks[0];
+            if (!firstStack?.items?.length) throw new Error("No item found");
+            const item = firstStack.items[0];
+            return {
+                item,
+                stack: firstStack.value,
+                index: 0,
+                itemKey: this.getItemIdentity(item, 0),
+            };
+        },
         getTestEvent() {
             if (!this.renderStacks.length) throw new Error("No stack found");
             const firstStack = this.renderStacks[0];

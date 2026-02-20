@@ -40,6 +40,17 @@ export default {
     },
     triggerEvents: [
         {
+            name: "item:clicked",
+            label: { en: "On item clicked" },
+            event: {
+                item: {},
+                stack: "",
+                index: 0,
+                itemKey: "",
+            },
+            getTestEvent: "getTestClickEvent",
+        },
+        {
             name: "item:moved",
             label: { en: "On item moved" },
             event: {
