@@ -25,6 +25,8 @@
                         </header>
 
                         <div class="ww-kanban-stack-body">
+                            <div v-if="shouldShowPlaceholder(stack.value, 0) && stack.items.length === 0" class="ww-drop-placeholder"></div>
+
                             <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
                                 <wwLayoutItemContext
                                     :index="itemIndex"
@@ -41,7 +43,7 @@
                                         :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
                                         @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
-                                        @dragover.prevent="onCardDragOver($event, stack.value)"
+                                        @dragover.prevent="onCardDragOver($event, stack.value, itemIndex)"
                                         @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
                                         @click="onCardClick(item, stack.value, itemIndex, $event)"
                                     >
@@ -69,6 +71,8 @@
                                         </div>
                                     </article>
                                 </wwLayoutItemContext>
+
+                                <div v-if="shouldShowPlaceholder(stack.value, itemIndex + 1)" class="ww-drop-placeholder"></div>
                             </template>
                         </div>
                     </div>
@@ -171,6 +175,7 @@ export default {
             touchAutoScrollMaxStepY: 28,
             suppressClickUntil: 0,
             dropTargetStack: null,
+            dropIndicator: null,
         };
     },
     computed: {
@@ -301,6 +306,10 @@ export default {
             }
             if (targetStack === undefined) return false;
             return this.valuesEqual(targetStack, stackValue);
+        },
+        shouldShowPlaceholder(stackValue, index) {
+            if (!this.isDragging || !this.dropIndicator) return false;
+            return this.valuesEqual(this.dropIndicator.stackValue, stackValue) && this.dropIndicator.index === index;
         },
         getItemIdentity(item, index) {
             if (this.content.itemKey) {
@@ -535,6 +544,7 @@ export default {
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
             this.setDropTargetStack(fromStack);
+            this.dropIndicator = { stackValue: fromStack, index: oldIndex };
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
@@ -543,12 +553,19 @@ export default {
         onDesktopDragEnd() {
             this.desktopDrag = null;
             this.clearDropTargetStack();
+            this.dropIndicator = null;
             if (!this.touchDragContext) this.isDragging = false;
         },
-        onCardDragOver(event, toStack) {
+        onCardDragOver(event, toStack, itemIndex) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
             this.setDropTargetStack(toStack);
+            let index = itemIndex + 1;
+            if (event.currentTarget) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                index = itemIndex + (event.clientY > rect.top + rect.height / 2 ? 1 : 0);
+            }
+            this.dropIndicator = { stackValue: toStack, index };
         },
         onCardDrop(event, toStack, cardIndex) {
             if (!this.desktopDrag) return;
@@ -564,6 +581,7 @@ export default {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
             this.setDropTargetStack(toStack);
+            this.dropIndicator = { stackValue: toStack, index: this.getStackItemsByValue(toStack).length };
         },
         onStackDrop(_event, toStack) {
             if (!this.desktopDrag) return;
@@ -687,6 +705,7 @@ export default {
             this.touchPointerId = null;
             this.touchIdentifier = null;
             this.clearDropTargetStack();
+            this.dropIndicator = null;
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
@@ -832,7 +851,10 @@ export default {
             }
 
             const target = this.getTouchDropTarget(clientX, clientY);
-            if (target) this.setDropTargetStack(target.toStack);
+            if (target) {
+                this.setDropTargetStack(target.toStack);
+                this.dropIndicator = { stackValue: target.toStack, index: target.newIndex };
+            }
         },
         startTouchAutoScroll() {
             if (this.touchAutoScrollRaf !== null) return;
@@ -925,6 +947,7 @@ export default {
             this.lockTouchScroll();
             this.touchLastClientX = clientX;
             this.touchLastClientY = clientY;
+            this.dropIndicator = { stackValue: this.touchDragContext.fromStack, index: this.touchDragContext.oldIndex };
             this.startTouchAutoScroll();
         },
         onTouchPointerDown(event) {
@@ -990,7 +1013,10 @@ export default {
                 if (event.cancelable) event.preventDefault();
                 this.moveGhost(event.clientX, event.clientY);
                 const target = this.getTouchDropTarget(event.clientX, event.clientY);
-                if (target) this.setDropTargetStack(target.toStack);
+                if (target) {
+                    this.setDropTargetStack(target.toStack);
+                    this.dropIndicator = { stackValue: target.toStack, index: target.newIndex };
+                }
             }
         },
         onNativeTouchMove(event) {
@@ -1014,7 +1040,10 @@ export default {
                 if (primaryTouch) this.moveGhost(primaryTouch.clientX, primaryTouch.clientY);
                 if (primaryTouch) {
                     const target = this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY);
-                    if (target) this.setDropTargetStack(target.toStack);
+                    if (target) {
+                        this.setDropTargetStack(target.toStack);
+                        this.dropIndicator = { stackValue: target.toStack, index: target.newIndex };
+                    }
                 }
                 if (event.cancelable) event.preventDefault();
             }
@@ -1283,6 +1312,26 @@ export default {
     width: 0;
     height: 0;
     display: none;
+}
+
+.ww-drop-placeholder {
+    height: 74px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 2px dashed #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+    pointer-events: none;
+    animation: placeholder-pulse 1s ease-in-out infinite;
+}
+
+@keyframes placeholder-pulse {
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
 .ww-kanban-stack-footer {
