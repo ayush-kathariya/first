@@ -14,7 +14,10 @@
                     @dragover.prevent="onStackDragOver"
                     @drop.prevent="onStackDrop($event, stack.value)"
                 >
-                    <header class="ww-kanban-stack-header">{{ getStackLabel(stack) }}</header>
+                    <header class="ww-kanban-stack-header">
+                        <span class="ww-kanban-stack-title">{{ getStackLabel(stack) }}</span>
+                        <span class="ww-kanban-stack-count">{{ stack.items.length }}</span>
+                    </header>
 
                     <div class="ww-kanban-stack-body">
                         <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
@@ -1041,13 +1044,23 @@ export default {
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
     align-items: flex-start;
-    gap: 16px;
+    gap: 10px;
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
     height: 100%;
+    padding: 8px;
+    background: #f3f4f6;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.ww-kanban::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }
 
 .ww-kanban.is-touch-dragging {
@@ -1060,21 +1073,47 @@ export default {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    width: min(320px, 85vw);
+    width: min(280px, 82vw);
     height: 520px;
-    border: 1px solid rgba(20, 24, 33, 0.12);
-    border-radius: 12px;
-    background: #f5f7fb;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
     overflow: hidden;
 }
 
 .ww-kanban-stack-header {
-    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
     font-size: 13px;
     font-weight: 600;
-    color: #172033;
-    border-bottom: 1px solid rgba(20, 24, 33, 0.12);
-    background: #eaf0fb;
+    color: #0f172a;
+    border-radius: 8px;
+    background: #e5e7eb;
+}
+
+.ww-kanban-stack-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ww-kanban-stack-count {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.28);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #111827;
+    background: #f8fafc;
 }
 
 .ww-kanban-stack-body {
@@ -1082,47 +1121,57 @@ export default {
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
-    gap: 10px;
-    padding: 10px;
+    gap: 8px;
+    padding: 8px 0;
     overflow-y: auto;
     overflow-x: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.ww-kanban-stack-body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }
 
 .ww-kanban-stack-footer {
-    padding: 10px;
-    border-top: 1px solid rgba(20, 24, 33, 0.1);
-    background: #f7f9fd;
+    padding: 0;
+    border-top: none;
+    background: transparent;
 }
 
 .ww-kanban-add-card-button {
     width: 100%;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
-    border: 1px solid rgba(20, 24, 33, 0.2);
-    border-radius: 10px;
-    padding: 8px 10px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 8px;
+    padding: 9px 10px;
     font-size: 13px;
     font-weight: 600;
-    color: #1b2537;
-    background: #ffffff;
+    color: #111827;
+    background: #f9fafb;
     cursor: pointer;
 }
 
 .ww-kanban-add-card-button:hover {
-    background: #eef3ff;
+    background: #f3f4f6;
 }
 
 .ww-kanban-add-card-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    border: 1px solid rgba(20, 24, 33, 0.4);
-    font-size: 14px;
+    border: 1px solid rgba(17, 24, 39, 0.7);
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
     line-height: 1;
 }
 
@@ -1130,11 +1179,11 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border: 1px solid rgba(20, 24, 33, 0.12);
-    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 8px;
     background: #ffffff;
-    color: #151b2a;
-    padding: 10px 12px;
+    color: #0f172a;
+    padding: 11px 12px;
     user-select: none;
     -webkit-user-select: none;
     touch-action: auto;
@@ -1162,7 +1211,7 @@ export default {
 
 .ww-kanban-card-text {
     font-size: 13px;
-    line-height: 1.35;
+    line-height: 1.3;
     overflow-wrap: anywhere;
 }
 
