@@ -130,12 +130,18 @@ export default {
             return items;
         },
         stackConfig() {
+            const configuredLongPressDelay = Number(this.content.longPressDelay);
+            const longPressDelay = Number.isFinite(configuredLongPressDelay) ? configuredLongPressDelay : 400;
+
             return {
                 sortable: this.content.sortable,
                 group: "kanban-" + this.uid,
                 itemKey: this.content.itemKey,
                 handle: this.content.customDragHandle ? this.content.handleClass || "draggable" : null,
                 readonly: this.content.readonly,
+                delay: this.content.longPress ? Math.max(0, longPressDelay + 50) : 0,
+                delayOnTouchOnly: true,
+                touchStartThreshold: 10,
             };
         },
         kanbanStyle() {
