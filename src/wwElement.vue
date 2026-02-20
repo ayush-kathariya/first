@@ -301,6 +301,9 @@ export default {
             this._longPressTarget = null;
             this._longPressEventInit = null;
             this._longPressPointerId = null;
+            this._longPressStartX = null;
+            this._longPressStartY = null;
+            this._longPressMoveThreshold = null;
 
             // Release pointer capture if we took it on touch start
             if (this._longPressCapturedTarget && this._longPressCapturedPointerId !== null) {
@@ -349,48 +352,40 @@ export default {
             if (!this.content.longPress || this.isReadonly) return;
             if (event.pointerType !== "touch") return;
 
-            // Prevent immediate drag / click; we'll re-dispatch later
-            event.preventDefault();
+            // Prevent immediate drag start, but keep native scrolling enabled.
             event.stopPropagation();
 
             this.cleanupLongPress();
 
-            // While long press is pending, disable touch scroll so the page doesn't move too fast
-            try {
-                const body = wwLib.getFrontDocument().body;
-                this._previousTouchAction = body.style.touchAction;
-                body.style.touchAction = "none";
-                this._previousOverscrollBehavior = body.style.overscrollBehavior;
-                body.style.overscrollBehavior = "none";
-            } catch (e) {
-                // fail silently if front document is not available
-            }
             const delay =
                 typeof this.content.longPressDelay === "number" && !isNaN(this.content.longPressDelay)
                     ? this.content.longPressDelay
                     : 400;
             this._longPressTarget = event.target;
             this._longPressPointerId = event.pointerId;
+            this._longPressStartX = event.clientX;
+            this._longPressStartY = event.clientY;
+            this._longPressMoveThreshold = 10;
 
-            // Capture the pointer so we keep receiving move events even if the browser tries to scroll
-            // This is a key fix for the "freeze" issue when the finger pauses mid-drag.
-            try {
-                event.target?.setPointerCapture?.(event.pointerId);
-                this._longPressCapturedTarget = event.target;
-                this._longPressCapturedPointerId = event.pointerId;
-            } catch (e) {
-                this._longPressCapturedTarget = null;
-                this._longPressCapturedPointerId = null;
-            }
-
-            // While long-press is pending (and while dragging), prevent the browser from taking over scrolling.
+            // Cancel long-press if user moves finger enough to indicate scrolling.
+            // Once drag starts, keep preventing browser touch scrolling.
             // passive:false is required for preventDefault to work on iOS/Android.
             try {
                 const doc = wwLib.getFrontDocument();
                 this._onLongPressDocPointerMove = (e) => {
                     if (e.pointerType !== "touch") return;
                     if (this._longPressPointerId !== null && e.pointerId !== this._longPressPointerId) return;
-                    if (this._longPressTimer || this._longPressDragPending || this.isLongPressDragging) {
+                    if (
+                        this._longPressTimer &&
+                        this._longPressStartX !== null &&
+                        this._longPressStartY !== null &&
+                        Math.hypot(e.clientX - this._longPressStartX, e.clientY - this._longPressStartY) >
+                            this._longPressMoveThreshold
+                    ) {
+                        this.cleanupLongPress();
+                        return;
+                    }
+                    if (this._longPressDragPending || this.isLongPressDragging) {
                         if (e.cancelable) e.preventDefault();
                     }
                 };
@@ -411,6 +406,27 @@ export default {
             };
             this._longPressTimer = setTimeout(() => {
                 if (!this._longPressTarget || !this._longPressEventInit) return;
+
+                // Long-press is confirmed: lock touch scrolling during drag.
+                try {
+                    const body = wwLib.getFrontDocument().body;
+                    this._previousTouchAction = body.style.touchAction;
+                    body.style.touchAction = "none";
+                    this._previousOverscrollBehavior = body.style.overscrollBehavior;
+                    body.style.overscrollBehavior = "none";
+                } catch (e) {
+                    // fail silently if front document is not available
+                }
+
+                // Capture pointer once drag is about to begin to avoid losing events mid-drag.
+                try {
+                    this._longPressTarget?.setPointerCapture?.(this._longPressPointerId);
+                    this._longPressCapturedTarget = this._longPressTarget;
+                    this._longPressCapturedPointerId = this._longPressPointerId;
+                } catch (e) {
+                    this._longPressCapturedTarget = null;
+                    this._longPressCapturedPointerId = null;
+                }
 
                 // Cleanup only when touch is actually released/cancelled on the device.
                 const doc = wwLib.getFrontDocument();

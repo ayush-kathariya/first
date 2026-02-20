@@ -326,7 +326,7 @@ export default {
             section: "settings",
             bindable: true,
             responsive: true,
-            defaultValue: false,
+            defaultValue: true,
             propertyHelp: {
                 tooltip:
                     "When enabled, items can only be dragged after a long press. Useful for mobile to avoid accidental drags.",
