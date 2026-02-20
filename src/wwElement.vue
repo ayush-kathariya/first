@@ -30,7 +30,7 @@
                                     :class="{ 'is-drag-source': isCardDragSource(stack.value, itemIndex) }"
                                     :data-item-index="itemIndex"
                                     :data-item-key="String(getItemIdentity(item, itemIndex))"
-                                    :draggable="canDesktopDrag && !content.customDragHandle"
+                                    :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
                                     @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                     @dragend="onDesktopDragEnd"
                                     @dragover.prevent="onCardDragOver"
@@ -41,7 +41,7 @@
                                         type="button"
                                         class="ww-kanban-card-handle"
                                         :class="effectiveHandleClass"
-                                        :draggable="canDesktopDrag"
+                                        :draggable="canDesktopDrag && !isTouchDevice"
                                         @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
                                     >
@@ -130,7 +130,7 @@ export default {
             touchPressStartY: 0,
             touchPressContext: null,
             touchDragContext: null,
-            touchMoveThreshold: 10,
+            touchMoveThreshold: 14,
             previousTouchAction: undefined,
             previousOverscrollBehavior: undefined,
             touchListenersAttached: false,
@@ -391,6 +391,10 @@ export default {
                 event.preventDefault();
                 return;
             }
+            if (this.isTouchDevice) {
+                event.preventDefault();
+                return;
+            }
             this.desktopDrag = { item, fromStack, oldIndex };
             this.isDragging = true;
             if (event.dataTransfer) {
@@ -612,17 +616,14 @@ export default {
             this.clearTouchPress();
             this.touchPressContext = { item, fromStack, oldIndex, sourceEl: cardEl };
 
-            if (this.content.longPress) {
-                const delay = Number.isFinite(Number(this.content.longPressDelay))
-                    ? Math.max(0, Number(this.content.longPressDelay))
-                    : 400;
-                this.touchPressTimer = setTimeout(() => {
-                    this.touchPressTimer = null;
-                    this.startTouchDrag(this.touchPressStartX, this.touchPressStartY);
-                }, delay);
-            } else {
-                this.startTouchDrag(event.clientX, event.clientY);
-            }
+            // On touch, always use long-press before drag to preserve natural scroll gestures.
+            const delay = Number.isFinite(Number(this.content.longPressDelay))
+                ? Math.max(250, Number(this.content.longPressDelay))
+                : 400;
+            this.touchPressTimer = setTimeout(() => {
+                this.touchPressTimer = null;
+                this.startTouchDrag(this.touchPressStartX, this.touchPressStartY);
+            }, delay);
         },
         onTouchPointerMove(event) {
             if (event.pointerType !== "touch") return;
