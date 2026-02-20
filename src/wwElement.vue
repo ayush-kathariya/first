@@ -10,9 +10,12 @@
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
                     class="ww-kanban-stack"
-                    :class="{ 'has-add-card': content.showAddCardButton !== false && !isReadonly }"
+                    :class="{
+                        'has-add-card': content.showAddCardButton !== false && !isReadonly,
+                        'is-drop-target': isStackDropActive(stack.value),
+                    }"
                     :data-stack-key="getStackDomKey(stack.value)"
-                    @dragover.prevent="onStackDragOver"
+                    @dragover.prevent="onStackDragOver($event, stack.value)"
                     @drop.prevent="onStackDrop($event, stack.value)"
                 >
                     <div class="ww-kanban-stack-panel">
@@ -38,7 +41,7 @@
                                         :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
                                         @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
-                                        @dragover.prevent="onCardDragOver"
+                                        @dragover.prevent="onCardDragOver($event, stack.value)"
                                         @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
                                         @click="onCardClick(item, stack.value, itemIndex, $event)"
                                     >
@@ -167,6 +170,7 @@ export default {
             touchAutoScrollMaxStepX: 34,
             touchAutoScrollMaxStepY: 28,
             suppressClickUntil: 0,
+            dropTargetStack: null,
         };
     },
     computed: {
@@ -279,6 +283,17 @@ export default {
             if (stackValue === null) return this.uncategorizedStack.items || [];
             const foundStack = this.internalStacks.find(stack => this.valuesEqual(stack.value, stackValue));
             return foundStack?.items || [];
+        },
+        setDropTargetStack(stackValue) {
+            this.dropTargetStack = stackValue;
+        },
+        clearDropTargetStack() {
+            this.dropTargetStack = null;
+        },
+        isStackDropActive(stackValue) {
+            if (!this.isDragging) return false;
+            if (this.dropTargetStack === null && this.dropTargetStack !== 0) return false;
+            return this.valuesEqual(this.dropTargetStack, stackValue);
         },
         getItemIdentity(item, index) {
             if (this.content.itemKey) {
@@ -512,6 +527,7 @@ export default {
             this.desktopDrag = { item, fromStack, oldIndex };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
+            this.setDropTargetStack(fromStack);
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
@@ -519,11 +535,13 @@ export default {
         },
         onDesktopDragEnd() {
             this.desktopDrag = null;
+            this.clearDropTargetStack();
             if (!this.touchDragContext) this.isDragging = false;
         },
-        onCardDragOver(event) {
+        onCardDragOver(event, toStack) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+            this.setDropTargetStack(toStack);
         },
         onCardDrop(event, toStack, cardIndex) {
             if (!this.desktopDrag) return;
@@ -535,9 +553,10 @@ export default {
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
-        onStackDragOver(event) {
+        onStackDragOver(event, toStack) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+            this.setDropTargetStack(toStack);
         },
         onStackDrop(_event, toStack) {
             if (!this.desktopDrag) return;
@@ -660,6 +679,7 @@ export default {
             this.touchDragContext = null;
             this.touchPointerId = null;
             this.touchIdentifier = null;
+            this.clearDropTargetStack();
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
@@ -803,6 +823,9 @@ export default {
             if (deltaY !== 0) {
                 stackBody.scrollTop += deltaY;
             }
+
+            const target = this.getTouchDropTarget(clientX, clientY);
+            if (target) this.setDropTargetStack(target.toStack);
         },
         startTouchAutoScroll() {
             if (this.touchAutoScrollRaf !== null) return;
@@ -883,6 +906,7 @@ export default {
             this.touchPressContext = null;
             this.suppressClickUntil = Date.now() + 500;
             this.isDragging = true;
+            this.setDropTargetStack(this.touchDragContext.fromStack);
             this.touchDragContext.sourceEl.classList.add("is-drag-source");
             try {
                 this.touchDragContext.sourceEl.setPointerCapture?.(this.touchPointerId);
@@ -958,6 +982,8 @@ export default {
             if (this.touchDragContext) {
                 if (event.cancelable) event.preventDefault();
                 this.moveGhost(event.clientX, event.clientY);
+                const target = this.getTouchDropTarget(event.clientX, event.clientY);
+                if (target) this.setDropTargetStack(target.toStack);
             }
         },
         onNativeTouchMove(event) {
@@ -979,6 +1005,10 @@ export default {
 
             if (this.touchDragContext) {
                 if (primaryTouch) this.moveGhost(primaryTouch.clientX, primaryTouch.clientY);
+                if (primaryTouch) {
+                    const target = this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY);
+                    if (target) this.setDropTargetStack(target.toStack);
+                }
                 if (event.cancelable) event.preventDefault();
             }
         },
@@ -1148,6 +1178,20 @@ export default {
     background: transparent;
     overflow: visible;
     gap: 8px;
+}
+
+.ww-kanban-stack.is-drop-target {
+    outline: 2px solid #3b82f6;
+    border-radius: 12px;
+}
+
+.ww-kanban-stack.is-drop-target .ww-kanban-stack-panel {
+    border-color: rgba(59, 130, 246, 0.8);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.ww-kanban-stack.is-drop-target .ww-kanban-stack-footer {
+    border-color: rgba(59, 130, 246, 0.7);
 }
 
 .ww-kanban-stack-panel {
