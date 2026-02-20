@@ -14,57 +14,59 @@
                     @dragover.prevent="onStackDragOver"
                     @drop.prevent="onStackDrop($event, stack.value)"
                 >
-                    <header class="ww-kanban-stack-header">
-                        <span class="ww-kanban-stack-title">{{ getStackLabel(stack) }}</span>
-                        <span class="ww-kanban-stack-count">{{ stack.items.length }}</span>
-                    </header>
+                    <div class="ww-kanban-stack-panel">
+                        <header class="ww-kanban-stack-header">
+                            <span class="ww-kanban-stack-title">{{ getStackLabel(stack) }}</span>
+                            <span class="ww-kanban-stack-count">{{ stack.items.length }}</span>
+                        </header>
 
-                    <div class="ww-kanban-stack-body">
-                        <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
-                            <wwLayoutItemContext
-                                :index="itemIndex"
-                                :item="item"
-                                :data="item"
-                                :repeated-items="stack.items"
-                                is-repeat
-                            >
-                                <article
-                                    class="ww-kanban-card"
-                                    :class="{ 'is-drag-source': isCardDragSource(stack.value, itemIndex) }"
-                                    :data-item-index="itemIndex"
-                                    :data-item-key="String(getItemIdentity(item, itemIndex))"
-                                    :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
-                                    @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
-                                    @dragend="onDesktopDragEnd"
-                                    @dragover.prevent="onCardDragOver"
-                                    @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
-                                    @click="onCardClick(item, stack.value, itemIndex, $event)"
+                        <div class="ww-kanban-stack-body">
+                            <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
+                                <wwLayoutItemContext
+                                    :index="itemIndex"
+                                    :item="item"
+                                    :data="item"
+                                    :repeated-items="stack.items"
+                                    is-repeat
                                 >
-                                    <button
-                                        v-if="content.customDragHandle"
-                                        type="button"
-                                        class="ww-kanban-card-handle"
-                                        :class="effectiveHandleClass"
-                                        :draggable="canDesktopDrag && !isTouchDevice"
+                                    <article
+                                        class="ww-kanban-card"
+                                        :class="{ 'is-drag-source': isCardDragSource(stack.value, itemIndex) }"
+                                        :data-item-index="itemIndex"
+                                        :data-item-key="String(getItemIdentity(item, itemIndex))"
+                                        :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
                                         @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
+                                        @dragover.prevent="onCardDragOver"
+                                        @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
+                                        @click="onCardClick(item, stack.value, itemIndex, $event)"
                                     >
-                                        ::
-                                    </button>
-                                    <div class="ww-kanban-card-content">
-                                        <img
-                                            v-if="getItemImage(item)"
-                                            class="ww-kanban-card-image"
-                                            :src="getItemImage(item)"
-                                            alt=""
-                                            loading="lazy"
-                                            draggable="false"
-                                        />
-                                        <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
-                                    </div>
-                                </article>
-                            </wwLayoutItemContext>
-                        </template>
+                                        <button
+                                            v-if="content.customDragHandle"
+                                            type="button"
+                                            class="ww-kanban-card-handle"
+                                            :class="effectiveHandleClass"
+                                            :draggable="canDesktopDrag && !isTouchDevice"
+                                            @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
+                                            @dragend="onDesktopDragEnd"
+                                        >
+                                            ::
+                                        </button>
+                                        <div class="ww-kanban-card-content">
+                                            <img
+                                                v-if="getItemImage(item)"
+                                                class="ww-kanban-card-image"
+                                                :src="getItemImage(item)"
+                                                alt=""
+                                                loading="lazy"
+                                                draggable="false"
+                                            />
+                                            <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
+                                        </div>
+                                    </article>
+                                </wwLayoutItemContext>
+                            </template>
+                        </div>
                     </div>
 
                     <footer v-if="content.showAddCardButton !== false && !isReadonly" class="ww-kanban-stack-footer">
@@ -1073,11 +1075,22 @@ export default {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    width: min(280px, 82vw);
+    width: min(300px, 84vw);
     height: 520px;
     border: none;
-    border-radius: 10px;
     background: transparent;
+    overflow: visible;
+    gap: 8px;
+}
+
+.ww-kanban-stack-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 10px;
+    background: #e5e7eb;
+    padding: 8px;
     overflow: hidden;
 }
 
@@ -1086,12 +1099,11 @@ export default {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 10px 12px;
+    padding: 6px 4px 10px;
     font-size: 13px;
     font-weight: 600;
     color: #0f172a;
-    border-radius: 8px;
-    background: #e5e7eb;
+    background: transparent;
 }
 
 .ww-kanban-stack-title {
@@ -1121,8 +1133,8 @@ export default {
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
-    gap: 8px;
-    padding: 8px 0;
+    gap: 10px;
+    padding: 0 2px 2px;
     overflow-y: auto;
     overflow-x: hidden;
     -ms-overflow-style: none;
@@ -1139,6 +1151,7 @@ export default {
     padding: 0;
     border-top: none;
     background: transparent;
+    flex: 0 0 auto;
 }
 
 .ww-kanban-add-card-button {
@@ -1147,18 +1160,18 @@ export default {
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
-    border: 1px solid rgba(15, 23, 42, 0.16);
+    border: 1px solid rgba(15, 23, 42, 0.18);
     border-radius: 8px;
-    padding: 9px 10px;
+    padding: 8px 10px;
     font-size: 13px;
     font-weight: 600;
     color: #111827;
-    background: #f9fafb;
+    background: #f3f4f6;
     cursor: pointer;
 }
 
 .ww-kanban-add-card-button:hover {
-    background: #f3f4f6;
+    background: #eceff3;
 }
 
 .ww-kanban-add-card-icon {
@@ -1183,7 +1196,7 @@ export default {
     border-radius: 8px;
     background: #ffffff;
     color: #0f172a;
-    padding: 11px 12px;
+    padding: 12px;
     user-select: none;
     -webkit-user-select: none;
     touch-action: auto;
@@ -1213,6 +1226,7 @@ export default {
     font-size: 13px;
     line-height: 1.3;
     overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
 .ww-kanban-card-handle {
