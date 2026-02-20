@@ -10,12 +10,9 @@
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
                     class="ww-kanban-stack"
-                    :class="{
-                        'has-add-card': content.showAddCardButton !== false && !isReadonly,
-                        'is-drop-target': isStackDropActive(stack.value),
-                    }"
+                    :class="{ 'has-add-card': content.showAddCardButton !== false && !isReadonly }"
                     :data-stack-key="getStackDomKey(stack.value)"
-                    @dragover.prevent="onStackDragOver($event, stack.value)"
+                    @dragover.prevent="onStackDragOver"
                     @drop.prevent="onStackDrop($event, stack.value)"
                 >
                     <div class="ww-kanban-stack-panel">
@@ -25,29 +22,25 @@
                         </header>
 
                         <div class="ww-kanban-stack-body">
-                            <template
-                                v-for="(entry, entryIndex) in getStackDisplayEntries(stack)"
-                                :key="getStackEntryKey(entry, entryIndex, stack.value)"
-                            >
+                            <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
                                 <wwLayoutItemContext
-                                    v-if="entry.type === 'item'"
-                                    :index="entry.itemIndex"
-                                    :item="entry.item"
-                                    :data="entry.item"
+                                    :index="itemIndex"
+                                    :item="item"
+                                    :data="item"
                                     :repeated-items="stack.items"
                                     is-repeat
                                 >
                                     <article
                                         class="ww-kanban-card"
-                                        :class="{ 'is-drag-source': isCardDragSource(stack.value, entry.itemIndex) }"
-                                        :data-item-index="entry.itemIndex"
-                                        :data-item-key="String(getItemIdentity(entry.item, entry.itemIndex))"
+                                        :class="{ 'is-drag-source': isCardDragSource(stack.value, itemIndex) }"
+                                        :data-item-index="itemIndex"
+                                        :data-item-key="String(getItemIdentity(item, itemIndex))"
                                         :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
-                                        @dragstart="onDesktopDragStart($event, entry.item, stack.value, entry.itemIndex)"
+                                        @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
-                                        @dragover.prevent="onCardDragOver($event, stack.value, entry.itemIndex)"
-                                        @drop.prevent="onCardDrop($event, stack.value, entry.itemIndex)"
-                                        @click="onCardClick(entry.item, stack.value, entry.itemIndex, $event)"
+                                        @dragover.prevent="onCardDragOver"
+                                        @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
+                                        @click="onCardClick(item, stack.value, itemIndex, $event)"
                                     >
                                         <button
                                             v-if="content.customDragHandle"
@@ -55,38 +48,24 @@
                                             class="ww-kanban-card-handle"
                                             :class="effectiveHandleClass"
                                             :draggable="canDesktopDrag && !isTouchDevice"
-                                            @dragstart="onDesktopDragStart($event, entry.item, stack.value, entry.itemIndex)"
+                                            @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                             @dragend="onDesktopDragEnd"
                                         >
                                             ::
                                         </button>
                                         <div class="ww-kanban-card-content">
                                             <img
-                                                v-if="getItemImage(entry.item)"
+                                                v-if="getItemImage(item)"
                                                 class="ww-kanban-card-image"
-                                                :src="getItemImage(entry.item)"
+                                                :src="getItemImage(item)"
                                                 alt=""
                                                 loading="lazy"
                                                 draggable="false"
                                             />
-                                            <div class="ww-kanban-card-text">{{ getItemLabel(entry.item, entry.itemIndex) }}</div>
+                                            <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
                                         </div>
                                     </article>
                                 </wwLayoutItemContext>
-
-                                <article v-else class="ww-kanban-card ww-kanban-card-placeholder" aria-hidden="true">
-                                    <div class="ww-kanban-card-content">
-                                        <img
-                                            v-if="getItemImage(entry.item)"
-                                            class="ww-kanban-card-image"
-                                            :src="getItemImage(entry.item)"
-                                            alt=""
-                                            loading="lazy"
-                                            draggable="false"
-                                        />
-                                        <div class="ww-kanban-card-text">{{ getItemLabel(entry.item, entryIndex) }}</div>
-                                    </div>
-                                </article>
                             </template>
                         </div>
                     </div>
@@ -188,7 +167,6 @@ export default {
             touchAutoScrollMaxStepX: 34,
             touchAutoScrollMaxStepY: 28,
             suppressClickUntil: 0,
-            dropIndicator: null,
         };
     },
     computed: {
@@ -302,9 +280,6 @@ export default {
             const foundStack = this.internalStacks.find(stack => this.valuesEqual(stack.value, stackValue));
             return foundStack?.items || [];
         },
-        getActiveDragContext() {
-            return this.touchDragContext || this.desktopDrag || null;
-        },
         getItemIdentity(item, index) {
             if (this.content.itemKey) {
                 const key = wwLib.resolveObjectPropertyPath(item, this.content.itemKey);
@@ -314,45 +289,6 @@ export default {
         },
         getCardKey(item, index, stackValue) {
             return `${this.getStackDomKey(stackValue)}::${this.getItemIdentity(item, index)}::${index}`;
-        },
-        getStackEntryKey(entry, entryIndex, stackValue) {
-            if (entry?.type === "placeholder") {
-                return `${this.getStackDomKey(stackValue)}::placeholder::${entryIndex}`;
-            }
-            return this.getCardKey(entry?.item, entry?.itemIndex, stackValue);
-        },
-        getStackDisplayEntries(stack) {
-            const stackValue = stack?.value ?? null;
-            const entries = (stack?.items || []).map((item, itemIndex) => ({
-                type: "item",
-                item,
-                itemIndex,
-            }));
-
-            const dragContext = this.getActiveDragContext();
-            if (!dragContext || !this.dropIndicator || !this.valuesEqual(this.dropIndicator.toStack, stackValue)) {
-                return entries;
-            }
-
-            const workingEntries = [...entries];
-
-            const placeholderIndex = this.clampIndex(this.dropIndicator.newIndex, workingEntries.length);
-            const placeholderItem =
-                dragContext.item ??
-                this.getStackItemsByValue(dragContext.fromStack)[dragContext.oldIndex] ??
-                null;
-
-            workingEntries.splice(placeholderIndex, 0, {
-                type: "placeholder",
-                item: placeholderItem,
-            });
-
-            return workingEntries;
-        },
-        isStackDropActive(stackValue) {
-            const dragContext = this.getActiveDragContext();
-            if (!dragContext || !this.dropIndicator) return false;
-            return this.valuesEqual(this.dropIndicator.toStack, stackValue);
         },
         stripHtml(value) {
             const text = typeof value === "string" ? value : String(value ?? "");
@@ -458,27 +394,6 @@ export default {
         clampIndex(index, length) {
             if (!Number.isFinite(index)) return 0;
             return Math.max(0, Math.min(index, length));
-        },
-        updateDropIndicator(toStack, newIndex) {
-            const dragContext = this.getActiveDragContext();
-            if (!dragContext) {
-                this.dropIndicator = null;
-                return;
-            }
-
-            let normalizedIndex = Number.isFinite(newIndex) ? newIndex : 0;
-
-            const targetLength = this.getStackItemsByValue(toStack).length;
-            const finalIndex = this.clampIndex(normalizedIndex, targetLength);
-
-            if (this.dropIndicator && this.valuesEqual(this.dropIndicator.toStack, toStack) && this.dropIndicator.newIndex === finalIndex) {
-                return;
-            }
-
-            this.dropIndicator = {
-                toStack,
-                newIndex: finalIndex,
-            };
         },
         prepareMovePayload(dragContext, toStack, newIndex) {
             if (!dragContext || !this.canDrag) return null;
@@ -597,7 +512,6 @@ export default {
             this.desktopDrag = { item, fromStack, oldIndex };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
-            this.updateDropIndicator(fromStack, oldIndex);
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
@@ -605,15 +519,11 @@ export default {
         },
         onDesktopDragEnd() {
             this.desktopDrag = null;
-            this.dropIndicator = null;
             if (!this.touchDragContext) this.isDragging = false;
         },
-        onCardDragOver(event, toStack, cardIndex) {
+        onCardDragOver(event) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            const rect = event.currentTarget.getBoundingClientRect();
-            const insertIndex = cardIndex + (event.clientY > rect.top + rect.height / 2 ? 1 : 0);
-            this.updateDropIndicator(toStack, insertIndex);
         },
         onCardDrop(event, toStack, cardIndex) {
             if (!this.desktopDrag) return;
@@ -625,10 +535,9 @@ export default {
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
-        onStackDragOver(event, toStack) {
+        onStackDragOver(event) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            this.updateDropIndicator(toStack, this.getStackItemsByValue(toStack).length);
         },
         onStackDrop(_event, toStack) {
             if (!this.desktopDrag) return;
@@ -751,7 +660,6 @@ export default {
             this.touchDragContext = null;
             this.touchPointerId = null;
             this.touchIdentifier = null;
-            this.dropIndicator = null;
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
@@ -895,15 +803,6 @@ export default {
             if (deltaY !== 0) {
                 stackBody.scrollTop += deltaY;
             }
-
-            const target = this.getTouchDropTarget(clientX, clientY);
-            if (target) {
-                let displayIndex = target.newIndex;
-                if (this.valuesEqual(this.touchDragContext.fromStack, target.toStack) && target.newIndex > this.touchDragContext.oldIndex) {
-                    displayIndex += 1;
-                }
-                this.updateDropIndicator(target.toStack, displayIndex);
-            }
         },
         startTouchAutoScroll() {
             if (this.touchAutoScrollRaf !== null) return;
@@ -926,9 +825,8 @@ export default {
             this.touchAutoScrollRaf = null;
         },
         isCardDragSource(stackValue, itemIndex) {
-            const dragContext = this.getActiveDragContext();
-            if (!dragContext) return false;
-            return this.valuesEqual(dragContext.fromStack, stackValue) && dragContext.oldIndex === itemIndex;
+            if (!this.touchDragContext) return false;
+            return this.valuesEqual(this.touchDragContext.fromStack, stackValue) && this.touchDragContext.oldIndex === itemIndex;
         },
         getTouchDropTarget(clientX, clientY) {
             const sourceEl = this.touchDragContext?.sourceEl;
@@ -968,9 +866,7 @@ export default {
             const stackKey = stackEl.dataset.stackKey;
             if (!(stackKey in this.stackKeyLookup)) return null;
             const toStack = this.stackKeyLookup[stackKey];
-            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(
-                el => el !== sourceEl && !el.classList.contains("ww-kanban-card-placeholder")
-            );
+            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(el => el !== sourceEl);
             let newIndex = cards.length;
             for (let i = 0; i < cards.length; i += 1) {
                 const rect = cards[i].getBoundingClientRect();
@@ -998,7 +894,6 @@ export default {
             this.lockTouchScroll();
             this.touchLastClientX = clientX;
             this.touchLastClientY = clientY;
-            this.updateDropIndicator(this.touchDragContext.fromStack, this.touchDragContext.oldIndex);
             this.startTouchAutoScroll();
         },
         onTouchPointerDown(event) {
@@ -1063,14 +958,6 @@ export default {
             if (this.touchDragContext) {
                 if (event.cancelable) event.preventDefault();
                 this.moveGhost(event.clientX, event.clientY);
-                const target = this.getTouchDropTarget(event.clientX, event.clientY);
-                if (target) {
-                    let displayIndex = target.newIndex;
-                    if (this.valuesEqual(this.touchDragContext.fromStack, target.toStack) && target.newIndex > this.touchDragContext.oldIndex) {
-                        displayIndex += 1;
-                    }
-                    this.updateDropIndicator(target.toStack, displayIndex);
-                }
             }
         },
         onNativeTouchMove(event) {
@@ -1092,16 +979,6 @@ export default {
 
             if (this.touchDragContext) {
                 if (primaryTouch) this.moveGhost(primaryTouch.clientX, primaryTouch.clientY);
-                if (primaryTouch) {
-                    const target = this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY);
-                    if (target) {
-                        let displayIndex = target.newIndex;
-                        if (this.valuesEqual(this.touchDragContext.fromStack, target.toStack) && target.newIndex > this.touchDragContext.oldIndex) {
-                            displayIndex += 1;
-                        }
-                        this.updateDropIndicator(target.toStack, displayIndex);
-                    }
-                }
                 if (event.cancelable) event.preventDefault();
             }
         },
@@ -1273,21 +1150,6 @@ export default {
     gap: 8px;
 }
 
-.ww-kanban-stack.is-drop-target {
-    outline: 2px solid #3b82f6;
-    outline-offset: 0;
-    border-radius: 12px;
-}
-
-.ww-kanban-stack.is-drop-target .ww-kanban-stack-panel {
-    border-color: rgba(59, 130, 246, 0.8);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.16);
-}
-
-.ww-kanban-stack.is-drop-target .ww-kanban-stack-footer {
-    border-color: rgba(59, 130, 246, 0.7);
-}
-
 .ww-kanban-stack-panel {
     display: flex;
     flex-direction: column;
@@ -1434,20 +1296,8 @@ export default {
     box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
 }
 
-.ww-kanban-card.ww-kanban-card-placeholder {
-    border-color: #3b82f6;
-    background: rgba(219, 234, 254, 0.72);
-    box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.ww-kanban-card.ww-kanban-card-placeholder .ww-kanban-card-content {
-    opacity: 0.82;
-}
-
 .ww-kanban-card.is-drag-source {
-    opacity: 0.06;
+    opacity: 0.35;
 }
 
 .ww-kanban-card-content {
