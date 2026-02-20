@@ -46,7 +46,7 @@
                                         :class="{ 'is-drag-source': isCardDragSource(stack.value, itemIndex) }"
                                         :data-item-index="itemIndex"
                                         :data-item-key="String(getItemIdentity(item, itemIndex))"
-                                        :draggable="canDesktopDrag && !isTouchDevice && !content.customDragHandle"
+                                        :draggable="nativeDesktopDragEnabled && !content.customDragHandle"
                                         @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
                                         @dragover.prevent="onCardDragOver($event, stack.value, itemIndex)"
@@ -58,7 +58,7 @@
                                             type="button"
                                             class="ww-kanban-card-handle"
                                             :class="effectiveHandleClass"
-                                            :draggable="canDesktopDrag && !isTouchDevice"
+                                            :draggable="nativeDesktopDragEnabled"
                                             @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                             @dragend="onDesktopDragEnd"
                                         >
@@ -238,6 +238,20 @@ export default {
             } catch (e) {
                 return false;
             }
+        },
+        hasFinePointer() {
+            try {
+                const win = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+                if (!win?.matchMedia) return !this.isTouchDevice;
+                return win.matchMedia("(pointer: fine)").matches || win.matchMedia("(any-pointer: fine)").matches;
+            } catch (e) {
+                return !this.isTouchDevice;
+            }
+        },
+        nativeDesktopDragEnabled() {
+            if (!this.canDesktopDrag) return false;
+            if (!this.hasFinePointer) return false;
+            return true;
         },
         stackKeyLookup() {
             const map = {};
@@ -545,11 +559,7 @@ export default {
             );
         },
         onDesktopDragStart(event, item, fromStack, oldIndex) {
-            if (!this.canDesktopDrag) {
-                event.preventDefault();
-                return;
-            }
-            if (this.isTouchDevice) {
+            if (!this.nativeDesktopDragEnabled) {
                 event.preventDefault();
                 return;
             }
@@ -561,7 +571,8 @@ export default {
                 const rect = event.currentTarget.getBoundingClientRect();
                 if (rect?.height) this.dragSourceHeight = rect.height;
             }
-            this.dropIndicator = { stackValue: fromStack, index: oldIndex };
+            // Do not render placeholder during native dragstart; some browsers cancel drag if DOM mutates here.
+            this.dropIndicator = null;
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
