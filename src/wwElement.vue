@@ -25,7 +25,12 @@
                         </header>
 
                         <div class="ww-kanban-stack-body">
-                            <div v-if="shouldShowPlaceholder(stack.value, 0) && stack.items.length === 0" class="ww-drop-placeholder"></div>
+                            <div
+                                v-if="shouldShowPlaceholder(stack.value, 0) && stack.items.length === 0"
+                                class="ww-drop-placeholder"
+                                @dragover.prevent
+                                @drop.prevent="onStackDrop($event, stack.value)"
+                            ></div>
 
                             <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
                                 <wwLayoutItemContext
@@ -72,7 +77,12 @@
                                     </article>
                                 </wwLayoutItemContext>
 
-                                <div v-if="shouldShowPlaceholder(stack.value, itemIndex + 1)" class="ww-drop-placeholder"></div>
+                                <div
+                                    v-if="shouldShowPlaceholder(stack.value, itemIndex + 1)"
+                                    class="ww-drop-placeholder"
+                                    @dragover.prevent
+                                    @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
+                                ></div>
                             </template>
                         </div>
                     </div>
