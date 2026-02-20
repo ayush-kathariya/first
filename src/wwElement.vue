@@ -26,10 +26,11 @@
 
                         <div class="ww-kanban-stack-body">
                             <div
-                                v-if="shouldShowPlaceholder(stack.value, 0) && stack.items.length === 0"
+                                v-if="shouldShowPlaceholder(stack.value, 0)"
                                 class="ww-drop-placeholder"
-                                @dragover.prevent
-                                @drop.prevent="onStackDrop($event, stack.value)"
+                                :style="{ height: `${dragSourceHeight}px` }"
+                                @dragover.prevent="onPlaceholderDragOver($event, stack.value, 0)"
+                                @drop.prevent="onPlaceholderDrop($event, stack.value, 0)"
                             ></div>
 
                             <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
@@ -80,8 +81,9 @@
                                 <div
                                     v-if="shouldShowPlaceholder(stack.value, itemIndex + 1)"
                                     class="ww-drop-placeholder"
-                                    @dragover.prevent
-                                    @drop.prevent="onCardDrop($event, stack.value, itemIndex)"
+                                    :style="{ height: `${dragSourceHeight}px` }"
+                                    @dragover.prevent="onPlaceholderDragOver($event, stack.value, itemIndex + 1)"
+                                    @drop.prevent="onPlaceholderDrop($event, stack.value, itemIndex + 1)"
                                 ></div>
                             </template>
                         </div>
@@ -186,6 +188,7 @@ export default {
             suppressClickUntil: 0,
             dropTargetStack: null,
             dropIndicator: null,
+            dragSourceHeight: 74,
         };
     },
     computed: {
@@ -554,6 +557,10 @@ export default {
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
             this.setDropTargetStack(fromStack);
+            if (event.currentTarget) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                if (rect?.height) this.dragSourceHeight = rect.height;
+            }
             this.dropIndicator = { stackValue: fromStack, index: oldIndex };
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
@@ -592,6 +599,21 @@ export default {
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
             this.setDropTargetStack(toStack);
             this.dropIndicator = { stackValue: toStack, index: this.getStackItemsByValue(toStack).length };
+        },
+        onPlaceholderDragOver(event, toStack, index) {
+            if (!this.desktopDrag) return;
+            if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+            this.setDropTargetStack(toStack);
+            this.dropIndicator = { stackValue: toStack, index: this.clampIndex(index, this.getStackItemsByValue(toStack).length) };
+        },
+        onPlaceholderDrop(_event, toStack, index) {
+            if (!this.desktopDrag) return;
+            let insertIndex = this.clampIndex(index, this.getStackItemsByValue(toStack).length);
+            if (this.valuesEqual(this.desktopDrag.fromStack, toStack) && insertIndex > this.desktopDrag.oldIndex) {
+                insertIndex -= 1;
+            }
+            this.finalizeMove(this.desktopDrag, toStack, insertIndex);
+            this.onDesktopDragEnd();
         },
         onStackDrop(_event, toStack) {
             if (!this.desktopDrag) return;
@@ -946,6 +968,10 @@ export default {
             this.suppressClickUntil = Date.now() + 500;
             this.isDragging = true;
             this.setDropTargetStack(this.touchDragContext.fromStack);
+            {
+                const rect = this.touchDragContext.sourceEl?.getBoundingClientRect?.();
+                if (rect?.height) this.dragSourceHeight = rect.height;
+            }
             this.touchDragContext.sourceEl.classList.add("is-drag-source");
             try {
                 this.touchDragContext.sourceEl.setPointerCapture?.(this.touchPointerId);
@@ -1325,23 +1351,12 @@ export default {
 }
 
 .ww-drop-placeholder {
-    height: 74px;
     flex-shrink: 0;
     border-radius: 8px;
-    border: 2px dashed #3b82f6;
-    background: rgba(59, 130, 246, 0.08);
-    pointer-events: none;
-    animation: placeholder-pulse 1s ease-in-out infinite;
-}
-
-@keyframes placeholder-pulse {
-    0%,
-    100% {
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 1;
-    }
+    background: rgba(0, 0, 0, 0.08);
+    border: none;
+    pointer-events: auto;
+    transition: height 80ms ease;
 }
 
 .ww-kanban-stack-footer {
