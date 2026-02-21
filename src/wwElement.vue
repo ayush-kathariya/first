@@ -72,11 +72,43 @@
                         </div>
                     </div>
 
-                    <footer v-if="content.showAddCardButton !== false && !isReadonly" class="ww-kanban-stack-footer">
-                        <button type="button" class="ww-kanban-add-card-button" @click="onAddCardClick(stack, $event)">
+                    <footer
+                        v-if="content.showAddCardButton !== false && !isReadonly"
+                        class="ww-kanban-stack-footer"
+                        :class="{ 'is-composer-open': isAddCardComposerOpen(stack.value) }"
+                    >
+                        <button
+                            v-if="!isAddCardComposerOpen(stack.value)"
+                            type="button"
+                            class="ww-kanban-add-card-button"
+                            @click="openAddCardComposer(stack, $event)"
+                        >
                             <span class="ww-kanban-add-card-icon" aria-hidden="true">+</span>
                             <span>{{ content.addCardButtonLabel || "Add Card" }}</span>
                         </button>
+
+                        <form v-else class="ww-kanban-add-card-composer" @submit.prevent="onAddCardSubmit(stack, $event)">
+                            <textarea
+                                class="ww-kanban-add-card-input"
+                                :value="addCardDraft"
+                                :placeholder="content.addCardInputPlaceholder || 'Enter a title or paste a link'"
+                                rows="3"
+                                @input="onAddCardInput"
+                            ></textarea>
+                            <div class="ww-kanban-add-card-actions">
+                                <button type="submit" class="ww-kanban-add-card-submit" :disabled="!addCardDraft.trim()">
+                                    {{ content.addCardSubmitLabel || "Add card" }}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="ww-kanban-add-card-cancel"
+                                    aria-label="Cancel"
+                                    @click="cancelAddCardComposer"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </form>
                     </footer>
                 </section>
             </wwLayoutItemContext>
@@ -171,6 +203,8 @@ export default {
             touchAutoScrollRunning: false,
             suppressClickUntil: 0,
             dropTargetStack: null,
+            addCardDraft: "",
+            addCardComposerStackKey: null,
         };
     },
     computed: {
@@ -280,6 +314,7 @@ export default {
                 if (value) {
                     this.$emit("add-state", "readonly");
                     this.clearTouchInteraction();
+                    this.cancelAddCardComposer();
                 } else {
                     this.$emit("remove-state", "readonly");
                 }
@@ -625,23 +660,58 @@ export default {
                 },
             });
         },
-        onAddCardClick(stack, event) {
+        isAddCardComposerOpen(stackValue) {
+            return this.addCardComposerStackKey === this.getStackDomKey(stackValue ?? null);
+        },
+        openAddCardComposer(stack, event) {
             if (!event?.isTrusted) return;
             const stackValue = stack?.value ?? null;
+            const stackKey = this.getStackDomKey(stackValue);
+            this.addCardComposerStackKey = stackKey;
+            this.addCardDraft = "";
+            this.$nextTick(() => {
+                const root = this.$refs.kanbanRoot;
+                const stackElements = Array.from(root?.querySelectorAll?.(".ww-kanban-stack") || []);
+                const stackEl = stackElements.find(element => element.dataset.stackKey === stackKey);
+                const inputEl = stackEl?.querySelector?.(".ww-kanban-add-card-input");
+                inputEl?.focus?.();
+            });
+        },
+        cancelAddCardComposer() {
+            this.addCardDraft = "";
+            this.addCardComposerStackKey = null;
+        },
+        onAddCardInput(event) {
+            this.addCardDraft = String(event?.target?.value ?? "");
+        },
+        buildAddCardEventPayload(stack, title) {
+            const stackValue = stack?.value ?? null;
+            const normalizedTitle = String(title ?? "").trim();
             const defaultItem = {};
+            if (normalizedTitle) {
+                this.setObjectPropertyByPath(defaultItem, this.content.itemLabel || "title", normalizedTitle);
+            }
             if (this.content.stackedBy) {
                 this.setObjectPropertyByPath(defaultItem, this.content.stackedBy, stackValue);
             }
-
+            return {
+                stack: stackValue,
+                stackValue,
+                stackLabel: this.getStackLabel(stack),
+                title: normalizedTitle,
+                stackedBy: this.content.stackedBy || null,
+                defaultItem,
+            };
+        },
+        onAddCardSubmit(stack, event) {
+            if (event) event.preventDefault?.();
+            const title = this.addCardDraft.trim();
+            if (!title) return;
             this.$emit("trigger-event", {
                 name: "add-card:clicked",
-                event: {
-                    stack: stackValue,
-                    stackLabel: this.getStackLabel(stack),
-                    stackedBy: this.content.stackedBy || null,
-                    defaultItem,
-                },
+                event: this.buildAddCardEventPayload(stack, title),
             });
+            this.addCardDraft = "";
         },
         matchesHandleTarget(target) {
             if (!this.content.customDragHandle) return true;
@@ -1135,17 +1205,7 @@ export default {
         getTestAddCardEvent() {
             if (!this.renderStacks.length) throw new Error("No stack found");
             const firstStack = this.renderStacks[0];
-            const stackValue = firstStack?.value ?? null;
-            const defaultItem = {};
-            if (this.content.stackedBy) {
-                this.setObjectPropertyByPath(defaultItem, this.content.stackedBy, stackValue);
-            }
-            return {
-                stack: stackValue,
-                stackLabel: this.getStackLabel(firstStack),
-                stackedBy: this.content.stackedBy || null,
-                defaultItem,
-            };
+            return this.buildAddCardEventPayload(firstStack, "Test card");
         },
         getTestClickEvent() {
             if (!this.renderStacks.length) throw new Error("No stack found");
@@ -1316,6 +1376,14 @@ export default {
     box-sizing: border-box;
 }
 
+.ww-kanban-stack-footer.is-composer-open {
+    padding: 0;
+    border: none;
+    background: transparent;
+    height: auto;
+    flex: 0 0 auto;
+}
+
 .ww-kanban-add-card-button {
     width: 100%;
     height: 100%;
@@ -1335,6 +1403,71 @@ export default {
 
 .ww-kanban-add-card-button:hover {
     background: #f2f5fa;
+}
+
+.ww-kanban-add-card-composer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ww-kanban-add-card-input {
+    width: 100%;
+    min-height: 70px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.35;
+    resize: vertical;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.ww-kanban-add-card-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.ww-kanban-add-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ww-kanban-add-card-submit {
+    border: 1px solid rgba(37, 99, 235, 0.95);
+    border-radius: 6px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 12px;
+    cursor: pointer;
+}
+
+.ww-kanban-add-card-submit:hover {
+    background: #1d4ed8;
+}
+
+.ww-kanban-add-card-submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.ww-kanban-add-card-cancel {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+}
+
+.ww-kanban-add-card-cancel:hover {
+    color: #111827;
 }
 
 .ww-kanban-add-card-icon {
