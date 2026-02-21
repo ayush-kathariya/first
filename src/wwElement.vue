@@ -1299,7 +1299,7 @@ export default {
     min-height: 0;
     border-radius: 11px;
     border: 1px solid rgba(15, 23, 42, 0.1);
-    background: #dfe3ea;
+    background: #F3F4F6;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
     overflow: hidden;
