@@ -105,7 +105,7 @@
                                     aria-label="Cancel"
                                     @click="cancelAddCardComposer"
                                 >
-                                    ×
+                                    x
                                 </button>
                             </div>
                         </form>
@@ -222,8 +222,67 @@ export default {
             return this.content.uncategorizedStack ? [this.uncategorizedStack, ...this.internalStacks] : this.internalStacks;
         },
         kanbanStyle() {
+            const valueOrDefault = (value, fallback) => {
+                if (value === undefined || value === null || value === "") return fallback;
+                return String(value);
+            };
+            const sizeOrDefault = (value, fallbackPx) => {
+                if (value === undefined || value === null || value === "") return `${fallbackPx}px`;
+                if (typeof value === "number" && Number.isFinite(value)) return `${value}px`;
+                const normalized = String(value).trim();
+                if (!normalized) return `${fallbackPx}px`;
+                if (/^-?\d+(\.\d+)?$/.test(normalized)) return `${normalized}px`;
+                return normalized;
+            };
+            const numberOrDefault = (value, fallback) => {
+                if (value === undefined || value === null || value === "") return String(fallback);
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? String(parsed) : String(value);
+            };
+
             return {
                 "--wrap-stacks": "nowrap",
+                "--ww-font-family": valueOrDefault(this.content.uiFontFamily, "inherit"),
+                "--ww-board-bg": valueOrDefault(this.content.boardBackgroundColor, "#f1f3f6"),
+                "--ww-board-gap": sizeOrDefault(this.content.boardGap, 12),
+                "--ww-board-padding": sizeOrDefault(this.content.boardPadding, 8),
+                "--ww-stack-width": valueOrDefault(this.content.columnWidth, "min(300px, 84vw)"),
+                "--ww-stack-height": sizeOrDefault(this.content.columnHeight, 520),
+                "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
+                "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
+                "--ww-panel-bg": valueOrDefault(this.content.columnBackgroundColor, "#f3f4f6"),
+                "--ww-panel-border-color": valueOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
+                "--ww-header-text-color": valueOrDefault(this.content.columnTitleColor, "#0f172a"),
+                "--ww-header-font-size": sizeOrDefault(this.content.columnTitleFontSize, 13),
+                "--ww-header-font-weight": numberOrDefault(this.content.columnTitleFontWeight, 600),
+                "--ww-count-bg": valueOrDefault(this.content.columnCountBackgroundColor, "#f8fafc"),
+                "--ww-count-text-color": valueOrDefault(this.content.columnCountColor, "#111827"),
+                "--ww-count-border-color": valueOrDefault(this.content.columnCountBorderColor, "rgba(15, 23, 42, 0.28)"),
+                "--ww-card-bg": valueOrDefault(this.content.cardBackgroundColor, "#fbfdff"),
+                "--ww-card-text-color": valueOrDefault(this.content.cardTextColor, "#0f172a"),
+                "--ww-card-border-color": valueOrDefault(this.content.cardBorderColor, "rgba(15, 23, 42, 0.14)"),
+                "--ww-card-hover-border-color": valueOrDefault(this.content.cardHoverBorderColor, "#3b82f6"),
+                "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
+                "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
+                "--ww-card-radius": sizeOrDefault(this.content.cardBorderRadius, 8),
+                "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
+                "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
+                "--ww-add-button-bg": valueOrDefault(this.content.addCardButtonBackgroundColor, "#f8fafc"),
+                "--ww-add-button-bg-hover": valueOrDefault(this.content.addCardButtonHoverBackgroundColor, "#f2f5fa"),
+                "--ww-add-button-text-color": valueOrDefault(this.content.addCardButtonTextColor, "#111827"),
+                "--ww-add-button-border-color": valueOrDefault(this.content.addCardButtonBorderColor, "rgba(15, 23, 42, 0.18)"),
+                "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
+                "--ww-add-input-bg": valueOrDefault(this.content.addCardInputBackgroundColor, "#f8fafc"),
+                "--ww-add-input-text-color": valueOrDefault(this.content.addCardInputTextColor, "#0f172a"),
+                "--ww-add-input-border-color": valueOrDefault(this.content.addCardInputBorderColor, "rgba(15, 23, 42, 0.16)"),
+                "--ww-add-input-placeholder-color": valueOrDefault(this.content.addCardInputPlaceholderColor, "#6b7280"),
+                "--ww-add-input-font-size": sizeOrDefault(this.content.addCardInputFontSize, 13),
+                "--ww-add-input-min-height": sizeOrDefault(this.content.addCardInputMinHeight, 70),
+                "--ww-add-submit-bg": valueOrDefault(this.content.addCardSubmitBackgroundColor, "#2563eb"),
+                "--ww-add-submit-bg-hover": valueOrDefault(this.content.addCardSubmitHoverBackgroundColor, "#1d4ed8"),
+                "--ww-add-submit-text-color": valueOrDefault(this.content.addCardSubmitTextColor, "#ffffff"),
+                "--ww-add-submit-border-color": valueOrDefault(this.content.addCardSubmitBorderColor, "rgba(37, 99, 235, 0.95)"),
+                "--ww-add-submit-font-size": sizeOrDefault(this.content.addCardSubmitFontSize, 13),
             };
         },
         isReadonly() {
@@ -1251,13 +1310,14 @@ export default {
     flex-direction: row;
     flex-wrap: var(--wrap-stacks);
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--ww-board-gap);
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
     height: 100%;
-    padding: 8px;
-    background: #f1f3f6;
+    padding: var(--ww-board-padding);
+    background: var(--ww-board-bg);
+    font-family: var(--ww-font-family);
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     -ms-overflow-style: none;
@@ -1277,17 +1337,17 @@ export default {
 }
 
 .ww-kanban-stack {
-    --add-card-block-height: 34px;
-    --stack-block-gap: 8px;
+    --add-card-block-height: var(--ww-add-card-block-height);
+    --stack-block-gap: var(--ww-stack-block-gap);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    width: min(300px, 84vw);
-    height: 520px;
+    width: var(--ww-stack-width);
+    height: var(--ww-stack-height);
     border: none;
     background: transparent;
     overflow: visible;
-    gap: 8px;
+    gap: var(--stack-block-gap);
     position: relative;
     z-index: 0;
 }
@@ -1298,8 +1358,8 @@ export default {
     flex: 0 1 auto;
     min-height: 0;
     border-radius: 11px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: #F3F4F6;
+    border: 1px solid var(--ww-panel-border-color);
+    background: var(--ww-panel-bg);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
     overflow: hidden;
@@ -1319,9 +1379,9 @@ export default {
     justify-content: space-between;
     gap: 8px;
     padding: 2px 2px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #0f172a;
+    font-size: var(--ww-header-font-size);
+    font-weight: var(--ww-header-font-weight);
+    color: var(--ww-header-text-color);
     background: transparent;
 }
 
@@ -1337,14 +1397,14 @@ export default {
     height: 20px;
     flex: 0 0 20px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.28);
+    border: 1px solid var(--ww-count-border-color);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 11px;
     font-weight: 600;
-    color: #111827;
-    background: #f8fafc;
+    color: var(--ww-count-text-color);
+    background: var(--ww-count-bg);
 }
 
 .ww-kanban-stack-body {
@@ -1368,9 +1428,9 @@ export default {
 
 .ww-kanban-stack-footer {
     padding: 1px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid var(--ww-add-button-border-color);
     border-radius: 10px;
-    background: #e5e7eb;
+    background: var(--ww-panel-bg);
     height: var(--add-card-block-height);
     flex: 0 0 var(--add-card-block-height);
     box-sizing: border-box;
@@ -1391,18 +1451,18 @@ export default {
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
-    border: 1px solid rgba(15, 23, 42, 0.18);
+    border: 1px solid var(--ww-add-button-border-color);
     border-radius: 8px;
     padding: 7px 10px;
-    font-size: 13px;
+    font-size: var(--ww-add-button-font-size);
     font-weight: 600;
-    color: #111827;
-    background: #f8fafc;
+    color: var(--ww-add-button-text-color);
+    background: var(--ww-add-button-bg);
     cursor: pointer;
 }
 
 .ww-kanban-add-card-button:hover {
-    background: #f2f5fa;
+    background: var(--ww-add-button-bg-hover);
 }
 
 .ww-kanban-add-card-composer {
@@ -1413,21 +1473,26 @@ export default {
 
 .ww-kanban-add-card-input {
     width: 100%;
-    min-height: 70px;
-    border: 1px solid rgba(15, 23, 42, 0.16);
+    min-height: var(--ww-add-input-min-height);
+    border: 1px solid var(--ww-add-input-border-color);
     border-radius: 8px;
     padding: 10px 12px;
-    font-size: 13px;
+    font-size: var(--ww-add-input-font-size);
     line-height: 1.35;
-    resize: vertical;
-    background: #f8fafc;
-    color: #0f172a;
+    // resize: vertical;
+    background: var(--ww-add-input-bg);
+    color: var(--ww-add-input-text-color);
+    font-family: var(--ww-font-family);
 }
 
 .ww-kanban-add-card-input:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.ww-kanban-add-card-input::placeholder {
+    color: var(--ww-add-input-placeholder-color);
 }
 
 .ww-kanban-add-card-actions {
@@ -1437,18 +1502,19 @@ export default {
 }
 
 .ww-kanban-add-card-submit {
-    border: 1px solid rgba(37, 99, 235, 0.95);
+    border: 1px solid var(--ww-add-submit-border-color);
     border-radius: 6px;
-    background: #2563eb;
-    color: #ffffff;
-    font-size: 13px;
+    background: var(--ww-add-submit-bg);
+    color: var(--ww-add-submit-text-color);
+    font-size: var(--ww-add-submit-font-size);
     font-weight: 600;
     padding: 7px 12px;
     cursor: pointer;
+    font-family: var(--ww-font-family);
 }
 
 .ww-kanban-add-card-submit:hover {
-    background: #1d4ed8;
+    background: var(--ww-add-submit-bg-hover);
 }
 
 .ww-kanban-add-card-submit:disabled {
@@ -1488,27 +1554,28 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.14);
-    border-radius: 8px;
-    background: #fbfdff;
-    color: #0f172a;
-    padding: 12px;
-    min-height: 74px;
+    border: 1px solid var(--ww-card-border-color);
+    border-radius: var(--ww-card-radius);
+    background: var(--ww-card-bg);
+    color: var(--ww-card-text-color);
+    padding: var(--ww-card-padding);
+    min-height: var(--ww-card-min-height);
     box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
     touch-action: auto;
     transition: border-color 120ms ease, box-shadow 120ms ease;
+    font-family: var(--ww-font-family);
 }
 
 .ww-kanban-card:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
+    border-color: var(--ww-card-hover-border-color);
+    box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
 }
 
 .ww-kanban-card:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.22);
+    border-color: var(--ww-card-hover-border-color);
+    box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
 }
 
 .ww-kanban-card.is-drag-source {
@@ -1532,7 +1599,7 @@ export default {
 }
 
 .ww-kanban-card-text {
-    font-size: 13px;
+    font-size: var(--ww-card-font-size);
     line-height: 1.3;
     overflow-wrap: anywhere;
     white-space: pre-wrap;

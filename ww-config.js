@@ -26,13 +26,51 @@ export default {
         customSettingsPropertiesOrder: [
             "items",
             ["itemKey", "itemLabel", "itemImage", "stackedBy", "sortedBy", "sortOrder"],
-            ["showAddCardButton", "addCardButtonLabel"],
+            ["showAddCardButton", "addCardButtonLabel", "addCardInputPlaceholder", "addCardSubmitLabel"],
             "readonly",
             "draggingCursor",
             "customDragHandle",
             ["handleClass"],
             "longPress",
             ["longPressDelay"],
+            ["uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
+            ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor"],
+            ["columnTitleColor", "columnTitleFontSize", "columnTitleFontWeight"],
+            ["columnCountBackgroundColor", "columnCountColor", "columnCountBorderColor"],
+            [
+                "cardBackgroundColor",
+                "cardTextColor",
+                "cardBorderColor",
+                "cardHoverBorderColor",
+                "cardHoverRingColor",
+                "cardMinHeight",
+                "cardBorderRadius",
+                "cardPadding",
+                "cardFontSize",
+            ],
+            [
+                "addCardButtonHeight",
+                "addCardButtonBackgroundColor",
+                "addCardButtonHoverBackgroundColor",
+                "addCardButtonTextColor",
+                "addCardButtonBorderColor",
+                "addCardButtonFontSize",
+            ],
+            [
+                "addCardInputBackgroundColor",
+                "addCardInputTextColor",
+                "addCardInputBorderColor",
+                "addCardInputPlaceholderColor",
+                "addCardInputFontSize",
+                "addCardInputMinHeight",
+            ],
+            [
+                "addCardSubmitBackgroundColor",
+                "addCardSubmitHoverBackgroundColor",
+                "addCardSubmitTextColor",
+                "addCardSubmitBorderColor",
+                "addCardSubmitFontSize",
+            ],
         ],
     },
     states: ["readonly"],
@@ -45,7 +83,9 @@ export default {
             label: { en: "On add card clicked" },
             event: {
                 stack: "",
+                stackValue: "",
                 stackLabel: "",
+                title: "",
                 stackedBy: "",
                 defaultItem: {},
             },
@@ -222,6 +262,412 @@ export default {
             },
             type: "Text",
             defaultValue: "Add Card",
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputPlaceholder: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card input placeholder",
+            },
+            type: "Text",
+            defaultValue: "Enter a title or paste a link",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitLabel: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit label",
+            },
+            type: "Text",
+            defaultValue: "Add card",
+            bindable: true,
+            section: "settings",
+        },
+        uiFontFamily: {
+            label: {
+                en: "Font family",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "settings",
+        },
+        boardBackgroundColor: {
+            label: {
+                en: "Board background color",
+            },
+            type: "Text",
+            defaultValue: "#f1f3f6",
+            bindable: true,
+            section: "settings",
+        },
+        boardGap: {
+            label: {
+                en: "Board gap",
+            },
+            type: "Number",
+            defaultValue: 12,
+            bindable: true,
+            section: "settings",
+        },
+        boardPadding: {
+            label: {
+                en: "Board padding",
+            },
+            type: "Number",
+            defaultValue: 8,
+            bindable: true,
+            section: "settings",
+        },
+        columnWidth: {
+            label: {
+                en: "Column width",
+            },
+            type: "Text",
+            defaultValue: "min(300px, 84vw)",
+            bindable: true,
+            section: "settings",
+        },
+        columnHeight: {
+            label: {
+                en: "Column height",
+            },
+            type: "Number",
+            defaultValue: 520,
+            bindable: true,
+            section: "settings",
+        },
+        columnBlockGap: {
+            label: {
+                en: "Column section gap",
+            },
+            type: "Number",
+            defaultValue: 8,
+            bindable: true,
+            section: "settings",
+        },
+        columnBackgroundColor: {
+            label: {
+                en: "Column background color",
+            },
+            type: "Text",
+            defaultValue: "#f3f4f6",
+            bindable: true,
+            section: "settings",
+        },
+        columnBorderColor: {
+            label: {
+                en: "Column border color",
+            },
+            type: "Text",
+            defaultValue: "rgba(15, 23, 42, 0.1)",
+            bindable: true,
+            section: "settings",
+        },
+        columnTitleColor: {
+            label: {
+                en: "Column title color",
+            },
+            type: "Text",
+            defaultValue: "#0f172a",
+            bindable: true,
+            section: "settings",
+        },
+        columnTitleFontSize: {
+            label: {
+                en: "Column title size",
+            },
+            type: "Number",
+            defaultValue: 13,
+            bindable: true,
+            section: "settings",
+        },
+        columnTitleFontWeight: {
+            label: {
+                en: "Column title weight",
+            },
+            type: "Number",
+            defaultValue: 600,
+            bindable: true,
+            section: "settings",
+        },
+        columnCountBackgroundColor: {
+            label: {
+                en: "Column count background",
+            },
+            type: "Text",
+            defaultValue: "#f8fafc",
+            bindable: true,
+            section: "settings",
+        },
+        columnCountColor: {
+            label: {
+                en: "Column count color",
+            },
+            type: "Text",
+            defaultValue: "#111827",
+            bindable: true,
+            section: "settings",
+        },
+        columnCountBorderColor: {
+            label: {
+                en: "Column count border color",
+            },
+            type: "Text",
+            defaultValue: "rgba(15, 23, 42, 0.28)",
+            bindable: true,
+            section: "settings",
+        },
+        cardBackgroundColor: {
+            label: {
+                en: "Card background color",
+            },
+            type: "Text",
+            defaultValue: "#fbfdff",
+            bindable: true,
+            section: "settings",
+        },
+        cardTextColor: {
+            label: {
+                en: "Card text color",
+            },
+            type: "Text",
+            defaultValue: "#0f172a",
+            bindable: true,
+            section: "settings",
+        },
+        cardBorderColor: {
+            label: {
+                en: "Card border color",
+            },
+            type: "Text",
+            defaultValue: "rgba(15, 23, 42, 0.14)",
+            bindable: true,
+            section: "settings",
+        },
+        cardHoverBorderColor: {
+            label: {
+                en: "Card hover border color",
+            },
+            type: "Text",
+            defaultValue: "#3b82f6",
+            bindable: true,
+            section: "settings",
+        },
+        cardHoverRingColor: {
+            label: {
+                en: "Card hover ring color",
+            },
+            type: "Text",
+            defaultValue: "rgba(59, 130, 246, 0.22)",
+            bindable: true,
+            section: "settings",
+        },
+        cardMinHeight: {
+            label: {
+                en: "Card min height",
+            },
+            type: "Number",
+            defaultValue: 74,
+            bindable: true,
+            section: "settings",
+        },
+        cardBorderRadius: {
+            label: {
+                en: "Card border radius",
+            },
+            type: "Number",
+            defaultValue: 8,
+            bindable: true,
+            section: "settings",
+        },
+        cardPadding: {
+            label: {
+                en: "Card padding",
+            },
+            type: "Number",
+            defaultValue: 12,
+            bindable: true,
+            section: "settings",
+        },
+        cardFontSize: {
+            label: {
+                en: "Card font size",
+            },
+            type: "Number",
+            defaultValue: 13,
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonHeight: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button height",
+            },
+            type: "Number",
+            defaultValue: 34,
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonBackgroundColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button background",
+            },
+            type: "Text",
+            defaultValue: "#f8fafc",
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonHoverBackgroundColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button hover background",
+            },
+            type: "Text",
+            defaultValue: "#f2f5fa",
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonTextColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button text color",
+            },
+            type: "Text",
+            defaultValue: "#111827",
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonBorderColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button border color",
+            },
+            type: "Text",
+            defaultValue: "rgba(15, 23, 42, 0.18)",
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonFontSize: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button font size",
+            },
+            type: "Number",
+            defaultValue: 13,
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputBackgroundColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card input background",
+            },
+            type: "Text",
+            defaultValue: "#f8fafc",
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputTextColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card input text color",
+            },
+            type: "Text",
+            defaultValue: "#0f172a",
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputBorderColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card input border color",
+            },
+            type: "Text",
+            defaultValue: "rgba(15, 23, 42, 0.16)",
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputPlaceholderColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card placeholder color",
+            },
+            type: "Text",
+            defaultValue: "#6b7280",
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputFontSize: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card input font size",
+            },
+            type: "Number",
+            defaultValue: 13,
+            bindable: true,
+            section: "settings",
+        },
+        addCardInputMinHeight: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card input min height",
+            },
+            type: "Number",
+            defaultValue: 70,
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitBackgroundColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit background",
+            },
+            type: "Text",
+            defaultValue: "#2563eb",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitHoverBackgroundColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit hover background",
+            },
+            type: "Text",
+            defaultValue: "#1d4ed8",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitTextColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit text color",
+            },
+            type: "Text",
+            defaultValue: "#ffffff",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitBorderColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit border color",
+            },
+            type: "Text",
+            defaultValue: "rgba(37, 99, 235, 0.95)",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitFontSize: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit font size",
+            },
+            type: "Number",
+            defaultValue: 13,
             bindable: true,
             section: "settings",
         },
