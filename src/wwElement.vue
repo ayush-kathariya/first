@@ -1496,8 +1496,8 @@ export default {
 
 .ww-kanban-add-card-input:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+    // border-color: #3b82f6;
+    box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.2);
 }
 
 .ww-kanban-add-card-input::placeholder {
