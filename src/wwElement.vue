@@ -217,6 +217,7 @@ export default {
             dropPlaceholderStackKey: null,
             dropPlaceholderIndex: -1,
             dropPlaceholderHeight: 74,
+            emptyDragImage: null,
             addCardDraft: "",
             addCardComposerStackKey: null,
         };
@@ -495,7 +496,7 @@ export default {
             this.dropPlaceholderStackKey = stackKey;
             this.dropPlaceholderIndex = clampedIndex;
         },
-        setDropLocation(stackValue, index) {
+        setDropLocation(stackValue, index, renderPlaceholder = true) {
             this.setDropTargetStack(stackValue);
             if (!Number.isFinite(index)) {
                 this.setDropTargetIndex(null);
@@ -505,7 +506,50 @@ export default {
             const maxIndex = this.getStackItemsByValue(stackValue).length;
             const normalizedIndex = this.clampIndex(index, maxIndex);
             this.setDropTargetIndex(normalizedIndex);
-            this.mountDropPlaceholder(stackValue, normalizedIndex);
+            if (renderPlaceholder) {
+                this.mountDropPlaceholder(stackValue, normalizedIndex);
+            }
+        },
+        getEmptyDragImage() {
+            if (this.emptyDragImage) return this.emptyDragImage;
+            const win = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+            if (!win?.Image) return null;
+            const image = new win.Image();
+            image.src =
+                "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+            this.emptyDragImage = image;
+            return image;
+        },
+        runDesktopAutoScroll(clientX, clientY) {
+            if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+            const root = this.$refs.kanbanRoot;
+            if (!root) return;
+
+            const rootRect = root.getBoundingClientRect();
+            const deltaX = this.computeEdgeAutoScrollDelta(
+                clientX,
+                rootRect.left,
+                rootRect.right,
+                this.touchAutoScrollEdgeSize,
+                this.touchAutoScrollMaxStepX
+            );
+            if (deltaX !== 0) {
+                root.scrollLeft += deltaX;
+            }
+
+            const stackBody = this.getNearestStackBody(clientX, clientY);
+            if (!stackBody) return;
+            const stackRect = stackBody.getBoundingClientRect();
+            const deltaY = this.computeEdgeAutoScrollDelta(
+                clientY,
+                stackRect.top,
+                stackRect.bottom,
+                this.touchAutoScrollEdgeSize,
+                this.touchAutoScrollMaxStepY
+            );
+            if (deltaY !== 0) {
+                stackBody.scrollTop += deltaY;
+            }
         },
         getDesktopDropIndex(toStack, clientY) {
             const body = this.getStackBodyElement(toStack);
@@ -749,14 +793,24 @@ export default {
             this.desktopDrag = { item, fromStack, oldIndex };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
-            if (event.currentTarget) {
-                const rect = event.currentTarget.getBoundingClientRect();
+            const sourceEl = event.currentTarget?.closest?.(".ww-kanban-card") || event.currentTarget;
+            if (sourceEl) {
+                const rect = sourceEl.getBoundingClientRect();
                 this.setDropPlaceholderHeight(rect?.height);
+                const ghostX = Number.isFinite(event.clientX) ? event.clientX : rect.left + rect.width / 2;
+                const ghostY = Number.isFinite(event.clientY) ? event.clientY : rect.top + rect.height / 2;
+                this.showGhost(sourceEl, ghostX, ghostY);
             }
-            this.setDropLocation(fromStack, oldIndex);
+            // Avoid mutating list layout during native dragstart to keep desktop drag preview stable.
+            this.setDropLocation(fromStack, oldIndex, false);
+            this.clearDropPlaceholder();
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
+                const emptyDragImage = this.getEmptyDragImage();
+                if (emptyDragImage && event.dataTransfer.setDragImage) {
+                    event.dataTransfer.setDragImage(emptyDragImage, 0, 0);
+                }
             }
         },
         onDesktopDragEnd() {
@@ -764,11 +818,14 @@ export default {
             this.setDropTargetIndex(null);
             this.clearDropTargetStack();
             this.clearDropPlaceholder();
+            this.hideGhost();
             if (!this.touchDragContext) this.isDragging = false;
         },
         onCardDragOver(event, toStack, _itemIndex) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+            this.moveGhost(event.clientX, event.clientY);
+            this.runDesktopAutoScroll(event.clientX, event.clientY);
             const index = this.getDesktopDropIndex(toStack, event.clientY);
             this.setDropLocation(toStack, index);
         },
@@ -783,6 +840,8 @@ export default {
         onStackDragOver(event, toStack) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+            this.moveGhost(event.clientX, event.clientY);
+            this.runDesktopAutoScroll(event.clientX, event.clientY);
             this.setDropLocation(toStack, this.getDesktopDropIndex(toStack, event.clientY));
         },
         onStackDrop(event, toStack) {
@@ -1116,15 +1175,10 @@ export default {
             this.touchAutoScrollRaf = null;
         },
         isCardDragSource(stackValue, itemIndex) {
-            const isTouchSource =
+            return (
                 !!this.touchDragContext &&
                 this.valuesEqual(this.touchDragContext.fromStack, stackValue) &&
-                this.touchDragContext.oldIndex === itemIndex;
-            if (isTouchSource) return true;
-            return (
-                !!this.desktopDrag &&
-                this.valuesEqual(this.desktopDrag.fromStack, stackValue) &&
-                this.desktopDrag.oldIndex === itemIndex
+                this.touchDragContext.oldIndex === itemIndex
             );
         },
         getTouchDropTarget(clientX, clientY) {
