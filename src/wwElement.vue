@@ -456,6 +456,12 @@ export default {
             const placeholder = doc.createElement("div");
             placeholder.className = "ww-drop-placeholder";
             placeholder.setAttribute("aria-hidden", "true");
+            const radiusValue = Number(this.content.cardBorderRadius);
+            // Scoped styles do not apply to dynamic nodes, so set critical styles inline.
+            placeholder.style.pointerEvents = "none";
+            placeholder.style.flexShrink = "0";
+            placeholder.style.borderRadius = `${Number.isFinite(radiusValue) ? radiusValue : 8}px`;
+            placeholder.style.background = this.content.dropPlaceholderColor || "rgba(15, 23, 42, 0.08)";
             this.dropPlaceholderEl = placeholder;
             return placeholder;
         },
@@ -470,6 +476,12 @@ export default {
             const parsed = Number(height);
             if (!Number.isFinite(parsed) || parsed <= 0) return;
             this.dropPlaceholderHeight = Math.max(24, Math.round(parsed));
+            if (this.dropPlaceholderEl) {
+                const radiusValue = Number(this.content.cardBorderRadius);
+                this.dropPlaceholderEl.style.height = `${this.dropPlaceholderHeight}px`;
+                this.dropPlaceholderEl.style.background = this.content.dropPlaceholderColor || "rgba(15, 23, 42, 0.08)";
+                this.dropPlaceholderEl.style.borderRadius = `${Number.isFinite(radiusValue) ? radiusValue : 8}px`;
+            }
         },
         mountDropPlaceholder(stackValue, index, stackKey = null) {
             if (!this.isDragging) return;
@@ -488,7 +500,10 @@ export default {
             const clampedIndex = this.clampIndex(index, cards.length);
             const resolvedStackKey = stackKey || body.closest(".ww-kanban-stack")?.dataset?.stackKey || this.getStackDomKey(stackValue);
 
+            const radiusValue = Number(this.content.cardBorderRadius);
             placeholder.style.height = `${this.dropPlaceholderHeight}px`;
+            placeholder.style.background = this.content.dropPlaceholderColor || "rgba(15, 23, 42, 0.08)";
+            placeholder.style.borderRadius = `${Number.isFinite(radiusValue) ? radiusValue : 8}px`;
             if (
                 this.dropPlaceholderStackKey === resolvedStackKey &&
                 this.dropPlaceholderIndex === clampedIndex &&
@@ -527,7 +542,10 @@ export default {
             if (!root) return null;
 
             const doc = wwLib.getFrontDocument();
+            const previousPlaceholderVisibility = this.dropPlaceholderEl?.style.visibility ?? "";
+            if (this.dropPlaceholderEl) this.dropPlaceholderEl.style.visibility = "hidden";
             const pointElement = doc.elementFromPoint(clientX, clientY);
+            if (this.dropPlaceholderEl) this.dropPlaceholderEl.style.visibility = previousPlaceholderVisibility || "";
             let stackEl = pointElement?.closest(".ww-kanban-stack") || null;
             if (stackEl && !root.contains(stackEl)) {
                 stackEl = null;
@@ -1259,13 +1277,16 @@ export default {
             const sourceEl = this.touchDragContext?.sourceEl;
             const prevGhostVisible = this.ghostCard.visible;
             const previousVisibility = sourceEl ? sourceEl.style.visibility : "";
+            const previousPlaceholderVisibility = this.dropPlaceholderEl?.style.visibility ?? "";
 
             if (sourceEl) sourceEl.style.visibility = "hidden";
+            if (this.dropPlaceholderEl) this.dropPlaceholderEl.style.visibility = "hidden";
             this.ghostCard.visible = false;
 
             const pointElement = wwLib.getFrontDocument().elementFromPoint(clientX, clientY);
 
             if (sourceEl) sourceEl.style.visibility = previousVisibility || "";
+            if (this.dropPlaceholderEl) this.dropPlaceholderEl.style.visibility = previousPlaceholderVisibility || "";
             this.ghostCard.visible = prevGhostVisible;
 
             let stackEl = pointElement?.closest(".ww-kanban-stack") || null;
