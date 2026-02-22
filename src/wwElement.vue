@@ -6,16 +6,16 @@
         v-bind="wwElementState?.$attrs"
         ref="kanbanRoot"
     >
-        <template v-for="(stack, stackIndex) in renderStacks" :key="getStackDomKey(stack.value)">
+        <template v-for="(stack, stackIndex) in renderStacks" :key="getStackRenderKey(stack.value, stackIndex)">
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
                     class="ww-kanban-stack"
                     :class="{
                         'has-add-card': content.showAddCardButton !== false && !isReadonly,
                     }"
-                    :data-stack-key="getStackDomKey(stack.value)"
-                    @dragover.prevent="onStackDragOver($event, stack.value)"
-                    @drop.prevent="onStackDrop($event, stack.value)"
+                    :data-stack-key="getStackRenderKey(stack.value, stackIndex)"
+                    @dragover.prevent="onStackDragOver($event, stack.value, stackIndex)"
+                    @drop.prevent="onStackDrop($event, stack.value, stackIndex)"
                 >
                     <div class="ww-kanban-stack-panel">
                         <header class="ww-kanban-stack-header">
@@ -24,7 +24,7 @@
                         </header>
 
                         <div class="ww-kanban-stack-body">
-                            <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value)">
+                            <template v-for="(item, itemIndex) in stack.items" :key="getCardKey(item, itemIndex, stack.value, stackIndex)">
                                 <wwLayoutItemContext
                                     :index="itemIndex"
                                     :item="item"
@@ -40,8 +40,8 @@
                                         :draggable="nativeDesktopDragEnabled && !content.customDragHandle"
                                         @dragstart="onDesktopDragStart($event, item, stack.value, itemIndex)"
                                         @dragend="onDesktopDragEnd"
-                                        @dragover.stop.prevent="onCardDragOver($event, stack.value, itemIndex)"
-                                        @drop.stop.prevent="onCardDrop($event, stack.value, itemIndex)"
+                                        @dragover.stop.prevent="onCardDragOver($event, stack.value, itemIndex, stackIndex)"
+                                        @drop.stop.prevent="onCardDrop($event, stack.value, itemIndex, stackIndex)"
                                         @click="onCardClick(item, stack.value, itemIndex, $event)"
                                     >
                                         <button
@@ -75,13 +75,13 @@
                     <footer
                         v-if="content.showAddCardButton !== false && !isReadonly"
                         class="ww-kanban-stack-footer"
-                        :class="{ 'is-composer-open': isAddCardComposerOpen(stack.value) }"
+                        :class="{ 'is-composer-open': isAddCardComposerOpen(stack.value, stackIndex) }"
                     >
                         <button
-                            v-if="!isAddCardComposerOpen(stack.value)"
+                            v-if="!isAddCardComposerOpen(stack.value, stackIndex)"
                             type="button"
                             class="ww-kanban-add-card-button"
-                            @click="openAddCardComposer(stack, $event)"
+                            @click="openAddCardComposer(stack, stackIndex, $event)"
                         >
                             <span class="ww-kanban-add-card-icon" aria-hidden="true">
                                 <svg class="ww-kanban-add-card-icon-svg" viewBox="0 0 20 20" focusable="false">
@@ -212,6 +212,7 @@ export default {
             touchAutoScrollRunning: false,
             suppressClickUntil: 0,
             dropTargetStack: null,
+            dropTargetStackKey: null,
             dropTargetIndex: null,
             dropPlaceholderEl: null,
             dropPlaceholderStackKey: null,
@@ -346,12 +347,9 @@ export default {
         },
         stackKeyLookup() {
             const map = {};
-            if (this.content.uncategorizedStack) {
-                map[this.getStackDomKey(null)] = null;
-            }
-            for (const stack of this.internalStacks) {
-                map[this.getStackDomKey(stack.value)] = stack.value;
-            }
+            this.renderStacks.forEach((stack, stackIndex) => {
+                map[this.getStackRenderKey(stack.value, stackIndex)] = stack.value;
+            });
             return map;
         },
     },
@@ -403,6 +401,9 @@ export default {
         getStackDomKey(stackValue) {
             return stackValue === null ? NULL_STACK_KEY : `__WW_STACK__${String(stackValue)}`;
         },
+        getStackRenderKey(stackValue, stackIndex) {
+            return `${this.getStackDomKey(stackValue)}::${stackIndex}`;
+        },
         getStackItemsByValue(stackValue) {
             if (stackValue === null) return this.uncategorizedStack.items || [];
             const foundStack = this.internalStacks.find(stack => this.valuesEqual(stack.value, stackValue));
@@ -413,8 +414,8 @@ export default {
             this.dropTargetStack = stackValue;
         },
         clearDropTargetStack() {
-            if (this.dropTargetStack === null) return;
             this.dropTargetStack = null;
+            this.dropTargetStackKey = null;
         },
         setDropTargetIndex(index) {
             if (!Number.isFinite(index)) {
@@ -423,19 +424,28 @@ export default {
             }
             this.dropTargetIndex = Math.max(0, Number(index));
         },
-        getStackElementByValue(stackValue) {
+        getStackElementByKey(stackKey) {
             const root = this.$refs.kanbanRoot;
             if (!root) return null;
-            const stackKey = this.getStackDomKey(stackValue);
             const stackElements = Array.from(root.querySelectorAll(".ww-kanban-stack"));
             return stackElements.find(el => el.dataset.stackKey === stackKey) || null;
         },
-        getStackBodyElement(stackValue) {
-            return this.getStackElementByValue(stackValue)?.querySelector(".ww-kanban-stack-body") || null;
+        getStackElementByValue(stackValue) {
+            const root = this.$refs.kanbanRoot;
+            if (!root) return null;
+            const stackElements = Array.from(root.querySelectorAll(".ww-kanban-stack"));
+            return (
+                stackElements.find(element => this.valuesEqual(this.stackKeyLookup[element.dataset.stackKey], stackValue)) || null
+            );
         },
-        isDesktopSourceCardElement(cardEl, stackValue) {
+        getStackBodyElement(stackValue, stackKey = null) {
+            const stackEl = stackKey ? this.getStackElementByKey(stackKey) : this.getStackElementByValue(stackValue);
+            return stackEl?.querySelector(".ww-kanban-stack-body") || null;
+        },
+        isDesktopSourceCardElement(cardEl) {
             if (!this.desktopDrag) return false;
-            if (!this.valuesEqual(this.desktopDrag.fromStack, stackValue)) return false;
+            const stackKey = cardEl?.closest?.(".ww-kanban-stack")?.dataset?.stackKey;
+            if (!stackKey || stackKey !== this.desktopDrag.fromStackKey) return false;
             const cardIndex = Number(cardEl?.dataset?.itemIndex);
             return Number.isInteger(cardIndex) && cardIndex === this.desktopDrag.oldIndex;
         },
@@ -461,9 +471,9 @@ export default {
             if (!Number.isFinite(parsed) || parsed <= 0) return;
             this.dropPlaceholderHeight = Math.max(24, Math.round(parsed));
         },
-        mountDropPlaceholder(stackValue, index) {
+        mountDropPlaceholder(stackValue, index, stackKey = null) {
             if (!this.isDragging) return;
-            const body = this.getStackBodyElement(stackValue);
+            const body = this.getStackBodyElement(stackValue, stackKey);
             if (!body) {
                 this.clearDropPlaceholder();
                 return;
@@ -473,14 +483,14 @@ export default {
             if (!placeholder) return;
 
             const cards = Array.from(body.querySelectorAll(".ww-kanban-card")).filter(
-                cardEl => !cardEl.classList.contains("is-drag-source") && !this.isDesktopSourceCardElement(cardEl, stackValue)
+                cardEl => !cardEl.classList.contains("is-drag-source") && !this.isDesktopSourceCardElement(cardEl)
             );
             const clampedIndex = this.clampIndex(index, cards.length);
-            const stackKey = this.getStackDomKey(stackValue);
+            const resolvedStackKey = stackKey || body.closest(".ww-kanban-stack")?.dataset?.stackKey || this.getStackDomKey(stackValue);
 
             placeholder.style.height = `${this.dropPlaceholderHeight}px`;
             if (
-                this.dropPlaceholderStackKey === stackKey &&
+                this.dropPlaceholderStackKey === resolvedStackKey &&
                 this.dropPlaceholderIndex === clampedIndex &&
                 placeholder.parentElement === body
             ) {
@@ -493,11 +503,12 @@ export default {
                 body.insertBefore(placeholder, cards[clampedIndex]);
             }
 
-            this.dropPlaceholderStackKey = stackKey;
+            this.dropPlaceholderStackKey = resolvedStackKey;
             this.dropPlaceholderIndex = clampedIndex;
         },
-        setDropLocation(stackValue, index, renderPlaceholder = true) {
+        setDropLocation(stackValue, index, renderPlaceholder = true, stackKey = null) {
             this.setDropTargetStack(stackValue);
+            this.dropTargetStackKey = stackKey;
             if (!Number.isFinite(index)) {
                 this.setDropTargetIndex(null);
                 this.clearDropPlaceholder();
@@ -507,7 +518,7 @@ export default {
             const normalizedIndex = this.clampIndex(index, maxIndex);
             this.setDropTargetIndex(normalizedIndex);
             if (renderPlaceholder) {
-                this.mountDropPlaceholder(stackValue, normalizedIndex);
+                this.mountDropPlaceholder(stackValue, normalizedIndex, stackKey);
             }
         },
         getDesktopDropTarget(clientX, clientY) {
@@ -545,9 +556,7 @@ export default {
             const stackKey = stackEl.dataset.stackKey;
             if (!(stackKey in this.stackKeyLookup)) return null;
             const toStack = this.stackKeyLookup[stackKey];
-            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(
-                cardEl => !this.isDesktopSourceCardElement(cardEl, toStack)
-            );
+            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(cardEl => !this.isDesktopSourceCardElement(cardEl));
             let newIndex = cards.length;
             for (let i = 0; i < cards.length; i += 1) {
                 const rect = cards[i].getBoundingClientRect();
@@ -556,7 +565,7 @@ export default {
                     break;
                 }
             }
-            return { toStack, newIndex };
+            return { toStack, newIndex, stackKey };
         },
         runDesktopAutoScroll(clientX, clientY) {
             if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
@@ -600,7 +609,7 @@ export default {
             this.runDesktopAutoScroll(clientX, clientY);
             const target = this.getDesktopDropTarget(clientX, clientY);
             if (target) {
-                this.setDropLocation(target.toStack, target.newIndex);
+                this.setDropLocation(target.toStack, target.newIndex, true, target.stackKey);
             }
         },
         attachDesktopListeners() {
@@ -615,11 +624,11 @@ export default {
             doc.removeEventListener("dragover", this.onDesktopDragOverGlobal, true);
             this.desktopListenersAttached = false;
         },
-        getDesktopDropIndex(toStack, clientY) {
-            const body = this.getStackBodyElement(toStack);
+        getDesktopDropIndex(toStack, clientY, stackKey = null) {
+            const body = this.getStackBodyElement(toStack, stackKey);
             if (!body) return this.getStackItemsByValue(toStack).length;
             const cards = Array.from(body.querySelectorAll(".ww-kanban-card")).filter(
-                cardEl => !cardEl.classList.contains("is-drag-source") && !this.isDesktopSourceCardElement(cardEl, toStack)
+                cardEl => !cardEl.classList.contains("is-drag-source") && !this.isDesktopSourceCardElement(cardEl)
             );
             for (let index = 0; index < cards.length; index += 1) {
                 const rect = cards[index].getBoundingClientRect();
@@ -636,8 +645,8 @@ export default {
             }
             return index;
         },
-        getCardKey(item, index, stackValue) {
-            return `${this.getStackDomKey(stackValue)}::${this.getItemIdentity(item, index)}::${index}`;
+        getCardKey(item, index, stackValue, stackIndex = 0) {
+            return `${this.getStackRenderKey(stackValue, stackIndex)}::${this.getItemIdentity(item, index)}::${index}`;
         },
         stripHtml(value) {
             const text = typeof value === "string" ? value : String(value ?? "");
@@ -854,16 +863,17 @@ export default {
                 event.preventDefault();
                 return;
             }
-            this.desktopDrag = { item, fromStack, oldIndex };
+            this.desktopDrag = { item, fromStack, oldIndex, fromStackKey: null };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
             const sourceEl = event.currentTarget?.closest?.(".ww-kanban-card") || event.currentTarget;
             if (sourceEl) {
                 const rect = sourceEl.getBoundingClientRect();
                 this.setDropPlaceholderHeight(rect?.height);
+                this.desktopDrag.fromStackKey = sourceEl.closest?.(".ww-kanban-stack")?.dataset?.stackKey || null;
             }
             // Avoid mutating list layout during native dragstart to keep desktop drag preview stable.
-            this.setDropLocation(fromStack, oldIndex, false);
+            this.setDropLocation(fromStack, oldIndex, false, this.desktopDrag.fromStackKey);
             this.clearDropPlaceholder();
             this.hideGhost();
             this.attachDesktopListeners();
@@ -880,33 +890,41 @@ export default {
             this.detachDesktopListeners();
             if (!this.touchDragContext) this.isDragging = false;
         },
-        onCardDragOver(event, toStack, _itemIndex) {
+        onCardDragOver(event, toStack, _itemIndex, stackIndex) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            const index = this.getDesktopDropIndex(toStack, event.clientY);
-            this.setDropLocation(toStack, index);
+            const stackKey = this.getStackRenderKey(toStack, stackIndex);
+            const index = this.getDesktopDropIndex(toStack, event.clientY, stackKey);
+            this.setDropLocation(toStack, index, true, stackKey);
         },
-        onCardDrop(event, toStack, _cardIndex) {
+        onCardDrop(event, toStack, _cardIndex, stackIndex) {
             if (!this.desktopDrag) return;
+            const stackKey = this.getStackRenderKey(toStack, stackIndex);
             const hasTrackedIndex =
-                this.valuesEqual(this.dropTargetStack, toStack) && Number.isFinite(this.dropTargetIndex);
-            const insertIndex = hasTrackedIndex ? this.dropTargetIndex : this.getDesktopDropIndex(toStack, event.clientY);
+                this.valuesEqual(this.dropTargetStack, toStack) &&
+                this.dropTargetStackKey === stackKey &&
+                Number.isFinite(this.dropTargetIndex);
+            const insertIndex = hasTrackedIndex ? this.dropTargetIndex : this.getDesktopDropIndex(toStack, event.clientY, stackKey);
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
-        onStackDragOver(event, toStack) {
+        onStackDragOver(event, toStack, stackIndex) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            this.setDropLocation(toStack, this.getDesktopDropIndex(toStack, event.clientY));
+            const stackKey = this.getStackRenderKey(toStack, stackIndex);
+            this.setDropLocation(toStack, this.getDesktopDropIndex(toStack, event.clientY, stackKey), true, stackKey);
         },
-        onStackDrop(event, toStack) {
+        onStackDrop(event, toStack, stackIndex) {
             if (!this.desktopDrag) return;
+            const stackKey = this.getStackRenderKey(toStack, stackIndex);
             const hasTrackedIndex =
-                this.valuesEqual(this.dropTargetStack, toStack) && Number.isFinite(this.dropTargetIndex);
+                this.valuesEqual(this.dropTargetStack, toStack) &&
+                this.dropTargetStackKey === stackKey &&
+                Number.isFinite(this.dropTargetIndex);
             const insertIndex = hasTrackedIndex
                 ? this.dropTargetIndex
                 : Number.isFinite(event?.clientY)
-                ? this.getDesktopDropIndex(toStack, event.clientY)
+                ? this.getDesktopDropIndex(toStack, event.clientY, stackKey)
                 : this.getStackItemsByValue(toStack).length;
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
@@ -927,13 +945,13 @@ export default {
                 },
             });
         },
-        isAddCardComposerOpen(stackValue) {
-            return this.addCardComposerStackKey === this.getStackDomKey(stackValue ?? null);
+        isAddCardComposerOpen(stackValue, stackIndex = 0) {
+            return this.addCardComposerStackKey === this.getStackRenderKey(stackValue ?? null, stackIndex);
         },
-        openAddCardComposer(stack, event) {
+        openAddCardComposer(stack, stackIndex, event) {
             if (!event?.isTrusted) return;
             const stackValue = stack?.value ?? null;
-            const stackKey = this.getStackDomKey(stackValue);
+            const stackKey = this.getStackRenderKey(stackValue, stackIndex);
             this.addCardComposerStackKey = stackKey;
             this.addCardDraft = "";
             this.$nextTick(() => {
@@ -1205,7 +1223,7 @@ export default {
 
             const target = this.getTouchDropTarget(clientX, clientY);
             if (target) {
-                this.setDropLocation(target.toStack, target.newIndex);
+                this.setDropLocation(target.toStack, target.newIndex, true, target.stackKey);
             }
         },
         startTouchAutoScroll() {
@@ -1284,7 +1302,7 @@ export default {
                     break;
                 }
             }
-            return { toStack, newIndex };
+            return { toStack, newIndex, stackKey };
         },
         startTouchDrag(clientX, clientY) {
             if (!this.touchPressContext) return;
@@ -1306,7 +1324,12 @@ export default {
             this.lockTouchScroll();
             this.touchLastClientX = clientX;
             this.touchLastClientY = clientY;
-            this.setDropLocation(this.touchDragContext.fromStack, this.touchDragContext.oldIndex);
+            this.setDropLocation(
+                this.touchDragContext.fromStack,
+                this.touchDragContext.oldIndex,
+                true,
+                this.touchDragContext.fromStackKey || null
+            );
             this.startTouchAutoScroll();
         },
         onTouchPointerDown(event) {
@@ -1341,7 +1364,7 @@ export default {
             this.touchLastClientX = event.clientX;
             this.touchLastClientY = event.clientY;
             this.clearTouchPress();
-            this.touchPressContext = { item, fromStack, oldIndex, sourceEl: cardEl };
+            this.touchPressContext = { item, fromStack, fromStackKey: stackKey, oldIndex, sourceEl: cardEl };
 
             // On touch, always use long-press before drag to preserve natural scroll gestures.
             const delay = Number.isFinite(Number(this.content.longPressDelay))
@@ -1374,7 +1397,7 @@ export default {
                 if (!this.touchAutoScrollRunning) {
                     const target = this.getTouchDropTarget(event.clientX, event.clientY);
                     if (target) {
-                        this.setDropLocation(target.toStack, target.newIndex);
+                        this.setDropLocation(target.toStack, target.newIndex, true, target.stackKey);
                     }
                 }
             }
@@ -1401,7 +1424,7 @@ export default {
                 if (primaryTouch && !this.touchAutoScrollRunning) {
                     const target = this.getTouchDropTarget(primaryTouch.clientX, primaryTouch.clientY);
                     if (target) {
-                        this.setDropLocation(target.toStack, target.newIndex);
+                        this.setDropLocation(target.toStack, target.newIndex, true, target.stackKey);
                     }
                 }
                 if (event.cancelable) event.preventDefault();
