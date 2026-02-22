@@ -212,6 +212,11 @@ export default {
             touchAutoScrollRunning: false,
             suppressClickUntil: 0,
             dropTargetStack: null,
+            dropTargetIndex: null,
+            dropPlaceholderEl: null,
+            dropPlaceholderStackKey: null,
+            dropPlaceholderIndex: -1,
+            dropPlaceholderHeight: 74,
             addCardDraft: "",
             addCardComposerStackKey: null,
         };
@@ -292,6 +297,7 @@ export default {
                 "--ww-add-submit-text-color": valueOrDefault(this.content.addCardSubmitTextColor, "#ffffff"),
                 "--ww-add-submit-border-color": valueOrDefault(this.content.addCardSubmitBorderColor, "rgba(37, 99, 235, 0.95)"),
                 "--ww-add-submit-font-size": sizeOrDefault(this.content.addCardSubmitFontSize, 13),
+                "--ww-drop-placeholder-color": valueOrDefault(this.content.dropPlaceholderColor, "rgba(15, 23, 42, 0.08)"),
             };
         },
         isReadonly() {
@@ -409,6 +415,13 @@ export default {
             if (this.dropTargetStack === null) return;
             this.dropTargetStack = null;
         },
+        setDropTargetIndex(index) {
+            if (!Number.isFinite(index)) {
+                this.dropTargetIndex = null;
+                return;
+            }
+            this.dropTargetIndex = Math.max(0, Number(index));
+        },
         getStackElementByValue(stackValue) {
             const root = this.$refs.kanbanRoot;
             if (!root) return null;
@@ -419,14 +432,86 @@ export default {
         getStackBodyElement(stackValue) {
             return this.getStackElementByValue(stackValue)?.querySelector(".ww-kanban-stack-body") || null;
         },
-        setDropLocation(stackValue) {
+        isDesktopSourceCardElement(cardEl, stackValue) {
+            if (!this.desktopDrag) return false;
+            if (!this.valuesEqual(this.desktopDrag.fromStack, stackValue)) return false;
+            const cardIndex = Number(cardEl?.dataset?.itemIndex);
+            return Number.isInteger(cardIndex) && cardIndex === this.desktopDrag.oldIndex;
+        },
+        ensureDropPlaceholder() {
+            if (this.dropPlaceholderEl) return this.dropPlaceholderEl;
+            const doc = wwLib.getFrontDocument?.() || (typeof document !== "undefined" ? document : null);
+            if (!doc) return null;
+            const placeholder = doc.createElement("div");
+            placeholder.className = "ww-drop-placeholder";
+            placeholder.setAttribute("aria-hidden", "true");
+            this.dropPlaceholderEl = placeholder;
+            return placeholder;
+        },
+        clearDropPlaceholder() {
+            if (this.dropPlaceholderEl?.parentNode) {
+                this.dropPlaceholderEl.parentNode.removeChild(this.dropPlaceholderEl);
+            }
+            this.dropPlaceholderStackKey = null;
+            this.dropPlaceholderIndex = -1;
+        },
+        setDropPlaceholderHeight(height) {
+            const parsed = Number(height);
+            if (!Number.isFinite(parsed) || parsed <= 0) return;
+            this.dropPlaceholderHeight = Math.max(24, Math.round(parsed));
+        },
+        mountDropPlaceholder(stackValue, index) {
+            if (!this.isDragging) return;
+            const body = this.getStackBodyElement(stackValue);
+            if (!body) {
+                this.clearDropPlaceholder();
+                return;
+            }
+
+            const placeholder = this.ensureDropPlaceholder();
+            if (!placeholder) return;
+
+            const cards = Array.from(body.querySelectorAll(".ww-kanban-card")).filter(
+                cardEl => !cardEl.classList.contains("is-drag-source") && !this.isDesktopSourceCardElement(cardEl, stackValue)
+            );
+            const clampedIndex = this.clampIndex(index, cards.length);
+            const stackKey = this.getStackDomKey(stackValue);
+
+            placeholder.style.height = `${this.dropPlaceholderHeight}px`;
+            if (
+                this.dropPlaceholderStackKey === stackKey &&
+                this.dropPlaceholderIndex === clampedIndex &&
+                placeholder.parentElement === body
+            ) {
+                return;
+            }
+
+            if (clampedIndex >= cards.length) {
+                body.appendChild(placeholder);
+            } else {
+                body.insertBefore(placeholder, cards[clampedIndex]);
+            }
+
+            this.dropPlaceholderStackKey = stackKey;
+            this.dropPlaceholderIndex = clampedIndex;
+        },
+        setDropLocation(stackValue, index) {
             this.setDropTargetStack(stackValue);
+            if (!Number.isFinite(index)) {
+                this.setDropTargetIndex(null);
+                this.clearDropPlaceholder();
+                return;
+            }
+            const maxIndex = this.getStackItemsByValue(stackValue).length;
+            const normalizedIndex = this.clampIndex(index, maxIndex);
+            this.setDropTargetIndex(normalizedIndex);
+            this.mountDropPlaceholder(stackValue, normalizedIndex);
         },
         getDesktopDropIndex(toStack, clientY) {
             const body = this.getStackBodyElement(toStack);
             if (!body) return this.getStackItemsByValue(toStack).length;
             const cards = Array.from(body.querySelectorAll(".ww-kanban-card")).filter(
-                cardEl => !cardEl.classList.contains("is-drag-source")
+                cardEl => !cardEl.classList.contains("is-drag-source") && !this.isDesktopSourceCardElement(cardEl, toStack)
             );
             for (let index = 0; index < cards.length; index += 1) {
                 const rect = cards[index].getBoundingClientRect();
@@ -664,7 +749,11 @@ export default {
             this.desktopDrag = { item, fromStack, oldIndex };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
-            this.setDropTargetStack(fromStack);
+            if (event.currentTarget) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                this.setDropPlaceholderHeight(rect?.height);
+            }
+            this.setDropLocation(fromStack, oldIndex);
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
@@ -672,26 +761,22 @@ export default {
         },
         onDesktopDragEnd() {
             this.desktopDrag = null;
+            this.setDropTargetIndex(null);
             this.clearDropTargetStack();
+            this.clearDropPlaceholder();
             if (!this.touchDragContext) this.isDragging = false;
         },
-        onCardDragOver(event, toStack, itemIndex) {
+        onCardDragOver(event, toStack, _itemIndex) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            let index = itemIndex + 1;
-            if (event.currentTarget) {
-                const rect = event.currentTarget.getBoundingClientRect();
-                index = itemIndex + (event.clientY > rect.top + rect.height / 2 ? 1 : 0);
-            }
+            const index = this.getDesktopDropIndex(toStack, event.clientY);
             this.setDropLocation(toStack, index);
         },
-        onCardDrop(event, toStack, cardIndex) {
+        onCardDrop(event, toStack, _cardIndex) {
             if (!this.desktopDrag) return;
-            const rect = event.currentTarget.getBoundingClientRect();
-            let insertIndex = cardIndex + (event.clientY > rect.top + rect.height / 2 ? 1 : 0);
-            if (this.valuesEqual(this.desktopDrag.fromStack, toStack) && insertIndex > this.desktopDrag.oldIndex) {
-                insertIndex -= 1;
-            }
+            const hasTrackedIndex =
+                this.valuesEqual(this.dropTargetStack, toStack) && Number.isFinite(this.dropTargetIndex);
+            const insertIndex = hasTrackedIndex ? this.dropTargetIndex : this.getDesktopDropIndex(toStack, event.clientY);
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
@@ -702,13 +787,13 @@ export default {
         },
         onStackDrop(event, toStack) {
             if (!this.desktopDrag) return;
-            const stackItems = this.getStackItemsByValue(toStack);
-            let insertIndex = Number.isFinite(event?.clientY)
+            const hasTrackedIndex =
+                this.valuesEqual(this.dropTargetStack, toStack) && Number.isFinite(this.dropTargetIndex);
+            const insertIndex = hasTrackedIndex
+                ? this.dropTargetIndex
+                : Number.isFinite(event?.clientY)
                 ? this.getDesktopDropIndex(toStack, event.clientY)
-                : stackItems.length;
-            if (this.valuesEqual(this.desktopDrag.fromStack, toStack) && insertIndex > this.desktopDrag.oldIndex) {
-                insertIndex -= 1;
-            }
+                : this.getStackItemsByValue(toStack).length;
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
@@ -856,7 +941,9 @@ export default {
             this.touchDragContext = null;
             this.touchPointerId = null;
             this.touchIdentifier = null;
+            this.setDropTargetIndex(null);
             this.clearDropTargetStack();
+            this.clearDropPlaceholder();
             this.hideGhost();
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
@@ -1029,8 +1116,16 @@ export default {
             this.touchAutoScrollRaf = null;
         },
         isCardDragSource(stackValue, itemIndex) {
-            if (!this.touchDragContext) return false;
-            return this.valuesEqual(this.touchDragContext.fromStack, stackValue) && this.touchDragContext.oldIndex === itemIndex;
+            const isTouchSource =
+                !!this.touchDragContext &&
+                this.valuesEqual(this.touchDragContext.fromStack, stackValue) &&
+                this.touchDragContext.oldIndex === itemIndex;
+            if (isTouchSource) return true;
+            return (
+                !!this.desktopDrag &&
+                this.valuesEqual(this.desktopDrag.fromStack, stackValue) &&
+                this.desktopDrag.oldIndex === itemIndex
+            );
         },
         getTouchDropTarget(clientX, clientY) {
             const sourceEl = this.touchDragContext?.sourceEl;
@@ -1088,6 +1183,8 @@ export default {
             this.suppressClickUntil = Date.now() + 500;
             this.isDragging = true;
             this.setDropTargetStack(this.touchDragContext.fromStack);
+            const sourceRect = this.touchDragContext.sourceEl?.getBoundingClientRect?.();
+            this.setDropPlaceholderHeight(sourceRect?.height);
             this.touchDragContext.sourceEl.classList.add("is-drag-source");
             try {
                 this.touchDragContext.sourceEl.setPointerCapture?.(this.touchPointerId);
@@ -1433,6 +1530,13 @@ export default {
     width: 0;
     height: 0;
     display: none;
+}
+
+.ww-drop-placeholder {
+    flex: 0 0 auto;
+    border-radius: var(--ww-card-radius);
+    background: var(--ww-drop-placeholder-color);
+    pointer-events: none;
 }
 
 .ww-kanban-stack-footer {

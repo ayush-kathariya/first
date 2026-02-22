@@ -43,6 +43,7 @@ export default {
                 "cardBorderColor",
                 "cardHoverBorderColor",
                 "cardHoverRingColor",
+                "dropPlaceholderColor",
                 "cardMinHeight",
                 "cardBorderRadius",
                 "cardPadding",
@@ -462,6 +463,15 @@ export default {
             },
             type: "Text",
             defaultValue: "rgba(59, 130, 246, 0.22)",
+            bindable: true,
+            section: "settings",
+        },
+        dropPlaceholderColor: {
+            label: {
+                en: "Drop placeholder color",
+            },
+            type: "Text",
+            defaultValue: "rgba(15, 23, 42, 0.08)",
             bindable: true,
             section: "settings",
         },
