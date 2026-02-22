@@ -83,7 +83,13 @@
                             class="ww-kanban-add-card-button"
                             @click="openAddCardComposer(stack, $event)"
                         >
-                            <span class="ww-kanban-add-card-icon" aria-hidden="true">+</span>
+                            <span class="ww-kanban-add-card-icon" aria-hidden="true">
+                                <svg class="ww-kanban-add-card-icon-svg" viewBox="0 0 20 20" focusable="false">
+                                    <circle cx="10" cy="10" r="8.25"></circle>
+                                    <path d="M10 6.5V13.5"></path>
+                                    <path d="M6.5 10H13.5"></path>
+                                </svg>
+                            </span>
                             <span>{{ content.addCardButtonLabel || "Add Card" }}</span>
                         </button>
 
@@ -105,7 +111,10 @@
                                     aria-label="Cancel"
                                     @click="cancelAddCardComposer"
                                 >
-                                    x
+                                    <svg class="ww-kanban-add-card-cancel-icon" viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+                                        <path d="M6 6L14 14"></path>
+                                        <path d="M14 6L6 14"></path>
+                                    </svg>
                                 </button>
                             </div>
                         </form>
@@ -1428,7 +1437,7 @@ export default {
 
 .ww-kanban-stack-footer {
     padding: 1px;
-    border: 1px solid var(--ww-add-button-border-color);
+    // border: 1px solid var(--ww-add-button-border-color);
     border-radius: 10px;
     background: var(--ww-panel-bg);
     height: var(--add-card-block-height);
@@ -1451,7 +1460,7 @@ export default {
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
-    border: 1px solid var(--ww-add-button-border-color);
+    // border: 1px solid var(--ww-add-button-border-color);
     border-radius: 8px;
     padding: 7px 10px;
     font-size: var(--ww-add-button-font-size);
@@ -1461,9 +1470,9 @@ export default {
     cursor: pointer;
 }
 
-.ww-kanban-add-card-button:hover {
-    background: var(--ww-add-button-bg-hover);
-}
+// .ww-kanban-add-card-button:hover {
+//     background: var(--ww-add-button-bg-hover);
+// }
 
 .ww-kanban-add-card-composer {
     display: flex;
@@ -1479,7 +1488,7 @@ export default {
     padding: 10px 12px;
     font-size: var(--ww-add-input-font-size);
     line-height: 1.35;
-    // resize: vertical;
+    resize: none;
     background: var(--ww-add-input-bg);
     color: var(--ww-add-input-text-color);
     font-family: var(--ww-font-family);
@@ -1525,29 +1534,48 @@ export default {
 .ww-kanban-add-card-cancel {
     border: none;
     background: transparent;
-    color: #0f172a;
-    font-size: 22px;
-    line-height: 1;
-    padding: 0 2px;
-    cursor: pointer;
-}
-
-.ww-kanban-add-card-cancel:hover {
-    color: #111827;
-}
-
-.ww-kanban-add-card-icon {
-    width: 16px;
-    height: 16px;
+    color: #000000;
+    width: 24px;
+    height: 24px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 999px;
-    border: 1px solid rgba(17, 24, 39, 0.7);
-    font-size: 12px;
-    font-weight: 600;
-    color: #111827;
     line-height: 1;
+    padding: 0;
+    // border-radius: 6px;
+    cursor: pointer;
+}
+
+// .ww-kanban-add-card-cancel:hover {
+//     color: #111827;
+//     background: rgba(15, 23, 42, 0.06);
+// }
+
+.ww-kanban-add-card-cancel-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+}
+
+.ww-kanban-add-card-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: currentColor;
+}
+
+.ww-kanban-add-card-icon-svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
 }
 
 .ww-kanban-card {
