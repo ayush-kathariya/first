@@ -217,7 +217,7 @@ export default {
             dropPlaceholderStackKey: null,
             dropPlaceholderIndex: -1,
             dropPlaceholderHeight: 74,
-            emptyDragImage: null,
+            desktopListenersAttached: false,
             addCardDraft: "",
             addCardComposerStackKey: null,
         };
@@ -510,15 +510,53 @@ export default {
                 this.mountDropPlaceholder(stackValue, normalizedIndex);
             }
         },
-        getEmptyDragImage() {
-            if (this.emptyDragImage) return this.emptyDragImage;
-            const win = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
-            if (!win?.Image) return null;
-            const image = new win.Image();
-            image.src =
-                "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-            this.emptyDragImage = image;
-            return image;
+        getDesktopDropTarget(clientX, clientY) {
+            if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+            const root = this.$refs.kanbanRoot;
+            if (!root) return null;
+
+            const doc = wwLib.getFrontDocument();
+            const pointElement = doc.elementFromPoint(clientX, clientY);
+            let stackEl = pointElement?.closest(".ww-kanban-stack") || null;
+            if (stackEl && !root.contains(stackEl)) {
+                stackEl = null;
+            }
+
+            if (!stackEl) {
+                const stackElements = Array.from(root.querySelectorAll(".ww-kanban-stack"));
+                if (!stackElements.length) return null;
+
+                stackEl =
+                    stackElements.find(el => {
+                        const rect = el.getBoundingClientRect();
+                        return clientX >= rect.left && clientX <= rect.right;
+                    }) ||
+                    stackElements.reduce((nearestEl, currentEl) => {
+                        if (!nearestEl) return currentEl;
+                        const nearestRect = nearestEl.getBoundingClientRect();
+                        const currentRect = currentEl.getBoundingClientRect();
+                        const nearestDistance = Math.abs(clientX - (nearestRect.left + nearestRect.width / 2));
+                        const currentDistance = Math.abs(clientX - (currentRect.left + currentRect.width / 2));
+                        return currentDistance < nearestDistance ? currentEl : nearestEl;
+                    }, null);
+            }
+            if (!stackEl) return null;
+
+            const stackKey = stackEl.dataset.stackKey;
+            if (!(stackKey in this.stackKeyLookup)) return null;
+            const toStack = this.stackKeyLookup[stackKey];
+            const cards = Array.from(stackEl.querySelectorAll(".ww-kanban-card")).filter(
+                cardEl => !this.isDesktopSourceCardElement(cardEl, toStack)
+            );
+            let newIndex = cards.length;
+            for (let i = 0; i < cards.length; i += 1) {
+                const rect = cards[i].getBoundingClientRect();
+                if (clientY < rect.top + rect.height / 2) {
+                    newIndex = i;
+                    break;
+                }
+            }
+            return { toStack, newIndex };
         },
         runDesktopAutoScroll(clientX, clientY) {
             if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
@@ -550,6 +588,32 @@ export default {
             if (deltaY !== 0) {
                 stackBody.scrollTop += deltaY;
             }
+        },
+        onDesktopDragOverGlobal(event) {
+            if (!this.desktopDrag) return;
+            const clientX = event.clientX;
+            const clientY = event.clientY;
+            if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+            if (event.cancelable) event.preventDefault();
+            if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+
+            this.runDesktopAutoScroll(clientX, clientY);
+            const target = this.getDesktopDropTarget(clientX, clientY);
+            if (target) {
+                this.setDropLocation(target.toStack, target.newIndex);
+            }
+        },
+        attachDesktopListeners() {
+            if (this.desktopListenersAttached) return;
+            const doc = wwLib.getFrontDocument();
+            doc.addEventListener("dragover", this.onDesktopDragOverGlobal, { capture: true, passive: false });
+            this.desktopListenersAttached = true;
+        },
+        detachDesktopListeners() {
+            if (!this.desktopListenersAttached) return;
+            const doc = wwLib.getFrontDocument();
+            doc.removeEventListener("dragover", this.onDesktopDragOverGlobal, true);
+            this.desktopListenersAttached = false;
         },
         getDesktopDropIndex(toStack, clientY) {
             const body = this.getStackBodyElement(toStack);
@@ -797,20 +861,15 @@ export default {
             if (sourceEl) {
                 const rect = sourceEl.getBoundingClientRect();
                 this.setDropPlaceholderHeight(rect?.height);
-                const ghostX = Number.isFinite(event.clientX) ? event.clientX : rect.left + rect.width / 2;
-                const ghostY = Number.isFinite(event.clientY) ? event.clientY : rect.top + rect.height / 2;
-                this.showGhost(sourceEl, ghostX, ghostY);
             }
             // Avoid mutating list layout during native dragstart to keep desktop drag preview stable.
             this.setDropLocation(fromStack, oldIndex, false);
             this.clearDropPlaceholder();
+            this.hideGhost();
+            this.attachDesktopListeners();
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "kanban-move");
-                const emptyDragImage = this.getEmptyDragImage();
-                if (emptyDragImage && event.dataTransfer.setDragImage) {
-                    event.dataTransfer.setDragImage(emptyDragImage, 0, 0);
-                }
             }
         },
         onDesktopDragEnd() {
@@ -818,14 +877,12 @@ export default {
             this.setDropTargetIndex(null);
             this.clearDropTargetStack();
             this.clearDropPlaceholder();
-            this.hideGhost();
+            this.detachDesktopListeners();
             if (!this.touchDragContext) this.isDragging = false;
         },
         onCardDragOver(event, toStack, _itemIndex) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            this.moveGhost(event.clientX, event.clientY);
-            this.runDesktopAutoScroll(event.clientX, event.clientY);
             const index = this.getDesktopDropIndex(toStack, event.clientY);
             this.setDropLocation(toStack, index);
         },
@@ -840,8 +897,6 @@ export default {
         onStackDragOver(event, toStack) {
             if (!this.desktopDrag) return;
             if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-            this.moveGhost(event.clientX, event.clientY);
-            this.runDesktopAutoScroll(event.clientX, event.clientY);
             this.setDropLocation(toStack, this.getDesktopDropIndex(toStack, event.clientY));
         },
         onStackDrop(event, toStack) {
@@ -986,6 +1041,7 @@ export default {
         clearTouchInteraction() {
             this.clearTouchPress();
             this.stopTouchAutoScroll();
+            this.detachDesktopListeners();
             if (this.touchDragCapturedEl && this.touchPointerId !== null) {
                 try {
                     this.touchDragCapturedEl.releasePointerCapture?.(this.touchPointerId);
@@ -1458,6 +1514,7 @@ export default {
         this.attachTouchListeners();
     },
     beforeUnmount() {
+        this.detachDesktopListeners();
         this.detachTouchListeners();
         this.clearTouchInteraction();
     },
