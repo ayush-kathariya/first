@@ -67,23 +67,54 @@
                                             <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
                                             <template v-for="cardMeta in [getItemCardMeta(item, itemIndex)]" :key="`meta-${itemIndex}`">
                                                 <div
+                                                    v-if="cardMeta.hasAnyMeta"
                                                     class="ww-kanban-card-meta"
                                                     :class="{ 'has-multiple-avatars': cardMeta.avatars.length > 1 }"
                                                 >
-                                                    <span
-                                                        v-if="cardMeta.hasDescription"
-                                                        class="ww-kanban-card-description-indicator"
-                                                        aria-hidden="true"
+                                                    <div
+                                                        v-if="cardMeta.deadline || cardMeta.hasDescription || cardMeta.hasAttachment"
+                                                        class="ww-kanban-card-meta-left"
                                                     >
-                                                        <svg class="ww-kanban-card-description-icon" viewBox="0 0 20 20" focusable="false">
-                                                            <path d="M4 6h12"></path>
-                                                            <path d="M4 10h12"></path>
-                                                            <path d="M4 14h8"></path>
-                                                        </svg>
-                                                    </span>
-                                                    <span v-else class="ww-kanban-card-description-spacer" aria-hidden="true"></span>
+                                                        <span
+                                                            v-if="cardMeta.deadline"
+                                                            class="ww-kanban-card-deadline"
+                                                            :class="`is-${cardMeta.deadline.tone}`"
+                                                            :title="cardMeta.deadline.text"
+                                                        >
+                                                            <svg class="ww-kanban-card-deadline-icon" viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+                                                                <circle cx="10" cy="10" r="7"></circle>
+                                                                <path d="M10 6.5V10.5"></path>
+                                                                <path d="M10 10.5L12.5 12"></path>
+                                                            </svg>
+                                                            <span class="ww-kanban-card-deadline-text">{{ cardMeta.deadline.text }}</span>
+                                                        </span>
 
-                                                    <div class="ww-kanban-card-avatars">
+                                                        <span
+                                                            v-if="cardMeta.hasDescription"
+                                                            class="ww-kanban-card-description-indicator"
+                                                            aria-hidden="true"
+                                                            title="Description available"
+                                                        >
+                                                            <svg class="ww-kanban-card-description-icon" viewBox="0 0 20 20" focusable="false">
+                                                                <path d="M4 6h12"></path>
+                                                                <path d="M4 10h12"></path>
+                                                                <path d="M4 14h8"></path>
+                                                            </svg>
+                                                        </span>
+
+                                                        <span
+                                                            v-if="cardMeta.hasAttachment"
+                                                            class="ww-kanban-card-attachment-indicator"
+                                                            aria-hidden="true"
+                                                            title="Attachment available"
+                                                        >
+                                                            <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 20 20" focusable="false">
+                                                                <path d="M7.4 10.9L11.9 6.4a2.5 2.5 0 1 1 3.5 3.5l-6.1 6.1a4 4 0 0 1-5.6-5.7l6-6"></path>
+                                                            </svg>
+                                                        </span>
+                                                    </div>
+
+                                                    <div v-if="cardMeta.avatars.length" class="ww-kanban-card-avatars">
                                                         <span
                                                             v-for="(avatar, avatarIndex) in cardMeta.avatars"
                                                             :key="`avatar-${itemIndex}-${avatarIndex}-${avatar.label}`"
@@ -321,10 +352,12 @@ export default {
                 "--ww-card-radius": sizeOrDefault(this.content.cardBorderRadius, 8),
                 "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
                 "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
+                "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
                 "--ww-add-button-bg": valueOrDefault(this.content.addCardButtonBackgroundColor, "#f8fafc"),
                 "--ww-add-button-bg-hover": valueOrDefault(this.content.addCardButtonHoverBackgroundColor, "#f2f5fa"),
                 "--ww-add-button-text-color": valueOrDefault(this.content.addCardButtonTextColor, "#111827"),
                 "--ww-add-button-border-color": valueOrDefault(this.content.addCardButtonBorderColor, "rgba(15, 23, 42, 0.18)"),
+                "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonBorderColor, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
                 "--ww-add-input-bg": valueOrDefault(this.content.addCardInputBackgroundColor, "#f8fafc"),
                 "--ww-add-input-text-color": valueOrDefault(this.content.addCardInputTextColor, "#0f172a"),
@@ -810,25 +843,39 @@ export default {
                 return `Item ${index + 1}`;
             }
         },
-        getItemDescription(item) {
-            if (!item || typeof item !== "object") return "";
-            const candidatePaths = [
-                this.content.itemDescription,
-                "description",
-                "desc",
-                "details",
-                "notes",
-                "note",
-            ].filter(Boolean);
-            for (const path of candidatePaths) {
-                const value = wwLib.resolveObjectPropertyPath(item, path);
-                const normalized = this.normalizeDisplayValue(value);
-                if (normalized) return normalized;
+        resolveItemFieldValue(item, configuredPath, fallbackPaths = []) {
+            if (!item || typeof item !== "object") return undefined;
+            if (configuredPath) {
+                return wwLib.resolveObjectPropertyPath(item, configuredPath);
             }
-            return "";
+            for (const path of fallbackPaths) {
+                const value = wwLib.resolveObjectPropertyPath(item, path);
+                if (value !== undefined) return value;
+            }
+            return undefined;
+        },
+        isTruthyMetaField(value) {
+            if (value === undefined || value === null || value === false) return false;
+            if (typeof value === "string") {
+                const normalized = value.trim();
+                if (!normalized) return false;
+                if (normalized.toLowerCase() === "false") return false;
+                if (normalized === "0") return false;
+                return true;
+            }
+            if (typeof value === "number") return value > 0;
+            if (Array.isArray(value)) return value.length > 0;
+            if (typeof value === "object") return Object.keys(value).length > 0;
+            return Boolean(value);
+        },
+        getItemDescriptionRaw(item) {
+            return this.resolveItemFieldValue(item, this.content.itemDescription, ["description", "desc", "details", "notes", "note"]);
+        },
+        getItemDescription(item) {
+            return this.normalizeDisplayValue(this.getItemDescriptionRaw(item));
         },
         hasItemDescription(item) {
-            return !!this.getItemDescription(item);
+            return this.isTruthyMetaField(this.getItemDescriptionRaw(item));
         },
         getAvatarPaletteColor(seed) {
             const palette = ["#0ea5e9", "#ef4444", "#f59e0b", "#22c55e", "#8b5cf6", "#06b6d4", "#ec4899", "#2563eb", "#14b8a6", "#f97316"];
@@ -894,9 +941,7 @@ export default {
             return "";
         },
         getItemRawAvatars(item) {
-            if (!item || typeof item !== "object") return [];
-            const avatarPaths = [
-                this.content.itemAvatars,
+            const rawValue = this.resolveItemFieldValue(item, this.content.itemAvatars, [
                 "avatars",
                 "assignees",
                 "members",
@@ -905,13 +950,11 @@ export default {
                 "people",
                 "assignedTo",
                 "assigned_to",
-            ].filter(Boolean);
-            for (const path of avatarPaths) {
-                const value = wwLib.resolveObjectPropertyPath(item, path);
-                if (Array.isArray(value) && value.length) return value;
-                if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return [value];
-                if (value && typeof value === "object") return [value];
-            }
+            ]);
+            if (rawValue === undefined || rawValue === null || rawValue === false) return [];
+            if (Array.isArray(rawValue)) return rawValue;
+            if (typeof rawValue === "string" || typeof rawValue === "number") return [rawValue];
+            if (typeof rawValue === "object") return [rawValue];
             return [];
         },
         buildAvatarChip(avatarSource, fallbackSeed) {
@@ -945,16 +988,96 @@ export default {
                 .map((avatar, avatarIndex) => this.buildAvatarChip(avatar, `${itemIndex}-${avatarIndex}`))
                 .filter(Boolean);
 
-            if (chips.length) return chips;
+            return chips;
+        },
+        getItemDeadlineRaw(item) {
+            return this.resolveItemFieldValue(item, this.content.itemDeadline, [
+                "deadline",
+                "dueDate",
+                "due_date",
+                "due",
+                "endDate",
+                "end_date",
+            ]);
+        },
+        parseDateValue(value) {
+            if (value instanceof Date && Number.isFinite(value.getTime())) return value;
+            if (typeof value === "number" && Number.isFinite(value)) {
+                const parsedDate = new Date(value);
+                return Number.isFinite(parsedDate.getTime()) ? parsedDate : null;
+            }
+            if (typeof value === "string") {
+                const normalized = value.trim();
+                if (!normalized) return null;
+                const timestamp = Date.parse(normalized);
+                if (Number.isFinite(timestamp)) {
+                    const parsedDate = new Date(timestamp);
+                    if (Number.isFinite(parsedDate.getTime())) return parsedDate;
+                }
+            }
+            return null;
+        },
+        formatDeadlineDate(dateValue) {
+            try {
+                return new Intl.DateTimeFormat("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
+                }).format(dateValue);
+            } catch (e) {
+                return dateValue?.toLocaleDateString?.("en-US") || "";
+            }
+        },
+        getDeadlineTone(deadlineDate) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const target = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate());
+            if (target < today) return "overdue";
+            if (target.getTime() === today.getTime()) return "today";
+            return "upcoming";
+        },
+        getItemDeadlineMeta(item) {
+            const rawValue = this.getItemDeadlineRaw(item);
+            if (!this.isTruthyMetaField(rawValue)) return null;
+            const parsedDate = this.parseDateValue(rawValue);
+            if (parsedDate) {
+                return {
+                    text: this.formatDeadlineDate(parsedDate),
+                    tone: this.getDeadlineTone(parsedDate),
+                };
+            }
 
-            const fallbackLabel = this.getItemLabel(item, itemIndex) || `Card ${itemIndex + 1}`;
-            const fallbackAvatar = this.buildAvatarChip({ label: fallbackLabel }, `fallback-${itemIndex}`);
-            return fallbackAvatar ? [fallbackAvatar] : [];
+            const normalized = this.normalizeDisplayValue(rawValue);
+            if (!normalized) return null;
+            return {
+                text: normalized,
+                tone: "neutral",
+            };
+        },
+        getItemAttachmentRaw(item) {
+            return this.resolveItemFieldValue(item, this.content.itemAttachment, [
+                "attachment",
+                "attachments",
+                "hasAttachment",
+                "hasAttachments",
+                "files",
+                "file",
+            ]);
+        },
+        hasItemAttachment(item) {
+            return this.isTruthyMetaField(this.getItemAttachmentRaw(item));
         },
         getItemCardMeta(item, itemIndex) {
+            const deadline = this.getItemDeadlineMeta(item);
+            const hasDescription = this.hasItemDescription(item);
+            const hasAttachment = this.hasItemAttachment(item);
+            const avatars = this.getItemAvatarChips(item, itemIndex);
             return {
-                hasDescription: this.hasItemDescription(item),
-                avatars: this.getItemAvatarChips(item, itemIndex),
+                deadline,
+                hasDescription,
+                hasAttachment,
+                avatars,
+                hasAnyMeta: !!deadline || hasDescription || hasAttachment || avatars.length > 0,
             };
         },
         clampIndex(index, length) {
@@ -1919,7 +2042,7 @@ export default {
     height: 100%;
     display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content:  var(--ww-add-button-alignment);
     gap: 8px;
     // border: 1px solid var(--ww-add-button-border-color);
     border-radius: 8px;
@@ -2055,6 +2178,7 @@ export default {
     touch-action: auto;
     transition: border-color 120ms ease, box-shadow 120ms ease;
     font-family: var(--ww-font-family);
+    cursor: var(--ww-card-cursor);
 }
 
 .ww-kanban-card:hover {
@@ -2102,21 +2226,77 @@ export default {
     min-height: 18px;
 }
 
+.ww-kanban-card-meta-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ww-kanban-card-deadline {
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.ww-kanban-card-deadline.is-overdue {
+    background: rgba(248, 113, 113, 0.24);
+    color: #b91c1c;
+}
+
+.ww-kanban-card-deadline.is-upcoming {
+    background: rgba(148, 163, 184, 0.28);
+    color: #0f172a;
+}
+
+.ww-kanban-card-deadline.is-today {
+    background: rgba(250, 204, 21, 0.28);
+    color: #854d0e;
+}
+
+.ww-kanban-card-deadline.is-neutral {
+    background: rgba(148, 163, 184, 0.22);
+    color: #334155;
+}
+
+.ww-kanban-card-deadline-icon {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.ww-kanban-card-deadline-text {
+    min-width: 0;
+}
+
 .ww-kanban-card-description-indicator,
-.ww-kanban-card-description-spacer {
+.ww-kanban-card-attachment-indicator {
     width: 16px;
     height: 16px;
     flex: 0 0 16px;
     display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
 }
 
-.ww-kanban-card-description-indicator {
+.ww-kanban-card-description-indicator,
+.ww-kanban-card-attachment-indicator {
     color: #4b5563;
 }
 
-.ww-kanban-card-description-icon {
+.ww-kanban-card-description-icon,
+.ww-kanban-card-attachment-icon {
     width: 15px;
     height: 15px;
     fill: none;
