@@ -69,64 +69,95 @@
                                             />
                                             <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
                                             <template v-for="cardMeta in [getItemCardMeta(item, itemIndex)]" :key="`meta-${itemIndex}`">
-                                                <div
-                                                    v-if="cardMeta.hasAnyMeta"
-                                                    class="ww-kanban-card-meta"
-                                                    :class="{ 'has-multiple-avatars': cardMeta.avatars.length > 1 }"
-                                                >
+                                                <div v-if="cardMeta.hasAnyMeta" class="ww-kanban-card-meta">
                                                     <div
-                                                        v-if="cardMeta.deadline || cardMeta.hasDescription || cardMeta.hasAttachment"
-                                                        class="ww-kanban-card-meta-left"
+                                                        v-if="
+                                                            cardMeta.deadline ||
+                                                            cardMeta.hasDescription ||
+                                                            cardMeta.hasAttachment ||
+                                                            cardMeta.avatars.length === 1
+                                                        "
+                                                        class="ww-kanban-card-meta-line"
                                                     >
-                                                        <span
-                                                            v-if="cardMeta.deadline"
-                                                            class="ww-kanban-card-deadline"
-                                                            :class="`is-${cardMeta.deadline.tone}`"
-                                                            :title="cardMeta.deadline.text"
+                                                        <div
+                                                            v-if="cardMeta.deadline || cardMeta.hasDescription || cardMeta.hasAttachment"
+                                                            class="ww-kanban-card-meta-left"
                                                         >
-                                                            <svg class="ww-kanban-card-deadline-icon" viewBox="0 0 20 20" focusable="false" aria-hidden="true">
-                                                                <circle cx="10" cy="10" r="7"></circle>
-                                                                <path d="M10 6.5V10.5"></path>
-                                                                <path d="M10 10.5L12.5 12"></path>
-                                                            </svg>
-                                                            <span class="ww-kanban-card-deadline-text">{{ cardMeta.deadline.text }}</span>
-                                                        </span>
+                                                            <span
+                                                                v-if="cardMeta.deadline"
+                                                                class="ww-kanban-card-deadline"
+                                                                :class="`is-${cardMeta.deadline.tone}`"
+                                                                :title="cardMeta.deadline.text"
+                                                            >
+                                                                <svg
+                                                                    class="ww-kanban-card-deadline-icon"
+                                                                    viewBox="0 0 20 20"
+                                                                    focusable="false"
+                                                                    aria-hidden="true"
+                                                                >
+                                                                    <circle cx="10" cy="10" r="7"></circle>
+                                                                    <path d="M10 6.5V10.5"></path>
+                                                                    <path d="M10 10.5L12.5 12"></path>
+                                                                </svg>
+                                                                <span class="ww-kanban-card-deadline-text">{{ cardMeta.deadline.text }}</span>
+                                                            </span>
 
-                                                        <span
-                                                            v-if="cardMeta.hasDescription"
-                                                            class="ww-kanban-card-description-indicator"
-                                                            aria-hidden="true"
-                                                            title="Description available"
-                                                        >
-                                                            <svg class="ww-kanban-card-description-icon" viewBox="0 0 20 20" focusable="false">
-                                                                <path d="M4 6h12"></path>
-                                                                <path d="M4 10h12"></path>
-                                                                <path d="M4 14h8"></path>
-                                                            </svg>
-                                                        </span>
+                                                            <span
+                                                                v-if="cardMeta.hasDescription"
+                                                                class="ww-kanban-card-description-indicator"
+                                                                aria-hidden="true"
+                                                                title="Description available"
+                                                            >
+                                                                <svg class="ww-kanban-card-description-icon" viewBox="0 0 20 20" focusable="false">
+                                                                    <path d="M4 6h12"></path>
+                                                                    <path d="M4 10h12"></path>
+                                                                    <path d="M4 14h8"></path>
+                                                                </svg>
+                                                            </span>
 
-                                                        <span
-                                                            v-if="cardMeta.hasAttachment"
-                                                            class="ww-kanban-card-attachment-indicator"
-                                                            aria-hidden="true"
-                                                            title="Attachment available"
+                                                            <span
+                                                                v-if="cardMeta.hasAttachment"
+                                                                class="ww-kanban-card-attachment-indicator"
+                                                                aria-hidden="true"
+                                                                title="Attachment available"
+                                                            >
+                                                                <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 20 20" focusable="false">
+                                                                    <path d="M7.4 10.9L11.9 6.4a2.5 2.5 0 1 1 3.5 3.5l-6.1 6.1a4 4 0 0 1-5.6-5.7l6-6"></path>
+                                                                </svg>
+                                                            </span>
+                                                        </div>
+
+                                                        <div
+                                                            v-if="cardMeta.avatars.length === 1"
+                                                            class="ww-kanban-card-avatars ww-kanban-card-avatars-single"
                                                         >
-                                                            <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 20 20" focusable="false">
-                                                                <path d="M7.4 10.9L11.9 6.4a2.5 2.5 0 1 1 3.5 3.5l-6.1 6.1a4 4 0 0 1-5.6-5.7l6-6"></path>
-                                                            </svg>
-                                                        </span>
+                                                            <span
+                                                                v-for="(avatar, avatarIndex) in cardMeta.avatars.slice(0, 1)"
+                                                                :key="`avatar-single-${itemIndex}-${avatarIndex}-${avatar.label}`"
+                                                                class="ww-kanban-card-avatar"
+                                                                :style="{ backgroundColor: avatar.color, color: avatar.textColor }"
+                                                                :title="avatar.label"
+                                                            >
+                                                                {{ avatar.text }}
+                                                            </span>
+                                                        </div>
                                                     </div>
 
-                                                    <div v-if="cardMeta.avatars.length" class="ww-kanban-card-avatars">
-                                                        <span
-                                                            v-for="(avatar, avatarIndex) in cardMeta.avatars"
-                                                            :key="`avatar-${itemIndex}-${avatarIndex}-${avatar.label}`"
-                                                            class="ww-kanban-card-avatar"
-                                                            :style="{ backgroundColor: avatar.color, color: avatar.textColor }"
-                                                            :title="avatar.label"
-                                                        >
-                                                            {{ avatar.text }}
-                                                        </span>
+                                                    <div
+                                                        v-if="cardMeta.avatars.length > 1"
+                                                        class="ww-kanban-card-meta-line ww-kanban-card-meta-line-avatars"
+                                                    >
+                                                        <div class="ww-kanban-card-avatars ww-kanban-card-avatars-multiple">
+                                                            <span
+                                                                v-for="(avatar, avatarIndex) in cardMeta.avatars"
+                                                                :key="`avatar-multiple-${itemIndex}-${avatarIndex}-${avatar.label}`"
+                                                                class="ww-kanban-card-avatar"
+                                                                :style="{ backgroundColor: avatar.color, color: avatar.textColor }"
+                                                                :title="avatar.label"
+                                                            >
+                                                                {{ avatar.text }}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </template>
@@ -2358,13 +2389,25 @@ export default {
 
 .ww-kanban-card-meta {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
     min-height: 18px;
     height: auto;
     width: 100%;
     overflow: hidden;
+}
+
+.ww-kanban-card-meta-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.ww-kanban-card-meta-line-avatars {
+    justify-content: flex-end;
 }
 
 .ww-kanban-card-meta-left {
@@ -2372,6 +2415,7 @@ export default {
     align-items: center;
     gap: 8px;
     min-width: 0;
+    flex: 1 1 auto;
 }
 
 .ww-kanban-card-deadline {
@@ -2459,15 +2503,26 @@ export default {
     min-width: 0;
     max-width: 100%;
     min-height: 28px;
-    // position: static !important;
-    // inset: auto !important;
-    // top: auto !important;
-    // right: auto !important;
-    // bottom: auto !important;
-    // left: auto !important;
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
     transform: none !important;
     float: none !important;
     overflow: hidden;
+}
+
+.ww-kanban-card-avatars-single {
+    margin-left: auto;
+}
+
+.ww-kanban-card-avatars-multiple {
+    margin-left: 0;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    row-gap: 4px;
 }
 
 .ww-kanban-card-avatar {
@@ -2484,30 +2539,15 @@ export default {
     border: 1px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
     text-transform: uppercase;
-    // position: static !important;
-    // inset: auto !important;
-    // top: auto !important;
-    // right: auto !important;
-    // bottom: auto !important;
-    // left: auto !important;
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
     transform: none !important;
     margin: 0 !important;
     float: none !important;
-}
-
-.ww-kanban-card-meta.has-multiple-avatars {
-    flex-wrap: wrap;
-    align-items: flex-start;
-    align-content: flex-start;
-}
-
-.ww-kanban-card-meta.has-multiple-avatars .ww-kanban-card-avatars {
-    flex-basis: 100%;
-    margin-left: 0;
-    justify-content: flex-end;
-    padding-top: 2px;
-    flex-wrap: wrap;
-    row-gap: 4px;
 }
 
 .ww-kanban-card-handle {
