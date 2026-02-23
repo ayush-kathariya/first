@@ -2355,6 +2355,7 @@ export default {
     height: auto;
     max-height: none;
     overflow: visible;
+    flex-shrink: 0;
 }
 
 .ww-kanban-card:not(.has-fixed-height) {
