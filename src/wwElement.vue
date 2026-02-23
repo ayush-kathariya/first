@@ -492,11 +492,25 @@ export default {
         hasFixedCardHeight() {
             const raw = this.content.cardHeight;
             if (raw === undefined || raw === null || raw === "") return false;
-            const normalized = String(raw).trim().toLowerCase();
+            const normalized = String(raw)
+                .trim()
+                .toLowerCase()
+                .replace(/;+$/, "");
             if (!normalized) return false;
-            return !["auto", "initial", "inherit", "unset", "fit-content", "max-content", "min-content"].includes(
-                normalized
-            );
+            if (normalized.includes("auto")) return false;
+            if (["initial", "inherit", "unset", "fit-content", "max-content", "min-content", "none", "normal"].includes(normalized))
+                return false;
+            if (/^-?\d+(\.\d+)?(px|rem|em|vh|vw|vmin|vmax|%|ch|ex|cm|mm|in|pt|pc)?$/.test(normalized)) return true;
+            if (
+                normalized.startsWith("calc(") ||
+                normalized.startsWith("clamp(") ||
+                normalized.startsWith("min(") ||
+                normalized.startsWith("max(") ||
+                normalized.startsWith("var(")
+            ) {
+                return true;
+            }
+            return false;
         },
         stackKeyLookup() {
             const map = {};
@@ -2343,6 +2357,11 @@ export default {
     overflow: clip;
 }
 
+.ww-kanban-card:not(.has-fixed-height) {
+    height: auto !important;
+    max-height: none !important;
+}
+
 .ww-kanban-card.has-fixed-height {
     height: var(--ww-card-height);
     max-height: var(--ww-card-height);
@@ -2398,6 +2417,7 @@ export default {
     height: auto;
     width: 100%;
     overflow: visible;
+    padding-bottom: 2px;
 }
 
 .ww-kanban-card-meta-line {
@@ -2411,6 +2431,7 @@ export default {
 .ww-kanban-card-meta-line-avatars {
     justify-content: flex-end;
     min-height: 30px;
+    padding-top: 2px;
 }
 
 .ww-kanban-card-meta-left {
@@ -2552,6 +2573,38 @@ export default {
     transform: none !important;
     margin: 0 !important;
     float: none !important;
+}
+
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-content,
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-meta {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-meta-line,
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-meta-line-avatars,
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-avatars,
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-avatar {
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    float: none !important;
+}
+
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-avatars {
+    display: flex !important;
+    align-items: center !important;
+    align-content: flex-start !important;
+    gap: 4px !important;
+}
+
+.ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-avatar {
+    margin: 0 !important;
 }
 
 .ww-kanban-card-handle {
