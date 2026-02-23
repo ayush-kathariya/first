@@ -7,7 +7,13 @@
         ref="kanbanRoot"
     >
         <template v-for="(stack, stackIndex) in renderStacks" :key="getStackRenderKey(stack.value, stackIndex)">
-            <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
+            <wwLayoutItemContext
+                :index="stackIndex"
+                :item="getStackLayoutData(stack, stackIndex)"
+                :data="getStackLayoutData(stack, stackIndex)"
+                :repeated-items="renderStacks"
+                is-repeat
+            >
                 <section
                     class="ww-kanban-stack"
                     :class="{
@@ -311,16 +317,6 @@ export default {
                 if (value === undefined || value === null || value === "") return fallback;
                 return String(value);
             };
-            const borderOrDefault = (value, fallbackColor) => {
-                const fallback = `1px solid ${fallbackColor}`;
-                if (value === undefined || value === null || value === "") return fallback;
-                const normalized = String(value).trim();
-                if (!normalized) return fallback;
-                if (normalized === "0") return normalized;
-                const hasBorderStyle = /\b(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)\b/i.test(normalized);
-                const hasBorderWidth = /(^|\s)\d+(\.\d+)?(px|em|rem|vh|vw|%)\b/i.test(normalized);
-                return hasBorderStyle || hasBorderWidth ? normalized : `1px solid ${normalized}`;
-            };
             const sizeOrDefault = (value, fallbackPx) => {
                 if (value === undefined || value === null || value === "") return `${fallbackPx}px`;
                 if (typeof value === "number" && Number.isFinite(value)) return `${value}px`;
@@ -346,7 +342,7 @@ export default {
                 "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
                 "--ww-panel-bg": valueOrDefault(this.content.columnBackgroundColor, "#f3f4f6"),
-                "--ww-panel-border-color": borderOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
+                "--ww-panel-border-color": valueOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
                 "--ww-header-text-color": valueOrDefault(this.content.columnTitleColor, "#0f172a"),
                 "--ww-header-font-size": sizeOrDefault(this.content.columnTitleFontSize, 13),
                 "--ww-header-font-weight": numberOrDefault(this.content.columnTitleFontWeight, 600),
@@ -775,6 +771,40 @@ export default {
                 label: this.getStackLabel(stack || { label: "", value: stackValue }),
                 index: normalizedIndex,
                 key: normalizedIndex === null ? null : this.getStackRenderKey(stackValue, normalizedIndex),
+            };
+        },
+        getStackLayoutData(stack, stackIndex) {
+            const stackMeta = this.buildStackMeta(stack, stackIndex);
+            const items = Array.isArray(stack?.items) ? stack.items : [];
+            const baseStack =
+                stack && typeof stack === "object" && !Array.isArray(stack)
+                    ? { ...stack }
+                    : {
+                          value: stackMeta.value,
+                          label: stackMeta.label,
+                          items,
+                      };
+            const existingData =
+                baseStack?.data && typeof baseStack.data === "object" && !Array.isArray(baseStack.data)
+                    ? { ...baseStack.data }
+                    : {};
+
+            return {
+                ...baseStack,
+                value: stackMeta.value,
+                label: stackMeta.label,
+                index: stackMeta.index,
+                key: stackMeta.key,
+                items,
+                data: {
+                    ...existingData,
+                    stack: stackMeta,
+                    value: stackMeta.value,
+                    label: stackMeta.label,
+                    index: stackMeta.index,
+                    key: stackMeta.key,
+                    items,
+                },
             };
         },
         getItemLayoutData(item, itemIndex, stack, stackIndex) {
@@ -2035,7 +2065,7 @@ export default {
     flex: 0 1 auto;
     min-height: 0;
     border-radius: 11px;
-    border: var(--ww-panel-border-color);
+    border: 1px solid var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
