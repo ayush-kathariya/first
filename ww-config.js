@@ -41,6 +41,7 @@ export default {
             ],
             [
                 "showAddCardButton",
+                "showOnLast",
                 "addCardButtonDirectTrigger",
                 "addCardButtonLabel",
                 "addCardInputPlaceholder",
@@ -395,6 +396,19 @@ export default {
             defaultValue: true,
             bindable: true,
             section: "settings",
+        },
+        showOnLast: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Show on last",
+            },
+            type: "OnOff",
+            defaultValue: false,
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "When enabled, Add Card is visible only in the last column.",
+            },
         },
         addCardButtonDirectTrigger: {
             hidden: (content) => content.showAddCardButton === false,

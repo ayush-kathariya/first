@@ -11,7 +11,7 @@
                 <section
                     class="ww-kanban-stack"
                     :class="{
-                        'has-add-card': content.showAddCardButton !== false && !isReadonly,
+                        'has-add-card': canShowAddCardForStack(stackIndex),
                     }"
                     :data-stack-key="getStackRenderKey(stack.value, stackIndex)"
                     @dragover.prevent="onStackDragOver($event, stack.value, stackIndex)"
@@ -135,7 +135,7 @@
                     </div>
 
                     <footer
-                        v-if="content.showAddCardButton !== false && !isReadonly"
+                        v-if="canShowAddCardForStack(stackIndex)"
                         class="ww-kanban-stack-footer"
                         :class="{
                             'is-composer-open':
@@ -1337,6 +1337,13 @@ export default {
                     },
                 },
             });
+        },
+        canShowAddCardForStack(stackIndex) {
+            if (this.content.showAddCardButton === false || this.isReadonly) return false;
+            if (this.content.showOnLast === true) {
+                return stackIndex === this.renderStacks.length - 1;
+            }
+            return true;
         },
         isAddCardComposerOpen(stackValue, stackIndex = 0) {
             return this.addCardComposerStackKey === this.getStackRenderKey(stackValue ?? null, stackIndex);
