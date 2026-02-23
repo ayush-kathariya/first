@@ -25,7 +25,18 @@ export default {
         icon: "template",
         customSettingsPropertiesOrder: [
             "items",
-            ["itemKey", "itemLabel", "itemImage", "stackedBy", "sortedBy", "sortOrder"],
+            [
+                "itemKey",
+                "itemLabel",
+                "itemImage",
+                "itemDescription",
+                "itemAvatars",
+                "itemAvatarTextKey",
+                "itemAvatarColorKey",
+                "stackedBy",
+                "sortedBy",
+                "sortOrder",
+            ],
             ["showAddCardButton", "addCardButtonLabel", "addCardInputPlaceholder", "addCardSubmitLabel"],
             "readonly",
             "draggingCursor",
@@ -182,6 +193,56 @@ export default {
             options: (content) => getObjectPropertyPathOptions("items", { content }),
             defaultValue: null,
             section: "settings",
+        },
+        itemDescription: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Card description",
+            },
+            type: "ObjectPropertyPath",
+            options: (content) => getObjectPropertyPathOptions("items", { content }),
+            defaultValue: null,
+            section: "settings",
+        },
+        itemAvatars: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Card avatars",
+            },
+            type: "ObjectPropertyPath",
+            options: (content) => getObjectPropertyPathOptions("items", { content }),
+            defaultValue: null,
+            section: "settings",
+        },
+        itemAvatarTextKey: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Avatar text key",
+            },
+            type: "Text",
+            defaultValue: "name",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Used when each avatar is an object (for example: name, initials, username).",
+            },
+        },
+        itemAvatarColorKey: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Avatar color key",
+            },
+            type: "Text",
+            defaultValue: "color",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Optional object key for avatar color. If empty/missing, color is generated dynamically.",
+            },
         },
         stackedBy: {
             hidden: (content, sidepanelContent, boundProps) =>

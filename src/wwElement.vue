@@ -65,6 +65,37 @@
                                                 draggable="false"
                                             />
                                             <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
+                                            <template v-for="cardMeta in [getItemCardMeta(item, itemIndex)]" :key="`meta-${itemIndex}`">
+                                                <div
+                                                    class="ww-kanban-card-meta"
+                                                    :class="{ 'has-multiple-avatars': cardMeta.avatars.length > 1 }"
+                                                >
+                                                    <span
+                                                        v-if="cardMeta.hasDescription"
+                                                        class="ww-kanban-card-description-indicator"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <svg class="ww-kanban-card-description-icon" viewBox="0 0 20 20" focusable="false">
+                                                            <path d="M4 6h12"></path>
+                                                            <path d="M4 10h12"></path>
+                                                            <path d="M4 14h8"></path>
+                                                        </svg>
+                                                    </span>
+                                                    <span v-else class="ww-kanban-card-description-spacer" aria-hidden="true"></span>
+
+                                                    <div class="ww-kanban-card-avatars">
+                                                        <span
+                                                            v-for="(avatar, avatarIndex) in cardMeta.avatars"
+                                                            :key="`avatar-${itemIndex}-${avatarIndex}-${avatar.label}`"
+                                                            class="ww-kanban-card-avatar"
+                                                            :style="{ backgroundColor: avatar.color, color: avatar.textColor }"
+                                                            :title="avatar.label"
+                                                        >
+                                                            {{ avatar.text }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </template>
                                         </div>
                                     </article>
                                 </wwLayoutItemContext>
@@ -766,6 +797,153 @@ export default {
             } catch (e) {
                 return `Item ${index + 1}`;
             }
+        },
+        getItemDescription(item) {
+            if (!item || typeof item !== "object") return "";
+            const candidatePaths = [
+                this.content.itemDescription,
+                "description",
+                "desc",
+                "details",
+                "notes",
+                "note",
+            ].filter(Boolean);
+            for (const path of candidatePaths) {
+                const value = wwLib.resolveObjectPropertyPath(item, path);
+                const normalized = this.normalizeDisplayValue(value);
+                if (normalized) return normalized;
+            }
+            return "";
+        },
+        hasItemDescription(item) {
+            return !!this.getItemDescription(item);
+        },
+        getAvatarPaletteColor(seed) {
+            const palette = ["#0ea5e9", "#ef4444", "#f59e0b", "#22c55e", "#8b5cf6", "#06b6d4", "#ec4899", "#2563eb", "#14b8a6", "#f97316"];
+            const source = String(seed ?? "");
+            let hash = 0;
+            for (let index = 0; index < source.length; index += 1) {
+                hash = (hash << 5) - hash + source.charCodeAt(index);
+                hash |= 0;
+            }
+            return palette[Math.abs(hash) % palette.length];
+        },
+        getAvatarInitials(value) {
+            const normalized = this.normalizeDisplayValue(value)
+                .replace(/\s+/g, " ")
+                .trim();
+            if (!normalized) return "?";
+            const words = normalized.split(" ").filter(Boolean);
+            if (words.length >= 2) {
+                return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
+            }
+            return normalized.slice(0, 2).toUpperCase();
+        },
+        normalizeAvatarColor(value) {
+            const text = typeof value === "string" ? value.trim() : "";
+            if (!text) return "";
+            const isHexColor = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(text);
+            const isRgbColor = /^rgba?\([^)]*\)$/i.test(text);
+            const isHslColor = /^hsla?\([^)]*\)$/i.test(text);
+            return isHexColor || isRgbColor || isHslColor ? text : "";
+        },
+        getAvatarLabelFromObject(avatar) {
+            const keyPaths = [
+                this.content.itemAvatarTextKey,
+                "text",
+                "label",
+                "name",
+                "title",
+                "initials",
+                "username",
+                "email",
+                "id",
+            ].filter(Boolean);
+            for (const path of keyPaths) {
+                const value = wwLib.resolveObjectPropertyPath(avatar, path);
+                const normalized = this.normalizeDisplayValue(value);
+                if (normalized) return normalized;
+            }
+            return "";
+        },
+        getAvatarColorFromObject(avatar) {
+            const keyPaths = [
+                this.content.itemAvatarColorKey,
+                "color",
+                "avatarColor",
+                "backgroundColor",
+                "bgColor",
+            ].filter(Boolean);
+            for (const path of keyPaths) {
+                const value = wwLib.resolveObjectPropertyPath(avatar, path);
+                const normalizedColor = this.normalizeAvatarColor(value);
+                if (normalizedColor) return normalizedColor;
+            }
+            return "";
+        },
+        getItemRawAvatars(item) {
+            if (!item || typeof item !== "object") return [];
+            const avatarPaths = [
+                this.content.itemAvatars,
+                "avatars",
+                "assignees",
+                "members",
+                "users",
+                "owners",
+                "people",
+                "assignedTo",
+                "assigned_to",
+            ].filter(Boolean);
+            for (const path of avatarPaths) {
+                const value = wwLib.resolveObjectPropertyPath(item, path);
+                if (Array.isArray(value) && value.length) return value;
+                if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return [value];
+                if (value && typeof value === "object") return [value];
+            }
+            return [];
+        },
+        buildAvatarChip(avatarSource, fallbackSeed) {
+            let label = "";
+            let color = "";
+
+            if (typeof avatarSource === "string" || typeof avatarSource === "number" || typeof avatarSource === "boolean") {
+                label = this.normalizeDisplayValue(avatarSource);
+            } else if (avatarSource && typeof avatarSource === "object") {
+                label = this.getAvatarLabelFromObject(avatarSource);
+                color = this.getAvatarColorFromObject(avatarSource);
+                if (!label && avatarSource.label !== undefined) {
+                    label = this.normalizeDisplayValue(avatarSource.label);
+                }
+            }
+
+            if (!label) return null;
+            const initials = this.getAvatarInitials(label);
+            const avatarColor = color || this.getAvatarPaletteColor(`${label}-${fallbackSeed}`);
+
+            return {
+                label,
+                text: initials,
+                color: avatarColor,
+                textColor: "#ffffff",
+            };
+        },
+        getItemAvatarChips(item, itemIndex) {
+            const rawAvatars = this.getItemRawAvatars(item);
+            const chips = rawAvatars
+                .map((avatar, avatarIndex) => this.buildAvatarChip(avatar, `${itemIndex}-${avatarIndex}`))
+                .filter(Boolean);
+
+            if (chips.length) return chips;
+
+            const fallbackLabel = this.getItemLabel(item, itemIndex) || `Card ${itemIndex + 1}`;
+            const fallbackAvatar = this.buildAvatarChip({ label: fallbackLabel }, `fallback-${itemIndex}`);
+            return fallbackAvatar ? [fallbackAvatar] : [];
+        },
+        getItemCardMeta(item, itemIndex) {
+            return {
+                hasDescription: this.hasItemDescription(item),
+                avatars: this.getItemAvatarChips(item, itemIndex),
+            };
         },
         clampIndex(index, length) {
             if (!Number.isFinite(index)) return 0;
@@ -1890,6 +2068,74 @@ export default {
     line-height: 1.3;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+
+.ww-kanban-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 18px;
+}
+
+.ww-kanban-card-description-indicator,
+.ww-kanban-card-description-spacer {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.ww-kanban-card-description-indicator {
+    color: #4b5563;
+}
+
+.ww-kanban-card-description-icon {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+}
+
+.ww-kanban-card-avatars {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+}
+
+.ww-kanban-card-avatar {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+    text-transform: uppercase;
+}
+
+.ww-kanban-card-meta.has-multiple-avatars {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.ww-kanban-card-meta.has-multiple-avatars .ww-kanban-card-avatars {
+    flex-basis: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+    padding-top: 2px;
 }
 
 .ww-kanban-card-handle {
