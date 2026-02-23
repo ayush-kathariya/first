@@ -2308,8 +2308,8 @@ export default {
     font-family: var(--ww-font-family);
     cursor: var(--ww-card-cursor);
     height: auto;
-    max-height: none;
-    overflow: visible;
+    max-height: auto;
+    overflow: hidden;
 }
 
 .ww-kanban-card.has-fixed-height {
@@ -2339,7 +2339,7 @@ export default {
     flex: 1 1 auto;
     height: auto;
     max-height: none;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .ww-kanban-card-image {
@@ -2359,13 +2359,13 @@ export default {
 
 .ww-kanban-card-meta {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 8px;
     min-height: 18px;
     height: auto;
     width: 100%;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .ww-kanban-card-meta-left {
@@ -2459,7 +2459,16 @@ export default {
     gap: 4px;
     min-width: 0;
     max-width: 100%;
-    position: static;
+    min-height: 28px;
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    float: none !important;
+    overflow: hidden;
 }
 
 .ww-kanban-card-avatar {
@@ -2476,10 +2485,15 @@ export default {
     border: 1px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
     text-transform: uppercase;
-    position: static;
-    inset: auto;
-    transform: none;
-    margin: 0;
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    float: none !important;
 }
 
 .ww-kanban-card-meta.has-multiple-avatars {
