@@ -34,7 +34,10 @@
                                 >
                                     <article
                                         class="ww-kanban-card"
-                                        :class="{ 'is-drag-source': isCardDragSource(stack.value, itemIndex) }"
+                                        :class="{
+                                            'is-drag-source': isCardDragSource(stack.value, itemIndex),
+                                            'has-fixed-height': hasFixedCardHeight,
+                                        }"
                                         :data-item-index="itemIndex"
                                         :data-item-key="String(getItemIdentity(item, itemIndex))"
                                         :draggable="nativeDesktopDragEnabled && !content.customDragHandle"
@@ -454,6 +457,15 @@ export default {
             if (!this.canDesktopDrag) return false;
             if (!this.hasFinePointer) return false;
             return true;
+        },
+        hasFixedCardHeight() {
+            const raw = this.content.cardHeight;
+            if (raw === undefined || raw === null || raw === "") return false;
+            const normalized = String(raw).trim().toLowerCase();
+            if (!normalized) return false;
+            return !["auto", "initial", "inherit", "unset", "fit-content", "max-content", "min-content"].includes(
+                normalized
+            );
         },
         stackKeyLookup() {
             const map = {};
@@ -2133,7 +2145,7 @@ export default {
 
 .ww-kanban-stack-footer {
     padding: 1px;
-    border: var(--ww-add-button-border-color);
+    // border: var(--ww-add-button-border-color);
     border-radius: 10px;
     background: var(--ww-panel-bg);
     height: var(--add-card-block-height);
@@ -2156,7 +2168,7 @@ export default {
     align-items: center;
     justify-content: var(--ww-add-button-alignment);
     gap: 8px;
-    // border: var(--ww-add-button-border-color);
+    border: var(--ww-add-button-border-color);
     border-radius: 8px;
     padding: 7px 10px;
     font-size: var(--ww-add-button-font-size);
@@ -2295,8 +2307,13 @@ export default {
     transition: border-color 120ms ease, box-shadow 120ms ease;
     font-family: var(--ww-font-family);
     cursor: var(--ww-card-cursor);
-    height: var(--ww-card-height);
+    height: auto;
     max-height: none;
+    overflow: visible;
+}
+
+.ww-kanban-card.has-fixed-height {
+    height: var(--ww-card-height);
     overflow: hidden;
 }
 
@@ -2322,6 +2339,7 @@ export default {
     flex: 1 1 auto;
     height: auto;
     max-height: none;
+    overflow: visible;
 }
 
 .ww-kanban-card-image {
@@ -2345,7 +2363,9 @@ export default {
     justify-content: space-between;
     gap: 8px;
     min-height: 18px;
+    height: auto;
     width: 100%;
+    overflow: visible;
 }
 
 .ww-kanban-card-meta-left {
@@ -2439,6 +2459,7 @@ export default {
     gap: 4px;
     min-width: 0;
     max-width: 100%;
+    position: static;
 }
 
 .ww-kanban-card-avatar {
@@ -2455,11 +2476,16 @@ export default {
     border: 1px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
     text-transform: uppercase;
+    position: static;
+    inset: auto;
+    transform: none;
+    margin: 0;
 }
 
 .ww-kanban-card-meta.has-multiple-avatars {
     flex-wrap: wrap;
     align-items: flex-start;
+    align-content: flex-start;
 }
 
 .ww-kanban-card-meta.has-multiple-avatars .ww-kanban-card-avatars {
