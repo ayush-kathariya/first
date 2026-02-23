@@ -353,6 +353,21 @@ export default {
                 "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
                 "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
+                "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
+                "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
+                "--ww-deadline-padding-y": sizeOrDefault(this.content.deadlinePaddingVertical, 2),
+                "--ww-deadline-padding-x": sizeOrDefault(this.content.deadlinePaddingHorizontal, 7),
+                "--ww-deadline-radius": sizeOrDefault(this.content.deadlineBorderRadius, 6),
+                "--ww-deadline-border-width": sizeOrDefault(this.content.deadlineBorderWidth, 0),
+                "--ww-deadline-border-color": valueOrDefault(this.content.deadlineBorderColor, "transparent"),
+                "--ww-deadline-overdue-bg": valueOrDefault(this.content.deadlineOverdueBackgroundColor, "rgba(248, 113, 113, 0.24)"),
+                "--ww-deadline-overdue-text": valueOrDefault(this.content.deadlineOverdueTextColor, "#b91c1c"),
+                "--ww-deadline-upcoming-bg": valueOrDefault(this.content.deadlineUpcomingBackgroundColor, "rgba(148, 163, 184, 0.28)"),
+                "--ww-deadline-upcoming-text": valueOrDefault(this.content.deadlineUpcomingTextColor, "#0f172a"),
+                "--ww-deadline-today-bg": valueOrDefault(this.content.deadlineTodayBackgroundColor, "rgba(250, 204, 21, 0.28)"),
+                "--ww-deadline-today-text": valueOrDefault(this.content.deadlineTodayTextColor, "#854d0e"),
+                "--ww-deadline-neutral-bg": valueOrDefault(this.content.deadlineNeutralBackgroundColor, "rgba(148, 163, 184, 0.22)"),
+                "--ww-deadline-neutral-text": valueOrDefault(this.content.deadlineNeutralTextColor, "#334155"),
                 "--ww-add-button-bg": valueOrDefault(this.content.addCardButtonBackgroundColor, "#f8fafc"),
                 "--ww-add-button-bg-hover": valueOrDefault(this.content.addCardButtonHoverBackgroundColor, "#f2f5fa"),
                 "--ww-add-button-text-color": valueOrDefault(this.content.addCardButtonTextColor, "#111827"),
@@ -869,7 +884,8 @@ export default {
             return Boolean(value);
         },
         getItemDescriptionRaw(item) {
-            return this.resolveItemFieldValue(item, this.content.itemDescription, ["description", "desc", "details", "notes", "note"]);
+            if (!this.content.itemDescription) return undefined;
+            return this.resolveItemFieldValue(item, this.content.itemDescription);
         },
         getItemDescription(item) {
             return this.normalizeDisplayValue(this.getItemDescriptionRaw(item));
@@ -941,16 +957,8 @@ export default {
             return "";
         },
         getItemRawAvatars(item) {
-            const rawValue = this.resolveItemFieldValue(item, this.content.itemAvatars, [
-                "avatars",
-                "assignees",
-                "members",
-                "users",
-                "owners",
-                "people",
-                "assignedTo",
-                "assigned_to",
-            ]);
+            if (!this.content.itemAvatars) return [];
+            const rawValue = this.resolveItemFieldValue(item, this.content.itemAvatars);
             if (rawValue === undefined || rawValue === null || rawValue === false) return [];
             if (Array.isArray(rawValue)) return rawValue;
             if (typeof rawValue === "string" || typeof rawValue === "number") return [rawValue];
@@ -991,14 +999,8 @@ export default {
             return chips;
         },
         getItemDeadlineRaw(item) {
-            return this.resolveItemFieldValue(item, this.content.itemDeadline, [
-                "deadline",
-                "dueDate",
-                "due_date",
-                "due",
-                "endDate",
-                "end_date",
-            ]);
+            if (!this.content.itemDeadline) return undefined;
+            return this.resolveItemFieldValue(item, this.content.itemDeadline);
         },
         parseDateValue(value) {
             if (value instanceof Date && Number.isFinite(value.getTime())) return value;
@@ -1055,14 +1057,8 @@ export default {
             };
         },
         getItemAttachmentRaw(item) {
-            return this.resolveItemFieldValue(item, this.content.itemAttachment, [
-                "attachment",
-                "attachments",
-                "hasAttachment",
-                "hasAttachments",
-                "files",
-                "file",
-            ]);
+            if (!this.content.itemAttachment) return undefined;
+            return this.resolveItemFieldValue(item, this.content.itemAttachment);
         },
         hasItemAttachment(item) {
             return this.isTruthyMetaField(this.getItemAttachmentRaw(item));
@@ -1944,7 +1940,7 @@ export default {
     flex: 0 1 auto;
     min-height: 0;
     border-radius: 11px;
-    border: 1px solid var(--ww-panel-border-color);
+    // border: 1px solid var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
@@ -2179,6 +2175,9 @@ export default {
     transition: border-color 120ms ease, box-shadow 120ms ease;
     font-family: var(--ww-font-family);
     cursor: var(--ww-card-cursor);
+    height: auto;
+    max-height: none;
+    overflow: hidden;
 }
 
 .ww-kanban-card:hover {
@@ -2201,6 +2200,8 @@ export default {
     gap: 8px;
     min-width: 0;
     flex: 1 1 auto;
+    height: auto;
+    max-height: none;
 }
 
 .ww-kanban-card-image {
@@ -2224,6 +2225,7 @@ export default {
     justify-content: space-between;
     gap: 8px;
     min-height: 18px;
+    width: 100%;
 }
 
 .ww-kanban-card-meta-left {
@@ -2238,32 +2240,36 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    border-radius: 6px;
-    padding: 2px 7px;
-    font-size: 11px;
-    font-weight: 600;
+    border-radius: var(--ww-deadline-radius);
+    padding: var(--ww-deadline-padding-y) var(--ww-deadline-padding-x);
+    font-size: var(--ww-deadline-font-size);
+    font-weight: var(--ww-deadline-font-weight);
     line-height: 1.2;
     white-space: nowrap;
+    border: var(--ww-deadline-border-width) solid var(--ww-deadline-border-color);
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ww-kanban-card-deadline.is-overdue {
-    background: rgba(248, 113, 113, 0.24);
-    color: #b91c1c;
+    background: var(--ww-deadline-overdue-bg);
+    color: var(--ww-deadline-overdue-text);
 }
 
 .ww-kanban-card-deadline.is-upcoming {
-    background: rgba(148, 163, 184, 0.28);
-    color: #0f172a;
+    background: var(--ww-deadline-upcoming-bg);
+    color: var(--ww-deadline-upcoming-text);
 }
 
 .ww-kanban-card-deadline.is-today {
-    background: rgba(250, 204, 21, 0.28);
-    color: #854d0e;
+    background: var(--ww-deadline-today-bg);
+    color: var(--ww-deadline-today-text);
 }
 
 .ww-kanban-card-deadline.is-neutral {
-    background: rgba(148, 163, 184, 0.22);
-    color: #334155;
+    background: var(--ww-deadline-neutral-bg);
+    color: var(--ww-deadline-neutral-text);
 }
 
 .ww-kanban-card-deadline-icon {
@@ -2312,6 +2318,7 @@ export default {
     justify-content: flex-end;
     gap: 4px;
     min-width: 0;
+    max-width: 100%;
 }
 
 .ww-kanban-card-avatar {
@@ -2340,6 +2347,8 @@ export default {
     margin-left: 0;
     justify-content: flex-end;
     padding-top: 2px;
+    flex-wrap: wrap;
+    row-gap: 4px;
 }
 
 .ww-kanban-card-handle {

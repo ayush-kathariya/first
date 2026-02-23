@@ -70,6 +70,23 @@ export default {
                 "cardCursor",
             ],
             [
+                "deadlineFontSize",
+                "deadlineFontWeight",
+                "deadlinePaddingVertical",
+                "deadlinePaddingHorizontal",
+                "deadlineBorderRadius",
+                "deadlineBorderWidth",
+                "deadlineBorderColor",
+                "deadlineOverdueBackgroundColor",
+                "deadlineOverdueTextColor",
+                "deadlineUpcomingBackgroundColor",
+                "deadlineUpcomingTextColor",
+                "deadlineTodayBackgroundColor",
+                "deadlineTodayTextColor",
+                "deadlineNeutralBackgroundColor",
+                "deadlineNeutralTextColor",
+            ],
+            [
                 "addCardButtonHeight",
                 "addCardButtonBackgroundColor",
                 "addCardButtonHoverBackgroundColor",
@@ -668,6 +685,141 @@ export default {
             },
             /* wwEditor:end */
             defaultValue: "auto",
+        },
+        deadlineFontSize: {
+            label: {
+                en: "Deadline font size",
+            },
+            type: "Number",
+            defaultValue: 11,
+            bindable: true,
+            section: "settings",
+        },
+        deadlineFontWeight: {
+            label: {
+                en: "Deadline font weight",
+            },
+            type: "Number",
+            defaultValue: 600,
+            bindable: true,
+            section: "settings",
+        },
+        deadlinePaddingVertical: {
+            label: {
+                en: "Deadline padding Y",
+            },
+            type: "Number",
+            defaultValue: 2,
+            bindable: true,
+            section: "settings",
+        },
+        deadlinePaddingHorizontal: {
+            label: {
+                en: "Deadline padding X",
+            },
+            type: "Number",
+            defaultValue: 7,
+            bindable: true,
+            section: "settings",
+        },
+        deadlineBorderRadius: {
+            label: {
+                en: "Deadline border radius",
+            },
+            type: "Number",
+            defaultValue: 6,
+            bindable: true,
+            section: "settings",
+        },
+        deadlineBorderWidth: {
+            label: {
+                en: "Deadline border width",
+            },
+            type: "Number",
+            defaultValue: 0,
+            bindable: true,
+            section: "settings",
+        },
+        deadlineBorderColor: {
+            label: {
+                en: "Deadline border color",
+            },
+            type: "Text",
+            defaultValue: "transparent",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineOverdueBackgroundColor: {
+            label: {
+                en: "Deadline overdue bg",
+            },
+            type: "Text",
+            defaultValue: "rgba(248, 113, 113, 0.24)",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineOverdueTextColor: {
+            label: {
+                en: "Deadline overdue text",
+            },
+            type: "Text",
+            defaultValue: "#b91c1c",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineUpcomingBackgroundColor: {
+            label: {
+                en: "Deadline upcoming bg",
+            },
+            type: "Text",
+            defaultValue: "rgba(148, 163, 184, 0.28)",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineUpcomingTextColor: {
+            label: {
+                en: "Deadline upcoming text",
+            },
+            type: "Text",
+            defaultValue: "#0f172a",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineTodayBackgroundColor: {
+            label: {
+                en: "Deadline today bg",
+            },
+            type: "Text",
+            defaultValue: "rgba(250, 204, 21, 0.28)",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineTodayTextColor: {
+            label: {
+                en: "Deadline today text",
+            },
+            type: "Text",
+            defaultValue: "#854d0e",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineNeutralBackgroundColor: {
+            label: {
+                en: "Deadline neutral bg",
+            },
+            type: "Text",
+            defaultValue: "rgba(148, 163, 184, 0.22)",
+            bindable: true,
+            section: "settings",
+        },
+        deadlineNeutralTextColor: {
+            label: {
+                en: "Deadline neutral text",
+            },
+            type: "Text",
+            defaultValue: "#334155",
+            bindable: true,
+            section: "settings",
         },
         addCardButtonHeight: {
             hidden: (content) => content.showAddCardButton === false,
