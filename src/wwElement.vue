@@ -428,7 +428,7 @@ export default {
                     this.content.addCardButtonHoverTextColor || this.content.addCardButtonTextColor || "#111827"
                 ),
                 "--ww-add-button-border-color": valueOrDefault(this.content.addCardButtonBorderColor, "rgba(15, 23, 42, 0.18)"),
-                "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonBorderColor, "flex-start"),
+                "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonJustifyContent, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
                 "--ww-add-cancel-icon-color": valueOrDefault(this.content.addCardCancelIconColor, "#000000"),
                 "--ww-add-cancel-icon-color-hover": valueOrDefault(this.content.addCardCancelHoverIconColor, "#111827"),
