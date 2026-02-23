@@ -319,6 +319,14 @@ export default {
                 if (/^-?\d+(\.\d+)?$/.test(normalized)) return `${normalized}px`;
                 return normalized;
             };
+            const sizeOrKeyword = (value, fallback) => {
+                if (value === undefined || value === null || value === "") return fallback;
+                if (typeof value === "number" && Number.isFinite(value)) return `${value}px`;
+                const normalized = String(value).trim();
+                if (!normalized) return fallback;
+                if (/^-?\d+(\.\d+)?$/.test(normalized)) return `${normalized}px`;
+                return normalized;
+            };
             const numberOrDefault = (value, fallback) => {
                 if (value === undefined || value === null || value === "") return String(fallback);
                 const parsed = Number(value);
@@ -349,10 +357,12 @@ export default {
                 "--ww-card-hover-border-color": valueOrDefault(this.content.cardHoverBorderColor, "#3b82f6"),
                 "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
                 "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
+                "--ww-card-height": sizeOrKeyword(this.content.cardHeight, "auto"),
                 "--ww-card-radius": sizeOrDefault(this.content.cardBorderRadius, 8),
                 "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
                 "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
+                "--ww-card-meta-icon-color": valueOrDefault(this.content.cardMetaIconColor, "#4b5563"),
                 "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
                 "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
                 "--ww-deadline-padding-y": sizeOrDefault(this.content.deadlinePaddingVertical, 2),
@@ -371,9 +381,23 @@ export default {
                 "--ww-add-button-bg": valueOrDefault(this.content.addCardButtonBackgroundColor, "#f8fafc"),
                 "--ww-add-button-bg-hover": valueOrDefault(this.content.addCardButtonHoverBackgroundColor, "#f2f5fa"),
                 "--ww-add-button-text-color": valueOrDefault(this.content.addCardButtonTextColor, "#111827"),
+                "--ww-add-button-text-color-hover": valueOrDefault(
+                    this.content.addCardButtonHoverTextColor,
+                    this.content.addCardButtonTextColor || "#111827"
+                ),
+                "--ww-add-button-icon-color": valueOrDefault(
+                    this.content.addCardButtonIconColor,
+                    this.content.addCardButtonTextColor || "#111827"
+                ),
+                "--ww-add-button-icon-color-hover": valueOrDefault(
+                    this.content.addCardButtonHoverIconColor,
+                    this.content.addCardButtonHoverTextColor || this.content.addCardButtonTextColor || "#111827"
+                ),
                 "--ww-add-button-border-color": valueOrDefault(this.content.addCardButtonBorderColor, "rgba(15, 23, 42, 0.18)"),
                 "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonBorderColor, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
+                "--ww-add-cancel-icon-color": valueOrDefault(this.content.addCardCancelIconColor, "#000000"),
+                "--ww-add-cancel-icon-color-hover": valueOrDefault(this.content.addCardCancelHoverIconColor, "#111827"),
                 "--ww-add-input-bg": valueOrDefault(this.content.addCardInputBackgroundColor, "#f8fafc"),
                 "--ww-add-input-text-color": valueOrDefault(this.content.addCardInputTextColor, "#0f172a"),
                 "--ww-add-input-border-color": valueOrDefault(this.content.addCardInputBorderColor, "rgba(15, 23, 42, 0.16)"),
@@ -2109,7 +2133,7 @@ export default {
 
 .ww-kanban-stack-footer {
     padding: 1px;
-    // border: 1px solid var(--ww-add-button-border-color);
+    border: var(--ww-add-button-border-color);
     border-radius: 10px;
     background: var(--ww-panel-bg);
     height: var(--add-card-block-height);
@@ -2130,9 +2154,9 @@ export default {
     height: 100%;
     display: inline-flex;
     align-items: center;
-    justify-content:  var(--ww-add-button-alignment);
+    justify-content: var(--ww-add-button-alignment);
     gap: 8px;
-    // border: 1px solid var(--ww-add-button-border-color);
+    // border: var(--ww-add-button-border-color);
     border-radius: 8px;
     padding: 7px 10px;
     font-size: var(--ww-add-button-font-size);
@@ -2144,6 +2168,11 @@ export default {
 
 .ww-kanban-add-card-button:hover {
     background: var(--ww-add-button-bg-hover);
+    color: var(--ww-add-button-text-color-hover);
+}
+
+.ww-kanban-add-card-button:hover .ww-kanban-add-card-icon {
+    color: var(--ww-add-button-icon-color-hover);
 }
 
 .ww-kanban-add-card-composer {
@@ -2206,7 +2235,7 @@ export default {
 .ww-kanban-add-card-cancel {
     border: none;
     background: transparent;
-    color: #000000;
+    color: var(--ww-add-cancel-icon-color);
     width: 24px;
     height: 24px;
     display: inline-flex;
@@ -2218,10 +2247,9 @@ export default {
     cursor: pointer;
 }
 
-// .ww-kanban-add-card-cancel:hover {
-//     color: #111827;
-//     background: rgba(15, 23, 42, 0.06);
-// }
+.ww-kanban-add-card-cancel:hover {
+    color: var(--ww-add-cancel-icon-color-hover);
+}
 
 .ww-kanban-add-card-cancel-icon {
     width: 24px;
@@ -2238,7 +2266,7 @@ export default {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: currentColor;
+    color: var(--ww-add-button-icon-color);
 }
 
 .ww-kanban-add-card-icon-svg {
@@ -2267,7 +2295,7 @@ export default {
     transition: border-color 120ms ease, box-shadow 120ms ease;
     font-family: var(--ww-font-family);
     cursor: var(--ww-card-cursor);
-    height: auto;
+    height: var(--ww-card-height);
     max-height: none;
     overflow: hidden;
 }
@@ -2390,7 +2418,7 @@ export default {
 
 .ww-kanban-card-description-indicator,
 .ww-kanban-card-attachment-indicator {
-    color: #4b5563;
+    color: var(--ww-card-meta-icon-color);
 }
 
 .ww-kanban-card-description-icon,

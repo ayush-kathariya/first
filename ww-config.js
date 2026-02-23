@@ -63,8 +63,10 @@ export default {
                 "cardBorderColor",
                 "cardHoverBorderColor",
                 "cardHoverRingColor",
+                "cardMetaIconColor",
                 "dropPlaceholderColor",
                 "cardMinHeight",
+                "cardHeight",
                 "cardBorderRadius",
                 "cardPadding",
                 "cardFontSize",
@@ -92,8 +94,13 @@ export default {
                 "addCardButtonBackgroundColor",
                 "addCardButtonHoverBackgroundColor",
                 "addCardButtonTextColor",
+                "addCardButtonHoverTextColor",
+                "addCardButtonIconColor",
+                "addCardButtonHoverIconColor",
                 "addCardButtonBorderColor",
                 "addCardButtonFontSize",
+                "addCardCancelIconColor",
+                "addCardCancelHoverIconColor",
             ],
             [
                 "addCardInputBackgroundColor",
@@ -634,6 +641,15 @@ export default {
             bindable: true,
             section: "settings",
         },
+        cardMetaIconColor: {
+            label: {
+                en: "Card meta icon color",
+            },
+            type: "Text",
+            defaultValue: "#4b5563",
+            bindable: true,
+            section: "settings",
+        },
         dropPlaceholderColor: {
             label: {
                 en: "Drop placeholder color",
@@ -651,6 +667,18 @@ export default {
             defaultValue: 74,
             bindable: true,
             section: "settings",
+        },
+        cardHeight: {
+            label: {
+                en: "Card height",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Supports values like auto, 120px, 50%, etc.",
+            },
         },
         cardBorderRadius: {
             label: {
@@ -906,6 +934,36 @@ export default {
             bindable: true,
             section: "settings",
         },
+        addCardButtonHoverTextColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card hover text color",
+            },
+            type: "Text",
+            defaultValue: "#111827",
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonIconColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card icon color",
+            },
+            type: "Text",
+            defaultValue: "#111827",
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonHoverIconColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card hover icon color",
+            },
+            type: "Text",
+            defaultValue: "#111827",
+            bindable: true,
+            section: "settings",
+        },
         addCardButtonBorderColor: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
@@ -923,6 +981,26 @@ export default {
             },
             type: "Number",
             defaultValue: 13,
+            bindable: true,
+            section: "settings",
+        },
+        addCardCancelIconColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card cancel icon",
+            },
+            type: "Text",
+            defaultValue: "#000000",
+            bindable: true,
+            section: "settings",
+        },
+        addCardCancelHoverIconColor: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card cancel hover icon",
+            },
+            type: "Text",
+            defaultValue: "#111827",
             bindable: true,
             section: "settings",
         },
