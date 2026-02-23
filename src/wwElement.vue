@@ -7,13 +7,7 @@
         ref="kanbanRoot"
     >
         <template v-for="(stack, stackIndex) in renderStacks" :key="getStackRenderKey(stack.value, stackIndex)">
-            <wwLayoutItemContext
-                :index="stackIndex"
-                :item="getStackLayoutData(stack, stackIndex)"
-                :data="getStackLayoutData(stack, stackIndex)"
-                :repeated-items="renderStacks"
-                is-repeat
-            >
+            <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
                 <section
                     class="ww-kanban-stack"
                     :class="{
@@ -771,40 +765,6 @@ export default {
                 label: this.getStackLabel(stack || { label: "", value: stackValue }),
                 index: normalizedIndex,
                 key: normalizedIndex === null ? null : this.getStackRenderKey(stackValue, normalizedIndex),
-            };
-        },
-        getStackLayoutData(stack, stackIndex) {
-            const stackMeta = this.buildStackMeta(stack, stackIndex);
-            const items = Array.isArray(stack?.items) ? stack.items : [];
-            const baseStack =
-                stack && typeof stack === "object" && !Array.isArray(stack)
-                    ? { ...stack }
-                    : {
-                          value: stackMeta.value,
-                          label: stackMeta.label,
-                          items,
-                      };
-            const existingData =
-                baseStack?.data && typeof baseStack.data === "object" && !Array.isArray(baseStack.data)
-                    ? { ...baseStack.data }
-                    : {};
-
-            return {
-                ...baseStack,
-                value: stackMeta.value,
-                label: stackMeta.label,
-                index: stackMeta.index,
-                key: stackMeta.key,
-                items,
-                data: {
-                    ...existingData,
-                    stack: stackMeta,
-                    value: stackMeta.value,
-                    label: stackMeta.label,
-                    index: stackMeta.index,
-                    key: stackMeta.key,
-                    items,
-                },
             };
         },
         getItemLayoutData(item, itemIndex, stack, stackIndex) {
@@ -2065,7 +2025,7 @@ export default {
     flex: 0 1 auto;
     min-height: 0;
     border-radius: 11px;
-    border: 1px solid var(--ww-panel-border-color);
+    border: var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
@@ -2104,7 +2064,7 @@ export default {
     height: 20px;
     flex: 0 0 20px;
     border-radius: 999px;
-    border: 1px solid var(--ww-count-border-color);
+    border: var(--ww-count-border-color);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2188,7 +2148,7 @@ export default {
 .ww-kanban-add-card-input {
     width: 100%;
     min-height: var(--ww-add-input-min-height);
-    border: 1px solid var(--ww-add-input-border-color);
+    border: var(--ww-add-input-border-color);
     border-radius: 8px;
     padding: 10px 12px;
     font-size: var(--ww-add-input-font-size);
@@ -2216,7 +2176,7 @@ export default {
 }
 
 .ww-kanban-add-card-submit {
-    border: 1px solid var(--ww-add-submit-border-color);
+    border: var(--ww-add-submit-border-color);
     border-radius: 6px;
     background: var(--ww-add-submit-bg);
     color: var(--ww-add-submit-text-color);
@@ -2287,7 +2247,7 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border: 1px solid var(--ww-card-border-color);
+    border: var(--ww-card-border-color);
     border-radius: var(--ww-card-radius);
     background: var(--ww-card-bg);
     color: var(--ww-card-text-color);
