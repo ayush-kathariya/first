@@ -28,7 +28,7 @@
                                 <wwLayoutItemContext
                                     :index="itemIndex"
                                     :item="item"
-                                    :data="item"
+                                    :data="getItemLayoutData(item, itemIndex, stack, stackIndex)"
                                     :repeated-items="stack.items"
                                     is-repeat
                                 >
@@ -42,7 +42,7 @@
                                         @dragend="onDesktopDragEnd"
                                         @dragover.stop.prevent="onCardDragOver($event, stack.value, itemIndex, stackIndex)"
                                         @drop.stop.prevent="onCardDrop($event, stack.value, itemIndex, stackIndex)"
-                                        @click="onCardClick(item, stack.value, itemIndex, $event)"
+                                        @click="onCardClick(item, stack, stackIndex, itemIndex, $event)"
                                     >
                                         <button
                                             v-if="content.customDragHandle"
@@ -311,6 +311,16 @@ export default {
                 if (value === undefined || value === null || value === "") return fallback;
                 return String(value);
             };
+            const borderOrDefault = (value, fallbackColor) => {
+                const fallback = `1px solid ${fallbackColor}`;
+                if (value === undefined || value === null || value === "") return fallback;
+                const normalized = String(value).trim();
+                if (!normalized) return fallback;
+                if (normalized === "0") return normalized;
+                const hasBorderStyle = /\b(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)\b/i.test(normalized);
+                const hasBorderWidth = /(^|\s)\d+(\.\d+)?(px|em|rem|vh|vw|%)\b/i.test(normalized);
+                return hasBorderStyle || hasBorderWidth ? normalized : `1px solid ${normalized}`;
+            };
             const sizeOrDefault = (value, fallbackPx) => {
                 if (value === undefined || value === null || value === "") return `${fallbackPx}px`;
                 if (typeof value === "number" && Number.isFinite(value)) return `${value}px`;
@@ -336,7 +346,7 @@ export default {
                 "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
                 "--ww-panel-bg": valueOrDefault(this.content.columnBackgroundColor, "#f3f4f6"),
-                "--ww-panel-border-color": valueOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
+                "--ww-panel-border-color": borderOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
                 "--ww-header-text-color": valueOrDefault(this.content.columnTitleColor, "#0f172a"),
                 "--ww-header-font-size": sizeOrDefault(this.content.columnTitleFontSize, 13),
                 "--ww-header-font-weight": numberOrDefault(this.content.columnTitleFontWeight, 600),
@@ -757,6 +767,45 @@ export default {
         getCardKey(item, index, stackValue, stackIndex = 0) {
             return `${this.getStackRenderKey(stackValue, stackIndex)}::${this.getItemIdentity(item, index)}::${index}`;
         },
+        buildStackMeta(stack, stackIndex) {
+            const stackValue = stack?.value ?? null;
+            const normalizedIndex = Number.isInteger(stackIndex) ? stackIndex : null;
+            return {
+                value: stackValue,
+                label: this.getStackLabel(stack || { label: "", value: stackValue }),
+                index: normalizedIndex,
+                key: normalizedIndex === null ? null : this.getStackRenderKey(stackValue, normalizedIndex),
+            };
+        },
+        getItemLayoutData(item, itemIndex, stack, stackIndex) {
+            const stackMeta = this.buildStackMeta(stack, stackIndex);
+            const base =
+                item && typeof item === "object" && !Array.isArray(item)
+                    ? { ...item }
+                    : {
+                          value: item,
+                      };
+            const existingData =
+                base?.data && typeof base.data === "object" && !Array.isArray(base.data) ? { ...base.data } : {};
+
+            return {
+                ...base,
+                stack: stackMeta,
+                stackValue: stackMeta.value,
+                stackLabel: stackMeta.label,
+                stackIndex: stackMeta.index,
+                itemIndex,
+                data: {
+                    ...existingData,
+                    item,
+                    stack: stackMeta,
+                    stackValue: stackMeta.value,
+                    stackLabel: stackMeta.label,
+                    stackIndex: stackMeta.index,
+                    itemIndex,
+                },
+            };
+        },
         stripHtml(value) {
             const text = typeof value === "string" ? value : String(value ?? "");
             if (!text) return "";
@@ -1154,9 +1203,25 @@ export default {
         },
         emitMove(payload) {
             if (!payload) return;
+            const fromIndex = this.renderStacks.findIndex(stack => this.valuesEqual(stack.value, payload.from));
+            const toIndex = this.renderStacks.findIndex(stack => this.valuesEqual(stack.value, payload.to));
+            const fromStack =
+                fromIndex >= 0 ? this.renderStacks[fromIndex] : { value: payload.from, label: String(payload.from ?? "") };
+            const toStack = toIndex >= 0 ? this.renderStacks[toIndex] : { value: payload.to, label: String(payload.to ?? "") };
+            const fromMeta = this.buildStackMeta(fromStack, fromIndex >= 0 ? fromIndex : null);
+            const toMeta = this.buildStackMeta(toStack, toIndex >= 0 ? toIndex : null);
             this.$emit("trigger-event", {
                 name: "item:moved",
-                event: payload,
+                event: {
+                    ...payload,
+                    data: {
+                        item: payload.item,
+                        from: fromMeta,
+                        to: toMeta,
+                        oldIndex: payload.oldIndex,
+                        newIndex: payload.newIndex,
+                    },
+                },
             });
         },
         refreshStacks() {
@@ -1256,19 +1321,30 @@ export default {
             this.finalizeMove(this.desktopDrag, toStack, insertIndex);
             this.onDesktopDragEnd();
         },
-        onCardClick(item, stackValue, itemIndex, event) {
+        onCardClick(item, stack, stackIndex, itemIndex, event) {
             if (!event?.isTrusted) return;
             if (Date.now() < this.suppressClickUntil) return;
             if (this.touchPressTimer || this.touchDragContext || this.desktopDrag || this.isDragging) return;
             if (this.content.customDragHandle && this.matchesHandleTarget(event.target)) return;
+            const stackMeta = this.buildStackMeta(stack, stackIndex);
+            const itemKey = this.getItemIdentity(item, itemIndex);
 
             this.$emit("trigger-event", {
                 name: "item:clicked",
                 event: {
                     item,
-                    stack: stackValue,
+                    stack: stackMeta.value,
+                    stackLabel: stackMeta.label,
+                    stackIndex: stackMeta.index,
+                    stackKey: stackMeta.key,
                     index: itemIndex,
-                    itemKey: this.getItemIdentity(item, itemIndex),
+                    itemKey,
+                    data: {
+                        item,
+                        itemKey,
+                        index: itemIndex,
+                        stack: stackMeta,
+                    },
                 },
             });
         },
@@ -1852,17 +1928,29 @@ export default {
             const firstStack = this.renderStacks[0];
             if (!firstStack?.items?.length) throw new Error("No item found");
             const item = firstStack.items[0];
+            const stackMeta = this.buildStackMeta(firstStack, 0);
+            const itemKey = this.getItemIdentity(item, 0);
             return {
                 item,
-                stack: firstStack.value,
+                stack: stackMeta.value,
+                stackLabel: stackMeta.label,
+                stackIndex: stackMeta.index,
+                stackKey: stackMeta.key,
                 index: 0,
-                itemKey: this.getItemIdentity(item, 0),
+                itemKey,
+                data: {
+                    item,
+                    itemKey,
+                    index: 0,
+                    stack: stackMeta,
+                },
             };
         },
         getTestEvent() {
             if (!this.renderStacks.length) throw new Error("No stack found");
             const firstStack = this.renderStacks[0];
             if (!firstStack?.items?.length) throw new Error("No item found");
+            const stackMeta = this.buildStackMeta(firstStack, 0);
             return {
                 item: firstStack.items[0],
                 from: firstStack.value,
@@ -1870,6 +1958,13 @@ export default {
                 oldIndex: 0,
                 newIndex: 1,
                 updatedList: firstStack.items,
+                data: {
+                    item: firstStack.items[0],
+                    from: stackMeta,
+                    to: stackMeta,
+                    oldIndex: 0,
+                    newIndex: 1,
+                },
             };
         },
         /* wwEditor:end */
@@ -1940,7 +2035,7 @@ export default {
     flex: 0 1 auto;
     min-height: 0;
     border-radius: 11px;
-    // border: 1px solid var(--ww-panel-border-color);
+    border: var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
