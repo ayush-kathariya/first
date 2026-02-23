@@ -2308,14 +2308,13 @@ export default {
     font-family: var(--ww-font-family);
     cursor: var(--ww-card-cursor);
     height: auto;
-    max-height: auto;
     overflow: hidden;
 }
 
-.ww-kanban-card.has-fixed-height {
-    height: var(--ww-card-height);
-    overflow: hidden;
-}
+// .ww-kanban-card.has-fixed-height {
+//     height: var(--ww-card-height);
+//     overflow: hidden;
+// }
 
 .ww-kanban-card:hover {
     border-color: var(--ww-card-hover-border-color);
