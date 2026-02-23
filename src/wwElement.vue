@@ -2340,7 +2340,7 @@ export default {
     cursor: var(--ww-card-cursor);
     height: auto;
     max-height: none;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .ww-kanban-card.has-fixed-height {
@@ -2371,7 +2371,7 @@ export default {
     flex: 1 1 auto;
     height: auto;
     max-height: none;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .ww-kanban-card-image {
