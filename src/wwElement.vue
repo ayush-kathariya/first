@@ -2142,9 +2142,9 @@ export default {
     cursor: pointer;
 }
 
-// .ww-kanban-add-card-button:hover {
-//     background: var(--ww-add-button-bg-hover);
-// }
+.ww-kanban-add-card-button:hover {
+    background: var(--ww-add-button-bg-hover);
+}
 
 .ww-kanban-add-card-composer {
     display: flex;
