@@ -2371,7 +2371,7 @@ export default {
     flex: 1 1 auto;
     height: auto;
     max-height: none;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .ww-kanban-card-image {
