@@ -2034,7 +2034,7 @@ export default {
     border-radius: 11px;
     border: var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    // box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
     padding: 10px;
     overflow: hidden;
 }
