@@ -37,7 +37,13 @@ export default {
                 "sortedBy",
                 "sortOrder",
             ],
-            ["showAddCardButton", "addCardButtonLabel", "addCardInputPlaceholder", "addCardSubmitLabel"],
+            [
+                "showAddCardButton",
+                "addCardButtonDirectTrigger",
+                "addCardButtonLabel",
+                "addCardInputPlaceholder",
+                "addCardSubmitLabel",
+            ],
             "readonly",
             "draggingCursor",
             "customDragHandle",
@@ -317,6 +323,20 @@ export default {
             bindable: true,
             section: "settings",
         },
+        addCardButtonDirectTrigger: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Trigger event on add button",
+            },
+            type: "OnOff",
+            defaultValue: false,
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip:
+                    "When enabled, clicking Add Card directly triggers 'On add card clicked' without opening the input form.",
+            },
+        },
         addCardButtonLabel: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
@@ -328,7 +348,7 @@ export default {
             section: "settings",
         },
         addCardInputPlaceholder: {
-            hidden: (content) => content.showAddCardButton === false,
+            hidden: (content) => content.showAddCardButton === false || content.addCardButtonDirectTrigger === true,
             label: {
                 en: "Add card input placeholder",
             },
@@ -338,7 +358,7 @@ export default {
             section: "settings",
         },
         addCardSubmitLabel: {
-            hidden: (content) => content.showAddCardButton === false,
+            hidden: (content) => content.showAddCardButton === false || content.addCardButtonDirectTrigger === true,
             label: {
                 en: "Add card submit label",
             },

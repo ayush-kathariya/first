@@ -106,13 +106,16 @@
                     <footer
                         v-if="content.showAddCardButton !== false && !isReadonly"
                         class="ww-kanban-stack-footer"
-                        :class="{ 'is-composer-open': isAddCardComposerOpen(stack.value, stackIndex) }"
+                        :class="{
+                            'is-composer-open':
+                                content.addCardButtonDirectTrigger !== true && isAddCardComposerOpen(stack.value, stackIndex),
+                        }"
                     >
                         <button
-                            v-if="!isAddCardComposerOpen(stack.value, stackIndex)"
+                            v-if="content.addCardButtonDirectTrigger === true || !isAddCardComposerOpen(stack.value, stackIndex)"
                             type="button"
                             class="ww-kanban-add-card-button"
-                            @click="openAddCardComposer(stack, stackIndex, $event)"
+                            @click="onAddCardButtonClick(stack, stackIndex, $event)"
                         >
                             <span class="ww-kanban-add-card-icon" aria-hidden="true">
                                 <svg class="ww-kanban-add-card-icon-svg" viewBox="0 0 20 20" focusable="false">
@@ -124,7 +127,11 @@
                             <span>{{ content.addCardButtonLabel || "Add Card" }}</span>
                         </button>
 
-                        <form v-else class="ww-kanban-add-card-composer" @submit.prevent="onAddCardSubmit(stack, $event)">
+                        <form
+                            v-else-if="content.addCardButtonDirectTrigger !== true"
+                            class="ww-kanban-add-card-composer"
+                            @submit.prevent="onAddCardSubmit(stack, $event)"
+                        >
                             <textarea
                                 class="ww-kanban-add-card-input"
                                 :value="addCardDraft"
@@ -423,6 +430,11 @@ export default {
                     this.$emit("remove-state", "readonly");
                 }
             },
+        },
+        "content.addCardButtonDirectTrigger"(value) {
+            if (value === true) {
+                this.cancelAddCardComposer();
+            }
         },
     },
     methods: {
@@ -1165,6 +1177,21 @@ export default {
         onAddCardInput(event) {
             this.addCardDraft = String(event?.target?.value ?? "");
         },
+        emitAddCardEvent(stack, title = "") {
+            this.$emit("trigger-event", {
+                name: "add-card:clicked",
+                event: this.buildAddCardEventPayload(stack, title),
+            });
+        },
+        onAddCardButtonClick(stack, stackIndex, event) {
+            if (!event?.isTrusted) return;
+            if (this.content.addCardButtonDirectTrigger === true) {
+                this.cancelAddCardComposer();
+                this.emitAddCardEvent(stack, "");
+                return;
+            }
+            this.openAddCardComposer(stack, stackIndex, event);
+        },
         buildAddCardEventPayload(stack, title) {
             const stackValue = stack?.value ?? null;
             const normalizedTitle = String(title ?? "").trim();
@@ -1188,10 +1215,7 @@ export default {
             if (event) event.preventDefault?.();
             const title = this.addCardDraft.trim();
             if (!title) return;
-            this.$emit("trigger-event", {
-                name: "add-card:clicked",
-                event: this.buildAddCardEventPayload(stack, title),
-            });
+            this.emitAddCardEvent(stack, title);
             this.addCardDraft = "";
         },
         matchesHandleTarget(target) {
