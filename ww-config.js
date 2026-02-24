@@ -113,7 +113,7 @@ export default {
                 "cardCursor",
             ],
             "styleAvatarHeading",
-            ["cardAvatarBorder", "cardAvatarMargin", "cardAvatarPadding"],
+            ["cardAvatarWidth", "cardAvatarHeight", "cardAvatarBorder", "cardAvatarMargin", "cardAvatarPadding"],
             "styleDeadlineHeading",
             [
                 "deadlineFontSize",
@@ -1309,6 +1309,40 @@ export default {
                 type: "string",
                 cssSupports: "border",
                 tooltip: "A valid CSS border value",
+            },
+        },
+        cardAvatarWidth: {
+            label: {
+                en: "Avatar width",
+            },
+            type: "Text",
+            defaultValue: "28px",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS width values like 28px, 2rem, 10%.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "width",
+                tooltip: "A valid CSS width value",
+            },
+        },
+        cardAvatarHeight: {
+            label: {
+                en: "Avatar height",
+            },
+            type: "Text",
+            defaultValue: "28px",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS height values like 28px, 2rem, 10%.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "height",
+                tooltip: "A valid CSS height value",
             },
         },
         cardAvatarMargin: {

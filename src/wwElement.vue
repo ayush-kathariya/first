@@ -492,6 +492,8 @@ export default {
                 "--ww-card-label-max-height": valueOrDefault(this.content.cardLabelMaxHeight, "auto"),
                 "--ww-card-label-overflow": valueOrDefault(this.content.cardLabelOverflow, "unset"),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
+                "--ww-card-avatar-width": sizeOrKeyword(this.content.cardAvatarWidth, "28px"),
+                "--ww-card-avatar-height": sizeOrKeyword(this.content.cardAvatarHeight, "28px"),
                 "--ww-card-avatar-border": borderOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
                 "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),
                 "--ww-card-avatar-padding": valueOrDefault(this.content.cardAvatarPadding, "0"),
@@ -2785,9 +2787,9 @@ export default {
 }
 
 .ww-kanban-card-avatar {
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
+    width: var(--ww-card-avatar-width);
+    height: var(--ww-card-avatar-height);
+    flex: 0 0 var(--ww-card-avatar-width);
     border-radius: 999px;
     display: inline-flex;
     align-items: center;
