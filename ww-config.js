@@ -106,6 +106,8 @@ export default {
                 "cardFontWeight",
                 "cardLabelTypography",
                 "cardLabelMaxLength",
+                "cardLabelMaxHeight",
+                "cardLabelOverflow",
                 "cardCursor",
             ],
             "styleAvatarHeading",
@@ -1160,6 +1162,46 @@ export default {
             section: "style",
             propertyHelp: {
                 tooltip: "Maximum characters to show in card label. Set 0 to show full text.",
+            },
+        },
+        cardLabelMaxHeight: {
+            label: {
+                en: "Card label max height",
+            },
+            type: "Text",
+            defaultValue: "none",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS values like none, 48px, 6rem, 40%.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "max-height",
+                tooltip: "A valid CSS max-height value",
+            },
+        },
+        cardLabelOverflow: {
+            label: {
+                en: "Card label overflow",
+            },
+            type: "TextSelect",
+            options: {
+                options: [
+                    { value: "visible", label: "Visible", default: true },
+                    { value: "hidden", label: "Hidden" },
+                    { value: "auto", label: "Auto" },
+                    { value: "scroll", label: "Scroll" },
+                    { value: "clip", label: "Clip" },
+                ],
+            },
+            defaultValue: "visible",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "overflow",
+                tooltip: "A valid CSS overflow value",
             },
         },
         cardCursor: {

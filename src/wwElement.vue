@@ -485,6 +485,8 @@ export default {
                 "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
                 "--ww-card-font-weight": numberOrDefault(this.content.cardFontWeight, 400),
                 "--ww-card-label-typography": valueOrDefault(this.content.cardLabelTypography, ""),
+                "--ww-card-label-max-height": valueOrDefault(this.content.cardLabelMaxHeight, "auto"),
+                "--ww-card-label-overflow": valueOrDefault(this.content.cardLabelOverflow, "unset"),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
                 "--ww-card-avatar-border": borderOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
                 "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),
@@ -2596,6 +2598,8 @@ export default {
     font-weight: var(--ww-card-font-weight);
     line-height: 1.3;
     font: var(--ww-card-label-typography);
+    max-height: var(--ww-card-label-max-height);
+    overflow: var(--ww-card-label-overflow);
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
