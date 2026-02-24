@@ -5,6 +5,7 @@
         :style="kanbanStyle"
         v-bind="wwElementState?.$attrs"
         ref="kanbanRoot"
+        @click.capture="onRootClickCapture"
     >
         <template v-for="(stack, stackIndex) in renderStacks" :key="getStackRenderKey(stack.value, stackIndex)">
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
@@ -37,6 +38,8 @@
                                         :class="{
                                             'is-drag-source': isCardDragSource(stack.value, itemIndex),
                                             'has-fixed-height': hasFixedCardHeight,
+                                            'is-active-card': isCardStateKeyActive(stack.value, stackIndex, itemIndex),
+                                            'is-hovered-card': isCardStateKeyHovered(stack.value, stackIndex, itemIndex),
                                         }"
                                         :data-item-index="itemIndex"
                                         :data-item-key="String(getItemIdentity(item, itemIndex))"
@@ -45,6 +48,10 @@
                                         @dragend="onDesktopDragEnd"
                                         @dragover.stop.prevent="onCardDragOver($event, stack.value, itemIndex, stackIndex)"
                                         @drop.stop.prevent="onCardDrop($event, stack.value, itemIndex, stackIndex)"
+                                        @mouseenter="onCardMouseEnter(stack.value, stackIndex, itemIndex)"
+                                        @mouseleave="onCardMouseLeave(stack.value, stackIndex, itemIndex, $event)"
+                                        @focusin="onCardFocusIn(stack.value, stackIndex, itemIndex)"
+                                        @focusout="onCardFocusOut(stack.value, stackIndex, itemIndex, $event)"
                                         @click="onCardClick(item, stack, stackIndex, itemIndex, $event)"
                                     >
                                         <button
@@ -324,6 +331,10 @@ export default {
             desktopListenersAttached: false,
             addCardDraft: "",
             addCardComposerStackKey: null,
+            activeCardStateKey: null,
+            hoveredCardStateKey: null,
+            isCardStateEnabled: false,
+            isCardHoverStateEnabled: false,
         };
     },
     computed: {
@@ -553,6 +564,7 @@ export default {
             handler(value) {
                 if (value) {
                     this.$emit("add-state", "readonly");
+                    this.clearCardStates();
                     this.clearTouchInteraction();
                     this.cancelAddCardComposer();
                 } else {
@@ -575,6 +587,64 @@ export default {
         },
         getStackRenderKey(stackValue, stackIndex) {
             return `${this.getStackDomKey(stackValue)}::${stackIndex}`;
+        },
+        getCardStateKey(stackValue, stackIndex, itemIndex) {
+            return `${this.getStackRenderKey(stackValue, stackIndex)}::${itemIndex}`;
+        },
+        setCardStateEnabled(enabled) {
+            const normalized = !!enabled;
+            if (this.isCardStateEnabled === normalized) return;
+            this.isCardStateEnabled = normalized;
+            this.$emit(normalized ? "add-state" : "remove-state", "card");
+        },
+        setCardHoverStateEnabled(enabled) {
+            const normalized = !!enabled;
+            if (this.isCardHoverStateEnabled === normalized) return;
+            this.isCardHoverStateEnabled = normalized;
+            this.$emit(normalized ? "add-state" : "remove-state", "card-hover");
+        },
+        setActiveCardState(cardKey = null) {
+            this.activeCardStateKey = cardKey || null;
+            this.setCardStateEnabled(!!this.activeCardStateKey);
+        },
+        setHoveredCardState(cardKey = null) {
+            this.hoveredCardStateKey = cardKey || null;
+            this.setCardHoverStateEnabled(!!this.hoveredCardStateKey);
+        },
+        clearCardStates() {
+            this.setActiveCardState(null);
+            this.setHoveredCardState(null);
+        },
+        isCardStateKeyActive(stackValue, stackIndex, itemIndex) {
+            return this.activeCardStateKey === this.getCardStateKey(stackValue, stackIndex, itemIndex);
+        },
+        isCardStateKeyHovered(stackValue, stackIndex, itemIndex) {
+            return this.hoveredCardStateKey === this.getCardStateKey(stackValue, stackIndex, itemIndex);
+        },
+        onRootClickCapture(event) {
+            const root = this.$refs.kanbanRoot;
+            if (!root) return;
+            const cardEl = event?.target?.closest?.(".ww-kanban-card");
+            if (cardEl && root.contains(cardEl)) return;
+            this.setActiveCardState(null);
+        },
+        onCardMouseEnter(stackValue, stackIndex, itemIndex) {
+            this.setHoveredCardState(this.getCardStateKey(stackValue, stackIndex, itemIndex));
+        },
+        onCardMouseLeave(stackValue, stackIndex, itemIndex, event) {
+            if (event?.currentTarget && event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
+            const cardKey = this.getCardStateKey(stackValue, stackIndex, itemIndex);
+            if (this.hoveredCardStateKey !== cardKey) return;
+            this.setHoveredCardState(null);
+        },
+        onCardFocusIn(stackValue, stackIndex, itemIndex) {
+            this.setHoveredCardState(this.getCardStateKey(stackValue, stackIndex, itemIndex));
+        },
+        onCardFocusOut(stackValue, stackIndex, itemIndex, event) {
+            if (event?.currentTarget && event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
+            const cardKey = this.getCardStateKey(stackValue, stackIndex, itemIndex);
+            if (this.hoveredCardStateKey !== cardKey) return;
+            this.setHoveredCardState(null);
         },
         getStackItemsByValue(stackValue) {
             if (stackValue === null) return this.uncategorizedStack.items || [];
@@ -1155,7 +1225,6 @@ export default {
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const target = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate());
             if (target < today) return "overdue";
-            if (target.getTime() === today.getTime()) return "today";
             return "upcoming";
         },
         getItemDeadlineMeta(item) {
@@ -1329,6 +1398,7 @@ export default {
             this.desktopDrag = { item, fromStack, oldIndex, fromStackKey: null };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
+            this.setHoveredCardState(null);
             const sourceEl = event.currentTarget?.closest?.(".ww-kanban-card") || event.currentTarget;
             if (sourceEl) {
                 const rect = sourceEl.getBoundingClientRect();
@@ -1350,6 +1420,7 @@ export default {
             this.setDropTargetIndex(null);
             this.clearDropTargetStack();
             this.clearDropPlaceholder();
+            this.setHoveredCardState(null);
             this.detachDesktopListeners();
             if (!this.touchDragContext) this.isDragging = false;
         },
@@ -1397,6 +1468,7 @@ export default {
             if (Date.now() < this.suppressClickUntil) return;
             if (this.touchPressTimer || this.touchDragContext || this.desktopDrag || this.isDragging) return;
             if (this.content.customDragHandle && this.matchesHandleTarget(event.target)) return;
+            this.setActiveCardState(this.getCardStateKey(stack?.value ?? null, stackIndex, itemIndex));
             const stackMeta = this.buildStackMeta(stack, stackIndex);
             const itemKey = this.getItemIdentity(item, itemIndex);
 
@@ -1571,6 +1643,7 @@ export default {
             this.clearDropTargetStack();
             this.clearDropPlaceholder();
             this.hideGhost();
+            this.setHoveredCardState(null);
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
         },
@@ -2055,6 +2128,7 @@ export default {
         this.detachDesktopListeners();
         this.detachTouchListeners();
         this.clearTouchInteraction();
+        this.clearCardStates();
     },
 };
 </script>
@@ -2370,6 +2444,12 @@ export default {
 }
 
 .ww-kanban-card:hover {
+    border-color: var(--ww-card-hover-border-color);
+    box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
+}
+
+.ww-kanban-card.is-hovered-card,
+.ww-kanban-card.is-active-card {
     border-color: var(--ww-card-hover-border-color);
     box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
 }

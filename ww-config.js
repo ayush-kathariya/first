@@ -120,7 +120,7 @@ export default {
             ],
         ],
     },
-    states: ["readonly"],
+    states: ["readonly", "card", "card-hover"],
     options: {
         displayAllowedValues: ["flex", "inline-flex"],
     },
