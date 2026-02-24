@@ -2683,11 +2683,6 @@ export default {
     stroke-linecap: round;
 }
 
-.ww-kanban-card-deadline-icon circle,
-.ww-kanban-card-deadline-icon path {
-    vector-effect: non-scaling-stroke;
-}
-
 .ww-kanban-card-deadline-text {
     min-width: 0;
 }
@@ -2739,11 +2734,6 @@ export default {
 
 .ww-kanban-card-attachment-icon {
     stroke-width: 1.45;
-}
-
-.ww-kanban-card-description-icon path,
-.ww-kanban-card-attachment-icon path {
-    vector-effect: non-scaling-stroke;
 }
 
 .ww-kanban-card-avatars {
