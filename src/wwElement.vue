@@ -534,7 +534,10 @@ export default {
                     this.content.addCardButtonHoverIconColor,
                     this.content.addCardButtonHoverTextColor || this.content.addCardButtonTextColor || "#111827"
                 ),
-                "--ww-add-button-border-color": borderOrDefault(this.content.addCardButtonBorderColor, "1px solid rgba(15, 23, 42, 0.18)"),
+                "--ww-add-button-border-color": borderOrDefault(
+                    this.content.addCardButtonBorder,
+                    borderOrDefault(this.content.addCardButtonBorderColor, "1px solid rgba(15, 23, 42, 0.18)")
+                ),
                 "--ww-add-button-shadow": valueOrDefault(this.content.addCardButtonBoxShadow, "none"),
                 "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonJustifyContent, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
@@ -2383,7 +2386,7 @@ export default {
     font: var(--ww-add-button-typography);
     color: var(--ww-add-button-text-color);
     background: var(--ww-add-button-bg);
-    box-shadow: var(--ww-add-button-shadow);
+    // box-shadow: var(--ww-add-button-shadow);
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
@@ -2395,6 +2398,8 @@ export default {
 .ww-kanban-add-card-button:hover {
     background: var(--ww-add-button-bg-hover);
     color: var(--ww-add-button-text-color-hover);
+    border: var(--ww-add-button-border-color);
+    // box-shadow: var(--ww-add-button-shadow);
 }
 
 .ww-kanban-add-card-button:focus,
@@ -2405,6 +2410,11 @@ export default {
 
 .ww-kanban-add-card-button:hover .ww-kanban-add-card-icon {
     color: var(--ww-add-button-icon-color-hover);
+}
+
+.ww-kanban-add-card-button:active {
+    border: var(--ww-add-button-border-color);
+    box-shadow: var(--ww-add-button-shadow);
 }
 
 .ww-kanban-add-card-composer {

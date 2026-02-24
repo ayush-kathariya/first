@@ -140,7 +140,7 @@ export default {
                 "addCardButtonHoverTextColor",
                 "addCardButtonIconColor",
                 "addCardButtonHoverIconColor",
-                "addCardButtonBorderColor",
+                "addCardButtonBorder",
                 "addCardButtonBoxShadow",
                 "addCardButtonJustifyContent",
                 "addCardButtonFontSize",
@@ -1542,10 +1542,25 @@ export default {
             bindable: true,
             section: "style",
         },
-        addCardButtonBorderColor: {
+        addCardButtonBorder: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
-                en: "Add card button border",
+                en: "Add card button borders",
+            },
+            type: "Border",
+            defaultValue: "1px solid rgba(15, 23, 42, 0.18)",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
+        },
+        addCardButtonBorderColor: {
+            hidden: true,
+            label: {
+                en: "Add card button border (legacy)",
             },
             type: "Border",
             defaultValue: "1px solid rgba(15, 23, 42, 0.18)",
