@@ -2272,7 +2272,7 @@ export default {
     flex-direction: column;
     flex: 0 1 auto;
     min-height: 0;
-    border-radius: 11px;
+    border-radius: 8px;
     border: var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
     box-shadow: var(--ww-panel-shadow);
