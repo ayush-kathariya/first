@@ -138,6 +138,7 @@ export default {
                 "addCardButtonIconColor",
                 "addCardButtonHoverIconColor",
                 "addCardButtonBorderColor",
+                "addCardButtonBoxShadow",
                 "addCardButtonJustifyContent",
                 "addCardButtonFontSize",
                 "addCardButtonFontWeight",
@@ -934,12 +935,20 @@ export default {
         },
         cardBorderShadow: {
             label: {
-                en: "Card border shadow",
+                en: "Card box shadow",
             },
             type: "Text",
-            defaultValue: "#3b82f6",
+            defaultValue: "none",
             bindable: true,
             section: "style",
+            propertyHelp: {
+                tooltip: "Any valid CSS box-shadow value, for example: 0 4px 14px rgba(15,23,42,0.18)",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "box-shadow",
+                tooltip: "A valid CSS box-shadow value",
+            },
         },
         cardHoverBorderColor: {
             label: {
@@ -1495,6 +1504,24 @@ export default {
                 type: "string",
                 cssSupports: "border",
                 tooltip: "A valid CSS border value",
+            },
+        },
+        addCardButtonBoxShadow: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button shadow",
+            },
+            type: "Text",
+            defaultValue: "none",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Any valid CSS box-shadow value, for example: 0 4px 14px rgba(15,23,42,0.18)",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "box-shadow",
+                tooltip: "A valid CSS box-shadow value",
             },
         },
         addCardButtonJustifyContent: {

@@ -388,6 +388,20 @@ export default {
                 }
                 return `1px solid ${normalized}`;
             };
+            const shadowOrDefault = (value, fallback) => {
+                if (value === undefined || value === null || value === "") return fallback;
+                const normalized = String(value).trim();
+                if (!normalized) return fallback;
+                if (
+                    normalized.toLowerCase() === "none" ||
+                    normalized.startsWith("var(") ||
+                    /\b(inset|calc\()/.test(normalized) ||
+                    /-?\d/.test(normalized)
+                ) {
+                    return normalized;
+                }
+                return `0 0 0 1px ${normalized}`;
+            };
             const metaIconSizeRaw = sizeOrKeyword(this.content.cardMetaIconSize, "auto");
             const metaIconIsAuto = String(metaIconSizeRaw || "")
                 .trim()
@@ -441,7 +455,7 @@ export default {
                 "--ww-card-bg": valueOrDefault(this.content.cardBackgroundColor, "#fbfdff"),
                 "--ww-card-text-color": valueOrDefault(this.content.cardTextColor, "#0f172a"),
                 "--ww-card-border-color": borderOrDefault(this.content.cardBorderColor, "1px solid rgba(15, 23, 42, 0.14)"),
-                "--ww-card-shadow": borderOrDefault(this.content.cardBorderShadow, ""),
+                "--ww-card-shadow": shadowOrDefault(this.content.cardBorderShadow, "none"),
                 "--ww-card-hover-border-color": valueOrDefault(this.content.cardHoverBorderColor, "#3b82f6"),
                 "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
                 "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
@@ -497,6 +511,7 @@ export default {
                     this.content.addCardButtonHoverTextColor || this.content.addCardButtonTextColor || "#111827"
                 ),
                 "--ww-add-button-border-color": borderOrDefault(this.content.addCardButtonBorderColor, "1px solid rgba(15, 23, 42, 0.18)"),
+                "--ww-add-button-shadow": shadowOrDefault(this.content.addCardButtonBoxShadow, "none"),
                 "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonJustifyContent, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
                 "--ww-add-button-font-weight": numberOrDefault(this.content.addCardButtonFontWeight, 600),
@@ -2344,6 +2359,7 @@ export default {
     font: var(--ww-add-button-typography);
     color: var(--ww-add-button-text-color);
     background: var(--ww-add-button-bg);
+    box-shadow: var(--ww-add-button-shadow);
     cursor: pointer;
 }
 
