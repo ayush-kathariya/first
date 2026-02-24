@@ -5,7 +5,6 @@
         :style="kanbanStyle"
         v-bind="wwElementState?.$attrs"
         ref="kanbanRoot"
-        @click.capture="onRootClickCapture"
     >
         <template v-for="(stack, stackIndex) in renderStacks" :key="getStackRenderKey(stack.value, stackIndex)">
             <wwLayoutItemContext :index="stackIndex" :item="null" :data="stack" :repeated-items="renderStacks" is-repeat>
@@ -38,8 +37,6 @@
                                         :class="{
                                             'is-drag-source': isCardDragSource(stack.value, itemIndex),
                                             'has-fixed-height': hasFixedCardHeight,
-                                            'is-active-card': isCardStateKeyActive(stack.value, stackIndex, itemIndex),
-                                            'is-hovered-card': isCardStateKeyHovered(stack.value, stackIndex, itemIndex),
                                         }"
                                         :data-item-index="itemIndex"
                                         :data-item-key="String(getItemIdentity(item, itemIndex))"
@@ -48,10 +45,6 @@
                                         @dragend="onDesktopDragEnd"
                                         @dragover.stop.prevent="onCardDragOver($event, stack.value, itemIndex, stackIndex)"
                                         @drop.stop.prevent="onCardDrop($event, stack.value, itemIndex, stackIndex)"
-                                        @mouseenter="onCardMouseEnter(stack.value, stackIndex, itemIndex)"
-                                        @mouseleave="onCardMouseLeave(stack.value, stackIndex, itemIndex, $event)"
-                                        @focusin="onCardFocusIn(stack.value, stackIndex, itemIndex)"
-                                        @focusout="onCardFocusOut(stack.value, stackIndex, itemIndex, $event)"
                                         @click="onCardClick(item, stack, stackIndex, itemIndex, $event)"
                                     >
                                         <button
@@ -129,7 +122,7 @@
                                                                 title="Attachment available"
                                                             >
                                                                 <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 20 20" focusable="false">
-                                                                    <path d="M7.4 10.9L11.9 6.4a2.5 2.5 0 1 1 3.5 3.5l-6.1 6.1a4 4 0 0 1-5.6-5.7l6-6"></path>
+                                                                    <path d="M12.2 7.8L8.1 11.9a1.9 1.9 0 1 0 2.7 2.7l4.1-4.1a3.6 3.6 0 0 0-5.1-5.1L5.7 9.5a5.3 5.3 0 1 0 7.5 7.5l2.1-2.1"></path>
                                                                 </svg>
                                                             </span>
                                                         </div>
@@ -156,13 +149,21 @@
                                                     >
                                                         <div class="ww-kanban-card-avatars ww-kanban-card-avatars-multiple">
                                                             <span
-                                                                v-for="(avatar, avatarIndex) in cardMeta.avatars"
+                                                                v-for="(avatar, avatarIndex) in getVisibleCardAvatars(cardMeta.avatars)"
                                                                 :key="`avatar-multiple-${itemIndex}-${avatarIndex}-${avatar.label}`"
                                                                 class="ww-kanban-card-avatar"
                                                                 :style="{ backgroundColor: avatar.color, color: avatar.textColor }"
                                                                 :title="avatar.label"
                                                             >
                                                                 {{ avatar.text }}
+                                                            </span>
+                                                            <span
+                                                                v-if="getHiddenCardAvatarCount(cardMeta.avatars) > 0"
+                                                                class="ww-kanban-card-avatar ww-kanban-card-avatar-overflow"
+                                                                :style="getHiddenCardAvatarStyle(cardMeta.avatars)"
+                                                                :title="getHiddenCardAvatarTitle(cardMeta.avatars)"
+                                                            >
+                                                                +{{ getHiddenCardAvatarCount(cardMeta.avatars) }}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -331,10 +332,6 @@ export default {
             desktopListenersAttached: false,
             addCardDraft: "",
             addCardComposerStackKey: null,
-            activeCardStateKey: null,
-            hoveredCardStateKey: null,
-            isCardStateEnabled: false,
-            isCardHoverStateEnabled: false,
         };
     },
     computed: {
@@ -390,6 +387,7 @@ export default {
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
                 "--ww-panel-bg": valueOrDefault(this.content.columnBackgroundColor, "#f3f4f6"),
                 "--ww-panel-border-color": valueOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
+                "--ww-panel-shadow": valueOrDefault(this.content.columnShadow, "none"),
                 "--ww-header-text-color": valueOrDefault(this.content.columnTitleColor, "#0f172a"),
                 "--ww-header-font-size": sizeOrDefault(this.content.columnTitleFontSize, 13),
                 "--ww-header-font-weight": numberOrDefault(this.content.columnTitleFontWeight, 600),
@@ -406,7 +404,12 @@ export default {
                 "--ww-card-radius": sizeOrDefault(this.content.cardBorderRadius, 8),
                 "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
                 "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
+                "--ww-card-font-weight": numberOrDefault(this.content.cardFontWeight, 400),
+                "--ww-card-label-typography": valueOrDefault(this.content.cardLabelTypography, ""),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
+                "--ww-card-avatar-border": valueOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
+                "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),
+                "--ww-card-avatar-padding": valueOrDefault(this.content.cardAvatarPadding, "0"),
                 "--ww-card-meta-icon-color": valueOrDefault(this.content.cardMetaIconColor, "#4b5563"),
                 "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
                 "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
@@ -441,6 +444,8 @@ export default {
                 "--ww-add-button-border-color": valueOrDefault(this.content.addCardButtonBorderColor, "rgba(15, 23, 42, 0.18)"),
                 "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonJustifyContent, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
+                "--ww-add-button-font-weight": numberOrDefault(this.content.addCardButtonFontWeight, 600),
+                "--ww-add-button-typography": valueOrDefault(this.content.addCardButtonTypography, ""),
                 "--ww-add-cancel-icon-color": valueOrDefault(this.content.addCardCancelIconColor, "#000000"),
                 "--ww-add-cancel-icon-color-hover": valueOrDefault(this.content.addCardCancelHoverIconColor, "#111827"),
                 "--ww-add-input-bg": valueOrDefault(this.content.addCardInputBackgroundColor, "#f8fafc"),
@@ -454,6 +459,15 @@ export default {
                 "--ww-add-submit-text-color": valueOrDefault(this.content.addCardSubmitTextColor, "#ffffff"),
                 "--ww-add-submit-border-color": valueOrDefault(this.content.addCardSubmitBorderColor, "rgba(37, 99, 235, 0.95)"),
                 "--ww-add-submit-font-size": sizeOrDefault(this.content.addCardSubmitFontSize, 13),
+                "--ww-add-submit-font-weight": numberOrDefault(this.content.addCardSubmitFontWeight, 600),
+                "--ww-add-submit-typography": valueOrDefault(this.content.addCardSubmitTypography, ""),
+                "--ww-add-submit-border": valueOrDefault(
+                    this.content.addCardSubmitBorder,
+                    this.content.addCardSubmitBorderColor || "1px solid rgba(37, 99, 235, 0.95)"
+                ),
+                "--ww-add-submit-border-radius": valueOrDefault(this.content.addCardSubmitBorderRadius, "6px"),
+                "--ww-add-submit-padding": valueOrDefault(this.content.addCardSubmitPadding, "7px 12px"),
+                "--ww-add-submit-margin": valueOrDefault(this.content.addCardSubmitMargin, "0"),
                 "--ww-drop-placeholder-color": valueOrDefault(this.content.dropPlaceholderColor, "rgba(15, 23, 42, 0.08)"),
             };
         },
@@ -564,7 +578,6 @@ export default {
             handler(value) {
                 if (value) {
                     this.$emit("add-state", "readonly");
-                    this.clearCardStates();
                     this.clearTouchInteraction();
                     this.cancelAddCardComposer();
                 } else {
@@ -587,64 +600,6 @@ export default {
         },
         getStackRenderKey(stackValue, stackIndex) {
             return `${this.getStackDomKey(stackValue)}::${stackIndex}`;
-        },
-        getCardStateKey(stackValue, stackIndex, itemIndex) {
-            return `${this.getStackRenderKey(stackValue, stackIndex)}::${itemIndex}`;
-        },
-        setCardStateEnabled(enabled) {
-            const normalized = !!enabled;
-            if (this.isCardStateEnabled === normalized) return;
-            this.isCardStateEnabled = normalized;
-            this.$emit(normalized ? "add-state" : "remove-state", "card");
-        },
-        setCardHoverStateEnabled(enabled) {
-            const normalized = !!enabled;
-            if (this.isCardHoverStateEnabled === normalized) return;
-            this.isCardHoverStateEnabled = normalized;
-            this.$emit(normalized ? "add-state" : "remove-state", "card-hover");
-        },
-        setActiveCardState(cardKey = null) {
-            this.activeCardStateKey = cardKey || null;
-            this.setCardStateEnabled(!!this.activeCardStateKey);
-        },
-        setHoveredCardState(cardKey = null) {
-            this.hoveredCardStateKey = cardKey || null;
-            this.setCardHoverStateEnabled(!!this.hoveredCardStateKey);
-        },
-        clearCardStates() {
-            this.setActiveCardState(null);
-            this.setHoveredCardState(null);
-        },
-        isCardStateKeyActive(stackValue, stackIndex, itemIndex) {
-            return this.activeCardStateKey === this.getCardStateKey(stackValue, stackIndex, itemIndex);
-        },
-        isCardStateKeyHovered(stackValue, stackIndex, itemIndex) {
-            return this.hoveredCardStateKey === this.getCardStateKey(stackValue, stackIndex, itemIndex);
-        },
-        onRootClickCapture(event) {
-            const root = this.$refs.kanbanRoot;
-            if (!root) return;
-            const cardEl = event?.target?.closest?.(".ww-kanban-card");
-            if (cardEl && root.contains(cardEl)) return;
-            this.setActiveCardState(null);
-        },
-        onCardMouseEnter(stackValue, stackIndex, itemIndex) {
-            this.setHoveredCardState(this.getCardStateKey(stackValue, stackIndex, itemIndex));
-        },
-        onCardMouseLeave(stackValue, stackIndex, itemIndex, event) {
-            if (event?.currentTarget && event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
-            const cardKey = this.getCardStateKey(stackValue, stackIndex, itemIndex);
-            if (this.hoveredCardStateKey !== cardKey) return;
-            this.setHoveredCardState(null);
-        },
-        onCardFocusIn(stackValue, stackIndex, itemIndex) {
-            this.setHoveredCardState(this.getCardStateKey(stackValue, stackIndex, itemIndex));
-        },
-        onCardFocusOut(stackValue, stackIndex, itemIndex, event) {
-            if (event?.currentTarget && event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
-            const cardKey = this.getCardStateKey(stackValue, stackIndex, itemIndex);
-            if (this.hoveredCardStateKey !== cardKey) return;
-            this.setHoveredCardState(null);
         },
         getStackItemsByValue(stackValue) {
             if (stackValue === null) return this.uncategorizedStack.items || [];
@@ -1023,7 +978,7 @@ export default {
         getItemLabel(item, index) {
             if (item === null || item === undefined) return "";
             if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") {
-                return this.normalizeDisplayValue(item);
+                return this.applyCardLabelMaxLength(this.normalizeDisplayValue(item));
             }
 
             let configuredNumericFallback = "";
@@ -1031,22 +986,31 @@ export default {
                 const configuredLabel = wwLib.resolveObjectPropertyPath(item, this.content.itemLabel);
                 if (typeof configuredLabel === "string") {
                     const normalizedConfiguredLabel = this.normalizeDisplayValue(configuredLabel);
-                    if (normalizedConfiguredLabel) return normalizedConfiguredLabel;
+                    if (normalizedConfiguredLabel) return this.applyCardLabelMaxLength(normalizedConfiguredLabel);
                 } else if (typeof configuredLabel === "number" || typeof configuredLabel === "boolean") {
                     configuredNumericFallback = String(configuredLabel);
                 }
             }
 
             const inferredLabel = this.getAutoLabelFromItemObject(item);
-            if (inferredLabel) return inferredLabel;
-            if (configuredNumericFallback) return configuredNumericFallback;
+            if (inferredLabel) return this.applyCardLabelMaxLength(inferredLabel);
+            if (configuredNumericFallback) return this.applyCardLabelMaxLength(configuredNumericFallback);
 
             try {
                 const text = JSON.stringify(item);
-                return text.length > 120 ? `${text.slice(0, 117)}...` : text;
+                const fallbackText = text.length > 120 ? `${text.slice(0, 117)}...` : text;
+                return this.applyCardLabelMaxLength(fallbackText);
             } catch (e) {
-                return `Item ${index + 1}`;
+                return this.applyCardLabelMaxLength(`Item ${index + 1}`);
             }
+        },
+        applyCardLabelMaxLength(label) {
+            const text = typeof label === "string" ? label : this.normalizeDisplayValue(label);
+            const rawLimit = this.content.cardLabelMaxLength;
+            const parsedLimit = Number(rawLimit);
+            const limit = Number.isFinite(parsedLimit) ? Math.max(0, Math.floor(parsedLimit)) : 0;
+            if (!limit || text.length <= limit) return text;
+            return `${text.slice(0, limit).trimEnd()}...`;
         },
         resolveItemFieldValue(item, configuredPath, fallbackPaths = []) {
             if (!item || typeof item !== "object") return undefined;
@@ -1084,14 +1048,10 @@ export default {
             return this.isTruthyMetaField(this.getItemDescriptionRaw(item));
         },
         getAvatarPaletteColor(seed) {
-            const palette = ["#0ea5e9", "#ef4444", "#f59e0b", "#22c55e", "#8b5cf6", "#06b6d4", "#ec4899", "#2563eb", "#14b8a6", "#f97316"];
-            const source = String(seed ?? "");
-            let hash = 0;
-            for (let index = 0; index < source.length; index += 1) {
-                hash = (hash << 5) - hash + source.charCodeAt(index);
-                hash |= 0;
-            }
-            return palette[Math.abs(hash) % palette.length];
+            const palette = ["#7C3AED", "#2563EB", "#059669", "#D97706", "#DC2626", "#0891B2", "#9333EA", "#4F46E5"];
+            const source = this.normalizeDisplayValue(seed).trim();
+            const charCode = source ? source.charCodeAt(0) : 0;
+            return palette[Math.abs(charCode || 0) % 6];
         },
         getAvatarInitials(value) {
             const normalized = this.normalizeDisplayValue(value)
@@ -1155,15 +1115,13 @@ export default {
             if (typeof rawValue === "object") return [rawValue];
             return [];
         },
-        buildAvatarChip(avatarSource, fallbackSeed) {
+        buildAvatarChip(avatarSource) {
             let label = "";
-            let color = "";
 
             if (typeof avatarSource === "string" || typeof avatarSource === "number" || typeof avatarSource === "boolean") {
                 label = this.normalizeDisplayValue(avatarSource);
             } else if (avatarSource && typeof avatarSource === "object") {
                 label = this.getAvatarLabelFromObject(avatarSource);
-                color = this.getAvatarColorFromObject(avatarSource);
                 if (!label && avatarSource.label !== undefined) {
                     label = this.normalizeDisplayValue(avatarSource.label);
                 }
@@ -1171,7 +1129,7 @@ export default {
 
             if (!label) return null;
             const initials = this.getAvatarInitials(label);
-            const avatarColor = color || this.getAvatarPaletteColor(`${label}-${fallbackSeed}`);
+            const avatarColor = this.getAvatarPaletteColor(label);
 
             return {
                 label,
@@ -1182,11 +1140,33 @@ export default {
         },
         getItemAvatarChips(item, itemIndex) {
             const rawAvatars = this.getItemRawAvatars(item);
-            const chips = rawAvatars
-                .map((avatar, avatarIndex) => this.buildAvatarChip(avatar, `${itemIndex}-${avatarIndex}`))
-                .filter(Boolean);
+            const chips = rawAvatars.map(avatar => this.buildAvatarChip(avatar)).filter(Boolean);
 
             return chips;
+        },
+        getVisibleCardAvatars(avatars) {
+            const list = Array.isArray(avatars) ? avatars : [];
+            return list.length > 3 ? list.slice(0, 2) : list;
+        },
+        getHiddenCardAvatarCount(avatars) {
+            const list = Array.isArray(avatars) ? avatars : [];
+            return list.length > 3 ? list.length - 2 : 0;
+        },
+        getHiddenCardAvatarTitle(avatars) {
+            const list = Array.isArray(avatars) ? avatars : [];
+            if (list.length <= 3) return "";
+            return list
+                .slice(2)
+                .map(avatar => this.normalizeDisplayValue(avatar?.label))
+                .filter(Boolean)
+                .join(", ");
+        },
+        getHiddenCardAvatarStyle(avatars) {
+            const title = this.getHiddenCardAvatarTitle(avatars);
+            return {
+                backgroundColor: this.getAvatarPaletteColor(title || "more"),
+                color: "#ffffff",
+            };
         },
         getItemDeadlineRaw(item) {
             if (!this.content.itemDeadline) return undefined;
@@ -1398,7 +1378,6 @@ export default {
             this.desktopDrag = { item, fromStack, oldIndex, fromStackKey: null };
             this.suppressClickUntil = Date.now() + 300;
             this.isDragging = true;
-            this.setHoveredCardState(null);
             const sourceEl = event.currentTarget?.closest?.(".ww-kanban-card") || event.currentTarget;
             if (sourceEl) {
                 const rect = sourceEl.getBoundingClientRect();
@@ -1420,7 +1399,6 @@ export default {
             this.setDropTargetIndex(null);
             this.clearDropTargetStack();
             this.clearDropPlaceholder();
-            this.setHoveredCardState(null);
             this.detachDesktopListeners();
             if (!this.touchDragContext) this.isDragging = false;
         },
@@ -1468,7 +1446,6 @@ export default {
             if (Date.now() < this.suppressClickUntil) return;
             if (this.touchPressTimer || this.touchDragContext || this.desktopDrag || this.isDragging) return;
             if (this.content.customDragHandle && this.matchesHandleTarget(event.target)) return;
-            this.setActiveCardState(this.getCardStateKey(stack?.value ?? null, stackIndex, itemIndex));
             const stackMeta = this.buildStackMeta(stack, stackIndex);
             const itemKey = this.getItemIdentity(item, itemIndex);
 
@@ -1643,7 +1620,6 @@ export default {
             this.clearDropTargetStack();
             this.clearDropPlaceholder();
             this.hideGhost();
-            this.setHoveredCardState(null);
             this.unlockTouchScroll();
             if (!this.desktopDrag) this.isDragging = false;
         },
@@ -2128,7 +2104,6 @@ export default {
         this.detachDesktopListeners();
         this.detachTouchListeners();
         this.clearTouchInteraction();
-        this.clearCardStates();
     },
 };
 </script>
@@ -2189,7 +2164,7 @@ export default {
     border-radius: 11px;
     border: var(--ww-panel-border-color);
     background: var(--ww-panel-bg);
-    // box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: var(--ww-panel-shadow);
     padding: 10px;
     overflow: hidden;
 }
@@ -2291,7 +2266,8 @@ export default {
     border-radius: 8px;
     padding: 7px 10px;
     font-size: var(--ww-add-button-font-size);
-    font-weight: 600;
+    font-weight: var(--ww-add-button-font-weight);
+    font: var(--ww-add-button-typography);
     color: var(--ww-add-button-text-color);
     background: var(--ww-add-button-bg);
     cursor: pointer;
@@ -2343,15 +2319,17 @@ export default {
 }
 
 .ww-kanban-add-card-submit {
-    border: var(--ww-add-submit-border-color);
-    border-radius: 6px;
+    border: var(--ww-add-submit-border);
+    border-radius: var(--ww-add-submit-border-radius);
     background: var(--ww-add-submit-bg);
     color: var(--ww-add-submit-text-color);
     font-size: var(--ww-add-submit-font-size);
-    font-weight: 600;
-    padding: 7px 12px;
-    cursor: pointer;
+    font-weight: var(--ww-add-submit-font-weight);
     font-family: var(--ww-font-family);
+    font: var(--ww-add-submit-typography);
+    padding: var(--ww-add-submit-padding);
+    margin: var(--ww-add-submit-margin);
+    cursor: pointer;
 }
 
 .ww-kanban-add-card-submit:hover {
@@ -2448,12 +2426,6 @@ export default {
     box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
 }
 
-.ww-kanban-card.is-hovered-card,
-.ww-kanban-card.is-active-card {
-    border-color: var(--ww-card-hover-border-color);
-    box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
-}
-
 .ww-kanban-card:focus-within {
     border-color: var(--ww-card-hover-border-color);
     box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
@@ -2484,7 +2456,9 @@ export default {
 
 .ww-kanban-card-text {
     font-size: var(--ww-card-font-size);
+    font-weight: var(--ww-card-font-weight);
     line-height: 1.3;
+    font: var(--ww-card-label-typography);
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
@@ -2641,7 +2615,8 @@ export default {
     font-size: 12px;
     font-weight: 700;
     line-height: 1;
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: var(--ww-card-avatar-border);
+    padding: var(--ww-card-avatar-padding);
     box-sizing: border-box;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
     text-transform: uppercase;
@@ -2652,7 +2627,7 @@ export default {
     bottom: auto !important;
     left: auto !important;
     transform: none !important;
-    margin: 0 !important;
+    margin: var(--ww-card-avatar-margin) !important;
     float: none !important;
 }
 

@@ -54,7 +54,7 @@ export default {
             "longPress",
             ["longPressDelay"],
             ["uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
-            ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor"],
+            ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
             ["columnTitleColor", "columnTitleFontSize", "columnTitleFontWeight"],
             ["columnCountBackgroundColor", "columnCountColor", "columnCountBorderColor"],
             [
@@ -70,7 +70,13 @@ export default {
                 "cardBorderRadius",
                 "cardPadding",
                 "cardFontSize",
+                "cardFontWeight",
+                "cardLabelTypography",
+                "cardLabelMaxLength",
                 "cardCursor",
+                "cardAvatarBorder",
+                "cardAvatarMargin",
+                "cardAvatarPadding",
             ],
             [
                 "deadlineFontSize",
@@ -100,6 +106,8 @@ export default {
                 "addCardButtonBorderColor",
                 "addCardButtonJustifyContent",
                 "addCardButtonFontSize",
+                "addCardButtonFontWeight",
+                "addCardButtonTypography",
                 "addCardCancelIconColor",
                 "addCardCancelHoverIconColor",
             ],
@@ -117,10 +125,16 @@ export default {
                 "addCardSubmitTextColor",
                 "addCardSubmitBorderColor",
                 "addCardSubmitFontSize",
+                "addCardSubmitFontWeight",
+                "addCardSubmitTypography",
+                "addCardSubmitBorder",
+                "addCardSubmitBorderRadius",
+                "addCardSubmitPadding",
+                "addCardSubmitMargin",
             ],
         ],
     },
-    states: ["readonly", "card", "card-hover"],
+    states: ["readonly"],
     options: {
         displayAllowedValues: ["flex", "inline-flex"],
     },
@@ -543,6 +557,18 @@ export default {
             bindable: true,
             section: "settings",
         },
+        columnShadow: {
+            label: {
+                en: "Column shadow",
+            },
+            type: "Text",
+            defaultValue: "none",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Any valid CSS box-shadow value, for example: 0 8px 24px rgba(0,0,0,0.12)",
+            },
+        },
         columnTitleColor: {
             label: {
                 en: "Column title color",
@@ -700,6 +726,7 @@ export default {
             section: "settings",
         },
         cardFontSize: {
+            hidden: (content) => !!content.cardLabelTypography,
             label: {
                 en: "Card font size",
             },
@@ -707,6 +734,40 @@ export default {
             defaultValue: 13,
             bindable: true,
             section: "settings",
+        },
+        cardFontWeight: {
+            hidden: (content) => !!content.cardLabelTypography,
+            label: {
+                en: "Card font weight",
+            },
+            type: "Number",
+            defaultValue: 400,
+            bindable: true,
+            section: "settings",
+        },
+        cardLabelTypography: {
+            label: {
+                en: "Card label typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand for card label, for example: 600 14px/1.4 Inter",
+            },
+        },
+        cardLabelMaxLength: {
+            label: {
+                en: "Card label max length",
+            },
+            type: "Number",
+            defaultValue: 0,
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Maximum characters to show in card label. Set 0 to show full text.",
+            },
         },
         cardCursor: {
             label: { en: "Card cursor" },
@@ -759,6 +820,33 @@ export default {
             },
             /* wwEditor:end */
             defaultValue: "auto",
+        },
+        cardAvatarBorder: {
+            label: {
+                en: "Avatar border",
+            },
+            type: "Text",
+            defaultValue: "1px solid rgba(255, 255, 255, 0.8)",
+            bindable: true,
+            section: "settings",
+        },
+        cardAvatarMargin: {
+            label: {
+                en: "Avatar margin",
+            },
+            type: "Text",
+            defaultValue: "0",
+            bindable: true,
+            section: "settings",
+        },
+        cardAvatarPadding: {
+            label: {
+                en: "Avatar padding",
+            },
+            type: "Text",
+            defaultValue: "0",
+            bindable: true,
+            section: "settings",
         },
         deadlineFontSize: {
             label: {
@@ -996,7 +1084,7 @@ export default {
             section: "settings",
         },
         addCardButtonFontSize: {
-            hidden: (content) => content.showAddCardButton === false,
+            hidden: (content) => content.showAddCardButton === false || !!content.addCardButtonTypography,
             label: {
                 en: "Add card button font size",
             },
@@ -1004,6 +1092,29 @@ export default {
             defaultValue: 13,
             bindable: true,
             section: "settings",
+        },
+        addCardButtonFontWeight: {
+            hidden: (content) => content.showAddCardButton === false || !!content.addCardButtonTypography,
+            label: {
+                en: "Add card button font weight",
+            },
+            type: "Number",
+            defaultValue: 600,
+            bindable: true,
+            section: "settings",
+        },
+        addCardButtonTypography: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card button typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand for Add Card button, for example: 600 14px/1.35 Inter",
+            },
         },
         addCardCancelIconColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1126,12 +1237,78 @@ export default {
             section: "settings",
         },
         addCardSubmitFontSize: {
-            hidden: (content) => content.showAddCardButton === false,
+            hidden: (content) => content.showAddCardButton === false || !!content.addCardSubmitTypography,
             label: {
                 en: "Add card submit font size",
             },
             type: "Number",
             defaultValue: 13,
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitFontWeight: {
+            hidden: (content) => content.showAddCardButton === false || !!content.addCardSubmitTypography,
+            label: {
+                en: "Add card submit font weight",
+            },
+            type: "Number",
+            defaultValue: 600,
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitTypography: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand for submit button, for example: 600 13px/1.3 Inter",
+            },
+        },
+        addCardSubmitBorder: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit border",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "settings",
+            propertyHelp: {
+                tooltip: "Full CSS border value, for example: 1px solid rgba(37,99,235,.95)",
+            },
+        },
+        addCardSubmitBorderRadius: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit border radius",
+            },
+            type: "Text",
+            defaultValue: "6px",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitPadding: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit padding",
+            },
+            type: "Text",
+            defaultValue: "7px 12px",
+            bindable: true,
+            section: "settings",
+        },
+        addCardSubmitMargin: {
+            hidden: (content) => content.showAddCardButton === false,
+            label: {
+                en: "Add card submit margin",
+            },
+            type: "Text",
+            defaultValue: "0",
             bindable: true,
             section: "settings",
         },
