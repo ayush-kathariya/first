@@ -113,7 +113,7 @@ export default {
                 "cardCursor",
             ],
             "styleAvatarHeading",
-            ["cardAvatarWidth", "cardAvatarHeight", "cardAvatarBorder", "cardAvatarMargin", "cardAvatarPadding"],
+            ["cardAvatarWidth", "cardAvatarHeight", "cardAvatarTypography", "cardAvatarBorder", "cardAvatarMargin", "cardAvatarPadding"],
             "styleDeadlineHeading",
             [
                 "deadlineFontSize",
@@ -1343,6 +1343,18 @@ export default {
                 type: "string",
                 cssSupports: "height",
                 tooltip: "A valid CSS height value",
+            },
+        },
+        cardAvatarTypography: {
+            label: {
+                en: "Avatar typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand for avatar text, for example: 700 12px/1 Inter",
             },
         },
         cardAvatarMargin: {

@@ -494,6 +494,7 @@ export default {
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
                 "--ww-card-avatar-width": sizeOrKeyword(this.content.cardAvatarWidth, "28px"),
                 "--ww-card-avatar-height": sizeOrKeyword(this.content.cardAvatarHeight, "28px"),
+                "--ww-card-avatar-typography": valueOrDefault(this.content.cardAvatarTypography, ""),
                 "--ww-card-avatar-border": borderOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
                 "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),
                 "--ww-card-avatar-padding": valueOrDefault(this.content.cardAvatarPadding, "0"),
@@ -2796,6 +2797,7 @@ export default {
     justify-content: center;
     font-size: 12px;
     font-weight: 700;
+    font: var(--ww-card-avatar-typography);
     line-height: 1;
     border: var(--ww-card-avatar-border);
     padding: var(--ww-card-avatar-padding);
