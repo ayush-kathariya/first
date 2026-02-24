@@ -388,6 +388,12 @@ export default {
                 }
                 return `1px solid ${normalized}`;
             };
+            const metaIconSizeRaw = sizeOrKeyword(this.content.cardMetaIconSize, "auto");
+            const metaIconIsAuto = String(metaIconSizeRaw || "")
+                .trim()
+                .toLowerCase() === "auto";
+            const metaIconRenderSize = metaIconIsAuto ? "15px" : metaIconSizeRaw;
+            const metaIconBoxSize = metaIconIsAuto ? "16px" : metaIconSizeRaw;
 
             return {
                 "--wrap-stacks": "nowrap",
@@ -426,6 +432,11 @@ export default {
                 "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),
                 "--ww-card-avatar-padding": valueOrDefault(this.content.cardAvatarPadding, "0"),
                 "--ww-card-meta-icon-color": valueOrDefault(this.content.cardMetaIconColor, "#4b5563"),
+                "--ww-card-meta-gap": sizeOrDefault(this.content.cardMetaGap, 8),
+                "--ww-card-label-meta-gap": sizeOrDefault(this.content.cardLabelMetaGap, 8),
+                "--ww-card-meta-icon-size": metaIconSizeRaw,
+                "--ww-card-meta-icon-render-size": metaIconRenderSize,
+                "--ww-card-meta-icon-box-size": metaIconBoxSize,
                 "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
                 "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
                 "--ww-deadline-padding-y": sizeOrDefault(this.content.deadlinePaddingVertical, 2),
@@ -2443,8 +2454,10 @@ export default {
 }
 
 .ww-kanban-card:hover {
-    border-color: var(--ww-card-hover-border-color);
-    box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
+    // border-color: var(--ww-card-hover-border-color);
+    border: var(--ww-card-hover-border-color);
+    box-shadow: var(--ww-card-hover-ring-color);
+    // box-shadow: 0 0 0 1px var(--ww-card-hover-ring-color);
 }
 
 .ww-kanban-card:focus-within {
@@ -2459,7 +2472,7 @@ export default {
 .ww-kanban-card-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
     min-width: 0;
     flex: 1 1 auto;
     height: auto;
@@ -2482,6 +2495,14 @@ export default {
     font: var(--ww-card-label-typography);
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+
+.ww-kanban-card-image + .ww-kanban-card-text {
+    margin-top: 8px;
+}
+
+.ww-kanban-card-text + .ww-kanban-card-meta {
+    margin-top: var(--ww-card-label-meta-gap);
 }
 
 .ww-kanban-card-meta {
@@ -2513,7 +2534,7 @@ export default {
 .ww-kanban-card-meta-left {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--ww-card-meta-gap);
     min-width: 0;
     flex: 1 1 auto;
 }
@@ -2571,9 +2592,9 @@ export default {
 
 .ww-kanban-card-description-indicator,
 .ww-kanban-card-attachment-indicator {
-    width: 16px;
-    height: 16px;
-    flex: 0 0 16px;
+    width: var(--ww-card-meta-icon-box-size);
+    height: var(--ww-card-meta-icon-box-size);
+    flex: 0 0 var(--ww-card-meta-icon-box-size);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2586,8 +2607,8 @@ export default {
 
 .ww-kanban-card-description-icon,
 .ww-kanban-card-attachment-icon {
-    width: 15px;
-    height: 15px;
+    width: var(--ww-card-meta-icon-render-size);
+    height: var(--ww-card-meta-icon-render-size);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.7;

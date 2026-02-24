@@ -69,6 +69,9 @@ export default {
                 "cardHoverBorderColor",
                 "cardHoverRingColor",
                 "cardMetaIconColor",
+                "cardMetaGap",
+                "cardLabelMetaGap",
+                "cardMetaIconSize",
                 "dropPlaceholderColor",
                 "cardMinHeight",
                 "cardHeight",
@@ -572,10 +575,6 @@ export default {
                 en: "Board padding",
             },
             type: "Spacing",
-            options: {
-                withPadding: true,
-                withMargin: false,
-            },
             defaultValue: "8px",
             bindable: true,
             section: "style",
@@ -740,7 +739,7 @@ export default {
         },
         cardHoverBorderColor: {
             label: {
-                en: "Card hover border color",
+                en: "Card hover border",
             },
             type: "Text",
             defaultValue: "#3b82f6",
@@ -749,7 +748,7 @@ export default {
         },
         cardHoverRingColor: {
             label: {
-                en: "Card hover ring color",
+                en: "Card hover ring",
             },
             type: "Text",
             defaultValue: "rgba(59, 130, 246, 0.22)",
@@ -764,6 +763,40 @@ export default {
             defaultValue: "#4b5563",
             bindable: true,
             section: "style",
+        },
+        cardMetaGap: {
+            label: {
+                en: "Card meta gap",
+            },
+            type: "Number",
+            defaultValue: 8,
+            bindable: true,
+            section: "style",
+        },
+        cardLabelMetaGap: {
+            label: {
+                en: "Card label/meta row gap",
+            },
+            type: "Number",
+            defaultValue: 8,
+            bindable: true,
+            section: "style",
+        },
+        cardMetaIconSize: {
+            label: {
+                en: "Card meta icon size",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS size like 14px, 1rem, 18px. Keep auto to use default size.",
+            },
+            bindingValidation: {
+                type: "string",
+                tooltip: "A valid CSS size value or auto",
+            },
         },
         dropPlaceholderColor: {
             label: {
@@ -814,10 +847,6 @@ export default {
                 en: "Card padding",
             },
             type: "Spacing",
-            options: {
-                withPadding: true,
-                withMargin: false,
-            },
             defaultValue: "12px",
             bindable: true,
             section: "style",
@@ -832,10 +861,6 @@ export default {
                 en: "Card margin",
             },
             type: "Spacing",
-            options: {
-                withPadding: false,
-                withMargin: true,
-            },
             defaultValue: "0px",
             bindable: true,
             section: "style",
@@ -960,10 +985,6 @@ export default {
                 en: "Avatar margin",
             },
             type: "Spacing",
-            options: {
-                withPadding: false,
-                withMargin: true,
-            },
             defaultValue: "0px",
             bindable: true,
             section: "style",
@@ -978,10 +999,6 @@ export default {
                 en: "Avatar padding",
             },
             type: "Spacing",
-            options: {
-                withPadding: true,
-                withMargin: false,
-            },
             defaultValue: "0px",
             bindable: true,
             section: "style",
@@ -1466,10 +1483,6 @@ export default {
                 en: "Add card submit padding",
             },
             type: "Spacing",
-            options: {
-                withPadding: true,
-                withMargin: false,
-            },
             defaultValue: "7px 12px",
             bindable: true,
             section: "style",
@@ -1485,10 +1498,6 @@ export default {
                 en: "Add card submit margin",
             },
             type: "Spacing",
-            options: {
-                withPadding: false,
-                withMargin: true,
-            },
             defaultValue: "0px",
             bindable: true,
             section: "style",
