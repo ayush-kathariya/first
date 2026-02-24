@@ -123,10 +123,9 @@
                                                                 aria-hidden="true"
                                                                 title="Attachment available"
                                                             >
-                                                                <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 20 20" focusable="false">
-                                                                    <path d="M7.6 12.4L12.4 7.6"></path>
-                                                                    <path d="M6.2 9.1a2.8 2.8 0 0 1 0-4L8.1 3.2a2.8 2.8 0 1 1 4 4L10.8 8.5"></path>
-                                                                    <path d="M9.2 11.5L8 12.7a2.8 2.8 0 1 0 4 4l1.9-1.9a2.8 2.8 0 0 0 0-4"></path>
+                                                                <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 24 24" focusable="false">
+                                                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                                                                 </svg>
                                                             </span>
                                                         </div>
@@ -2329,12 +2328,12 @@ export default {
 }
 
 .ww-kanban-stack-footer {
-    padding: 1px;
-    // border: var(--ww-add-button-border-color);
-    border-radius: 10px;
-    background: var(--ww-panel-bg);
-    height: var(--add-card-block-height);
-    flex: 0 0 var(--add-card-block-height);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    height: var(--ww-add-card-block-height);
+    flex: 0 0 var(--ww-add-card-block-height);
     box-sizing: border-box;
 }
 
@@ -2363,6 +2362,9 @@ export default {
     background: var(--ww-add-button-bg);
     box-shadow: var(--ww-add-button-shadow);
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-clip: padding-box;
     outline: none;
     -webkit-tap-highlight-color: transparent;
 }
@@ -2688,9 +2690,16 @@ export default {
     height: var(--ww-card-meta-icon-render-size);
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.7;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+.ww-kanban-card-description-icon {
+    stroke-width: 1.7;
+}
+
+.ww-kanban-card-attachment-icon {
+    stroke-width: 1.45;
 }
 
 .ww-kanban-card-description-icon path,
