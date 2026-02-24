@@ -55,11 +55,13 @@ export default {
             ["longPressDelay"],
         ],
         customStylePropertiesOrder: [
-            "wrapStacks",
-            ["uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
+            "styleBoardHeading",
+            ["wrapStacks", "uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
+            "styleColumnHeading",
             ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
-            ["columnTitleColor", "columnTitleFontSize", "columnTitleFontWeight"],
-            ["columnCountBackgroundColor", "columnCountColor", "columnCountBorderColor"],
+            "styleColumnHeaderHeading",
+            ["columnTitleColor", "columnTitleFontSize", "columnTitleFontWeight", "columnCountBackgroundColor", "columnCountColor", "columnCountBorderColor"],
+            "styleCardHeading",
             [
                 "cardBackgroundColor",
                 "cardTextColor",
@@ -72,15 +74,16 @@ export default {
                 "cardHeight",
                 "cardBorderRadius",
                 "cardPadding",
+                "cardMargin",
                 "cardFontSize",
                 "cardFontWeight",
                 "cardLabelTypography",
                 "cardLabelMaxLength",
                 "cardCursor",
-                "cardAvatarBorder",
-                "cardAvatarMargin",
-                "cardAvatarPadding",
             ],
+            "styleAvatarHeading",
+            ["cardAvatarBorder", "cardAvatarMargin", "cardAvatarPadding"],
+            "styleDeadlineHeading",
             [
                 "deadlineFontSize",
                 "deadlineFontWeight",
@@ -98,6 +101,7 @@ export default {
                 "deadlineNeutralBackgroundColor",
                 "deadlineNeutralTextColor",
             ],
+            "styleAddCardButtonHeading",
             [
                 "addCardButtonHeight",
                 "addCardButtonBackgroundColor",
@@ -114,6 +118,7 @@ export default {
                 "addCardCancelIconColor",
                 "addCardCancelHoverIconColor",
             ],
+            "styleAddCardInputHeading",
             [
                 "addCardInputBackgroundColor",
                 "addCardInputTextColor",
@@ -122,6 +127,7 @@ export default {
                 "addCardInputFontSize",
                 "addCardInputMinHeight",
             ],
+            "styleAddCardSubmitHeading",
             [
                 "addCardSubmitBackgroundColor",
                 "addCardSubmitHoverBackgroundColor",
@@ -221,6 +227,60 @@ export default {
                 type: "5a88036f-22ea-4f8d-b4a5-bc226ef95061",
             },
         },
+        styleBoardHeading: {
+            label: { en: "Board" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleColumnHeading: {
+            label: { en: "Column" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleColumnHeaderHeading: {
+            label: { en: "Column header" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleCardHeading: {
+            label: { en: "Card" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleAvatarHeading: {
+            label: { en: "Avatar" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleDeadlineHeading: {
+            label: { en: "Deadline" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleAddCardButtonHeading: {
+            label: { en: "Add card button" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleAddCardInputHeading: {
+            label: { en: "Add card input" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
+        styleAddCardSubmitHeading: {
+            label: { en: "Add card submit" },
+            type: "Title",
+            editorOnly: true,
+            section: "style",
+        },
         wrapStacks: {
             label: {
                 en: "Wrap stacks",
@@ -231,6 +291,7 @@ export default {
             bindable: true,
             states: true,
             classes: true,
+            section: "style",
         },
         items: {
             label: {
@@ -242,7 +303,7 @@ export default {
             },
             bindable: true,
             defaultValue: [],
-            section: "style",
+            section: "settings",
         },
         itemKey: {
             hidden: (content, sidepanelContent, boundProps) =>
@@ -510,10 +571,18 @@ export default {
             label: {
                 en: "Board padding",
             },
-            type: "Number",
-            defaultValue: 8,
+            type: "Spacing",
+            options: {
+                withMargin: false,
+            },
+            defaultValue: "8px",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
         },
         columnWidth: {
             label: {
@@ -553,12 +622,17 @@ export default {
         },
         columnBorderColor: {
             label: {
-                en: "Column border color",
+                en: "Column border",
             },
-            type: "Text",
-            defaultValue: "rgba(15, 23, 42, 0.1)",
+            type: "Border",
+            defaultValue: "1px solid rgba(15, 23, 42, 0.1)",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
         },
         columnShadow: {
             label: {
@@ -619,12 +693,17 @@ export default {
         },
         columnCountBorderColor: {
             label: {
-                en: "Column count border color",
+                en: "Column count border",
             },
-            type: "Text",
-            defaultValue: "rgba(15, 23, 42, 0.28)",
+            type: "Border",
+            defaultValue: "1px solid rgba(15, 23, 42, 0.28)",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
         },
         cardBackgroundColor: {
             label: {
@@ -646,12 +725,17 @@ export default {
         },
         cardBorderColor: {
             label: {
-                en: "Card border color",
+                en: "Card border",
             },
-            type: "Text",
-            defaultValue: "rgba(15, 23, 42, 0.14)",
+            type: "Border",
+            defaultValue: "1px solid rgba(15, 23, 42, 0.14)",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
         },
         cardHoverBorderColor: {
             label: {
@@ -714,19 +798,53 @@ export default {
             label: {
                 en: "Card border radius",
             },
-            type: "Number",
-            defaultValue: 8,
+            type: "Spacing",
+            options: {
+                withMargin: false,
+                isCorner: true,
+            },
+            defaultValue: "8px",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border-radius",
+                tooltip: "A valid CSS border-radius value",
+            },
         },
         cardPadding: {
             label: {
                 en: "Card padding",
             },
-            type: "Number",
-            defaultValue: 12,
+            type: "Spacing",
+            options: {
+                withMargin: false,
+            },
+            defaultValue: "12px",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
+        },
+        cardMargin: {
+            label: {
+                en: "Card margin",
+            },
+            type: "Spacing",
+            options: {
+                withPadding: false,
+            },
+            defaultValue: "0",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "margin",
+                tooltip: "A valid CSS margin value",
+            },
         },
         cardFontSize: {
             hidden: (content) => !!content.cardLabelTypography,
@@ -828,28 +946,49 @@ export default {
             label: {
                 en: "Avatar border",
             },
-            type: "Text",
+            type: "Border",
             defaultValue: "1px solid rgba(255, 255, 255, 0.8)",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
         },
         cardAvatarMargin: {
             label: {
                 en: "Avatar margin",
             },
-            type: "Text",
+            type: "Spacing",
+            options: {
+                withPadding: false,
+            },
             defaultValue: "0",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "margin",
+                tooltip: "A valid CSS margin value",
+            },
         },
         cardAvatarPadding: {
             label: {
                 en: "Avatar padding",
             },
-            type: "Text",
+            type: "Spacing",
+            options: {
+                withMargin: false,
+            },
             defaultValue: "0",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
         },
         deadlineFontSize: {
             label: {
@@ -891,10 +1030,19 @@ export default {
             label: {
                 en: "Deadline border radius",
             },
-            type: "Number",
-            defaultValue: 6,
+            type: "Spacing",
+            options: {
+                withMargin: false,
+                isCorner: true,
+            },
+            defaultValue: "6px",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border-radius",
+                tooltip: "A valid CSS border-radius value",
+            },
         },
         deadlineBorderWidth: {
             label: {
@@ -1059,12 +1207,17 @@ export default {
         addCardButtonBorderColor: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
-                en: "Add card button border color",
+                en: "Add card button border",
             },
-            type: "Text",
-            defaultValue: "rgba(15, 23, 42, 0.18)",
+            type: "Border",
+            defaultValue: "1px solid rgba(15, 23, 42, 0.18)",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
         },
         addCardButtonJustifyContent: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1162,12 +1315,17 @@ export default {
         addCardInputBorderColor: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
-                en: "Add card input border color",
+                en: "Add card input border",
             },
-            type: "Text",
-            defaultValue: "rgba(15, 23, 42, 0.16)",
+            type: "Border",
+            defaultValue: "1px solid rgba(15, 23, 42, 0.16)",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
         },
         addCardInputPlaceholderColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1277,12 +1435,17 @@ export default {
             label: {
                 en: "Add card submit border",
             },
-            type: "Text",
+            type: "Border",
             defaultValue: "",
             bindable: true,
             section: "style",
             propertyHelp: {
                 tooltip: "Full CSS border value, for example: 1px solid rgba(37,99,235,.95)",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
             },
         },
         addCardSubmitBorderRadius: {
@@ -1290,30 +1453,55 @@ export default {
             label: {
                 en: "Add card submit border radius",
             },
-            type: "Text",
+            type: "Spacing",
+            options: {
+                withMargin: false,
+                isCorner: true,
+            },
             defaultValue: "6px",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border-radius",
+                tooltip: "A valid CSS border-radius value",
+            },
         },
         addCardSubmitPadding: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
                 en: "Add card submit padding",
             },
-            type: "Text",
+            type: "Spacing",
+            options: {
+                withMargin: false,
+            },
             defaultValue: "7px 12px",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
         },
         addCardSubmitMargin: {
             hidden: (content) => content.showAddCardButton === false,
             label: {
                 en: "Add card submit margin",
             },
-            type: "Text",
+            type: "Spacing",
+            options: {
+                withPadding: false,
+            },
             defaultValue: "0",
             bindable: true,
             section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "margin",
+                tooltip: "A valid CSS margin value",
+            },
         },
         stacks: {
             label: {

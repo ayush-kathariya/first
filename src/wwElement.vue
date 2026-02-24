@@ -376,6 +376,18 @@ export default {
                 const parsed = Number(value);
                 return Number.isFinite(parsed) ? String(parsed) : String(value);
             };
+            const borderOrDefault = (value, fallback) => {
+                if (value === undefined || value === null || value === "") return fallback;
+                const normalized = String(value).trim();
+                if (!normalized) return fallback;
+                if (
+                    /\b(solid|dashed|dotted|double|groove|ridge|inset|outset|none|hidden)\b/i.test(normalized) ||
+                    normalized.startsWith("var(")
+                ) {
+                    return normalized;
+                }
+                return `1px solid ${normalized}`;
+            };
 
             return {
                 "--wrap-stacks": "nowrap",
@@ -388,28 +400,29 @@ export default {
                 "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
                 "--ww-panel-bg": valueOrDefault(this.content.columnBackgroundColor, "#f3f4f6"),
-                "--ww-panel-border-color": valueOrDefault(this.content.columnBorderColor, "rgba(15, 23, 42, 0.1)"),
+                "--ww-panel-border-color": borderOrDefault(this.content.columnBorderColor, "1px solid rgba(15, 23, 42, 0.1)"),
                 "--ww-panel-shadow": valueOrDefault(this.content.columnShadow, "none"),
                 "--ww-header-text-color": valueOrDefault(this.content.columnTitleColor, "#0f172a"),
                 "--ww-header-font-size": sizeOrDefault(this.content.columnTitleFontSize, 13),
                 "--ww-header-font-weight": numberOrDefault(this.content.columnTitleFontWeight, 600),
                 "--ww-count-bg": valueOrDefault(this.content.columnCountBackgroundColor, "#f8fafc"),
                 "--ww-count-text-color": valueOrDefault(this.content.columnCountColor, "#111827"),
-                "--ww-count-border-color": valueOrDefault(this.content.columnCountBorderColor, "rgba(15, 23, 42, 0.28)"),
+                "--ww-count-border-color": borderOrDefault(this.content.columnCountBorderColor, "1px solid rgba(15, 23, 42, 0.28)"),
                 "--ww-card-bg": valueOrDefault(this.content.cardBackgroundColor, "#fbfdff"),
                 "--ww-card-text-color": valueOrDefault(this.content.cardTextColor, "#0f172a"),
-                "--ww-card-border-color": valueOrDefault(this.content.cardBorderColor, "rgba(15, 23, 42, 0.14)"),
+                "--ww-card-border-color": borderOrDefault(this.content.cardBorderColor, "1px solid rgba(15, 23, 42, 0.14)"),
                 "--ww-card-hover-border-color": valueOrDefault(this.content.cardHoverBorderColor, "#3b82f6"),
                 "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
                 "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
                 "--ww-card-height": sizeOrKeyword(this.content.cardHeight, "auto"),
                 "--ww-card-radius": sizeOrDefault(this.content.cardBorderRadius, 8),
                 "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
+                "--ww-card-margin": valueOrDefault(this.content.cardMargin, "0"),
                 "--ww-card-font-size": sizeOrDefault(this.content.cardFontSize, 13),
                 "--ww-card-font-weight": numberOrDefault(this.content.cardFontWeight, 400),
                 "--ww-card-label-typography": valueOrDefault(this.content.cardLabelTypography, ""),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
-                "--ww-card-avatar-border": valueOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
+                "--ww-card-avatar-border": borderOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
                 "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),
                 "--ww-card-avatar-padding": valueOrDefault(this.content.cardAvatarPadding, "0"),
                 "--ww-card-meta-icon-color": valueOrDefault(this.content.cardMetaIconColor, "#4b5563"),
@@ -443,7 +456,7 @@ export default {
                     this.content.addCardButtonHoverIconColor,
                     this.content.addCardButtonHoverTextColor || this.content.addCardButtonTextColor || "#111827"
                 ),
-                "--ww-add-button-border-color": valueOrDefault(this.content.addCardButtonBorderColor, "rgba(15, 23, 42, 0.18)"),
+                "--ww-add-button-border-color": borderOrDefault(this.content.addCardButtonBorderColor, "1px solid rgba(15, 23, 42, 0.18)"),
                 "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonJustifyContent, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
                 "--ww-add-button-font-weight": numberOrDefault(this.content.addCardButtonFontWeight, 600),
@@ -452,7 +465,7 @@ export default {
                 "--ww-add-cancel-icon-color-hover": valueOrDefault(this.content.addCardCancelHoverIconColor, "#111827"),
                 "--ww-add-input-bg": valueOrDefault(this.content.addCardInputBackgroundColor, "#f8fafc"),
                 "--ww-add-input-text-color": valueOrDefault(this.content.addCardInputTextColor, "#0f172a"),
-                "--ww-add-input-border-color": valueOrDefault(this.content.addCardInputBorderColor, "rgba(15, 23, 42, 0.16)"),
+                "--ww-add-input-border-color": borderOrDefault(this.content.addCardInputBorderColor, "1px solid rgba(15, 23, 42, 0.16)"),
                 "--ww-add-input-placeholder-color": valueOrDefault(this.content.addCardInputPlaceholderColor, "#6b7280"),
                 "--ww-add-input-font-size": sizeOrDefault(this.content.addCardInputFontSize, 13),
                 "--ww-add-input-min-height": sizeOrDefault(this.content.addCardInputMinHeight, 70),
@@ -463,9 +476,9 @@ export default {
                 "--ww-add-submit-font-size": sizeOrDefault(this.content.addCardSubmitFontSize, 13),
                 "--ww-add-submit-font-weight": numberOrDefault(this.content.addCardSubmitFontWeight, 600),
                 "--ww-add-submit-typography": valueOrDefault(this.content.addCardSubmitTypography, ""),
-                "--ww-add-submit-border": valueOrDefault(
+                "--ww-add-submit-border": borderOrDefault(
                     this.content.addCardSubmitBorder,
-                    this.content.addCardSubmitBorderColor || "1px solid rgba(37, 99, 235, 0.95)"
+                    borderOrDefault(this.content.addCardSubmitBorderColor, "1px solid rgba(37, 99, 235, 0.95)")
                 ),
                 "--ww-add-submit-border-radius": valueOrDefault(this.content.addCardSubmitBorderRadius, "6px"),
                 "--ww-add-submit-padding": valueOrDefault(this.content.addCardSubmitPadding, "7px 12px"),
@@ -2403,6 +2416,7 @@ export default {
     background: var(--ww-card-bg);
     color: var(--ww-card-text-color);
     padding: var(--ww-card-padding);
+    margin: var(--ww-card-margin);
     min-height: var(--ww-card-min-height);
     box-sizing: border-box;
     user-select: none;
