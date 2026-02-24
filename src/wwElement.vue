@@ -2667,7 +2667,7 @@ export default {
 }
 
 .ww-kanban-card:not(.has-fixed-height) .ww-kanban-card-avatar {
-    margin: 0 !important;
+    margin: var(--ww-card-avatar-margin) !important;
 }
 
 .ww-kanban-card-handle {
