@@ -108,7 +108,7 @@
                                                                 v-if="cardMeta.hasDescription"
                                                                 class="ww-kanban-card-description-indicator"
                                                                 aria-hidden="true"
-                                                                title="Description available"
+                                                                :title="content.itemDescriptionTitle || 'Description available'"
                                                             >
                                                                 <svg class="ww-kanban-card-description-icon" viewBox="0 0 24 24" focusable="false">
                                                                     <path d="M21 6H3"></path>
@@ -122,7 +122,7 @@
                                                                 v-if="cardMeta.hasAttachment"
                                                                 class="ww-kanban-card-attachment-indicator"
                                                                 aria-hidden="true"
-                                                                title="Attachment available"
+                                                                :title="content.itemAttachmentTitle || 'Attachment available'"
                                                             >
                                                                 <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 24 24" focusable="false">
                                                                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -445,6 +445,10 @@ export default {
                 "--ww-board-gap": sizeOrDefault(this.content.boardGap, 12),
                 "--ww-board-padding": sizeOrDefault(this.content.boardPadding, 8),
                 "--ww-stack-width": valueOrDefault(this.content.columnWidth, "min(300px, 84vw)"),
+                "--ww-stack-min-width": valueOrDefault(
+                    this.content.columnMinWidth,
+                    valueOrDefault(this.content.columnWidth, "min(300px, 84vw)")
+                ),
                 "--ww-stack-height": sizeOrDefault(this.content.columnHeight, 520),
                 "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
@@ -2251,6 +2255,7 @@ export default {
     flex-direction: column;
     flex-shrink: 0;
     width: var(--ww-stack-width);
+    min-width: var(--ww-stack-min-width);
     height: var(--ww-stack-height);
     border: none;
     background: transparent;

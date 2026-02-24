@@ -30,8 +30,10 @@ export default {
                 "itemLabel",
                 "itemImage",
                 "itemDescription",
+                "itemDescriptionTitle",
                 "itemDeadline",
                 "itemAttachment",
+                "itemAttachmentTitle",
                 "itemAvatars",
                 "itemAvatarTextKey",
                 "itemAvatarColorKey",
@@ -58,7 +60,7 @@ export default {
             "styleBoardHeading",
             ["wrapStacks", "uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
             "styleColumnHeading",
-            ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
+            ["columnWidth", "columnMinWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
             "styleColumnHeaderHeading",
             [
                 "columnTitleColor",
@@ -382,6 +384,17 @@ export default {
             defaultValue: null,
             section: "settings",
         },
+        itemDescriptionTitle: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Description icon title",
+            },
+            type: "Text",
+            defaultValue: "Description available",
+            bindable: true,
+            section: "settings",
+        },
         itemDeadline: {
             hidden: (content, sidepanelContent, boundProps) =>
                 !showObjectPropertyPath("items", { content, boundProps }),
@@ -402,6 +415,17 @@ export default {
             type: "ObjectPropertyPath",
             options: (content) => getObjectPropertyPathOptions("items", { content }),
             defaultValue: null,
+            section: "settings",
+        },
+        itemAttachmentTitle: {
+            hidden: (content, sidepanelContent, boundProps) =>
+                !showObjectPropertyPath("items", { content, boundProps }),
+            label: {
+                en: "Attachment icon title",
+            },
+            type: "Text",
+            defaultValue: "Attachment available",
+            bindable: true,
             section: "settings",
         },
         itemAvatars: {
@@ -622,6 +646,23 @@ export default {
             defaultValue: "min(300px, 84vw)",
             bindable: true,
             section: "style",
+        },
+        columnMinWidth: {
+            label: {
+                en: "Column min width",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS values like 240px, 20rem, 30%, min(260px, 80vw). Empty keeps current behavior.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "min-width",
+                tooltip: "A valid CSS min-width value",
+            },
         },
         columnHeight: {
             label: {
