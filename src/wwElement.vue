@@ -2386,7 +2386,7 @@ export default {
     font: var(--ww-add-button-typography);
     color: var(--ww-add-button-text-color);
     background: var(--ww-add-button-bg);
-    // box-shadow: var(--ww-add-button-shadow);
+    box-shadow: var(--ww-add-button-shadow);
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
@@ -2398,8 +2398,6 @@ export default {
 .ww-kanban-add-card-button:hover {
     background: var(--ww-add-button-bg-hover);
     color: var(--ww-add-button-text-color-hover);
-    border: var(--ww-add-button-border-color);
-    // box-shadow: var(--ww-add-button-shadow);
 }
 
 .ww-kanban-add-card-button:focus,
