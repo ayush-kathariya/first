@@ -93,13 +93,13 @@
                                                             >
                                                                 <svg
                                                                     class="ww-kanban-card-deadline-icon"
-                                                                    viewBox="0 0 20 20"
+                                                                    viewBox="0 0 24 24"
                                                                     focusable="false"
                                                                     aria-hidden="true"
                                                                 >
-                                                                    <circle cx="10" cy="10" r="7"></circle>
-                                                                    <path d="M10 6.5V10.5"></path>
-                                                                    <path d="M10 10.5L12.5 12"></path>
+                                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                                    <path d="M12 6V12"></path>
+                                                                    <path d="M12 12L16 14"></path>
                                                                 </svg>
                                                                 <span class="ww-kanban-card-deadline-text">{{ cardMeta.deadline.text }}</span>
                                                             </span>
@@ -110,10 +110,11 @@
                                                                 aria-hidden="true"
                                                                 title="Description available"
                                                             >
-                                                                <svg class="ww-kanban-card-description-icon" viewBox="0 0 20 20" focusable="false">
-                                                                    <path d="M4 6h12"></path>
-                                                                    <path d="M4 10h12"></path>
-                                                                    <path d="M4 14h8"></path>
+                                                                <svg class="ww-kanban-card-description-icon" viewBox="0 0 24 24" focusable="false">
+                                                                    <path d="M21 6H3"></path>
+                                                                    <path d="M21 10H3"></path>
+                                                                    <path d="M17 14H3"></path>
+                                                                    <path d="M17 18H3"></path>
                                                                 </svg>
                                                             </span>
 
@@ -409,11 +410,28 @@ export default {
                 .toLowerCase() === "auto";
             const metaIconRenderSize = metaIconIsAuto ? "15px" : metaIconSizeRaw;
             const metaIconBoxSize = metaIconIsAuto ? "16px" : metaIconSizeRaw;
+            const descriptionIconSizeRaw = sizeOrKeyword(this.content.cardDescriptionIconSize, metaIconSizeRaw);
+            const descriptionIconIsAuto = String(descriptionIconSizeRaw || "")
+                .trim()
+                .toLowerCase() === "auto";
+            const descriptionIconRenderSize = descriptionIconIsAuto ? metaIconRenderSize : descriptionIconSizeRaw;
+            const descriptionIconBoxSize = descriptionIconIsAuto ? metaIconBoxSize : descriptionIconSizeRaw;
+            const attachmentIconSizeRaw = sizeOrKeyword(this.content.cardAttachmentIconSize, metaIconSizeRaw);
+            const attachmentIconIsAuto = String(attachmentIconSizeRaw || "")
+                .trim()
+                .toLowerCase() === "auto";
+            const attachmentIconRenderSize = attachmentIconIsAuto ? metaIconRenderSize : attachmentIconSizeRaw;
+            const attachmentIconBoxSize = attachmentIconIsAuto ? metaIconBoxSize : attachmentIconSizeRaw;
             const deadlineIconSizeRaw = sizeOrKeyword(this.content.deadlineIconSize, "auto");
             const deadlineIconIsAuto = String(deadlineIconSizeRaw || "")
                 .trim()
                 .toLowerCase() === "auto";
             const deadlineIconSize = deadlineIconIsAuto ? "12px" : deadlineIconSizeRaw;
+            const deadlineClockIconSizeRaw = sizeOrKeyword(this.content.deadlineClockIconSize, deadlineIconSizeRaw);
+            const deadlineClockIconIsAuto = String(deadlineClockIconSizeRaw || "")
+                .trim()
+                .toLowerCase() === "auto";
+            const deadlineClockIconSize = deadlineClockIconIsAuto ? deadlineIconSize : deadlineClockIconSizeRaw;
             const legacyDeadlinePadding = `${sizeOrDefault(this.content.deadlinePaddingVertical, 2)} ${sizeOrDefault(
                 this.content.deadlinePaddingHorizontal,
                 7
@@ -477,8 +495,13 @@ export default {
                 "--ww-card-meta-icon-size": metaIconSizeRaw,
                 "--ww-card-meta-icon-render-size": metaIconRenderSize,
                 "--ww-card-meta-icon-box-size": metaIconBoxSize,
+                "--ww-card-description-icon-render-size": descriptionIconRenderSize,
+                "--ww-card-description-icon-box-size": descriptionIconBoxSize,
+                "--ww-card-attachment-icon-render-size": attachmentIconRenderSize,
+                "--ww-card-attachment-icon-box-size": attachmentIconBoxSize,
                 "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
                 "--ww-deadline-icon-size": deadlineIconSize,
+                "--ww-deadline-clock-icon-size": deadlineClockIconSize,
                 "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
                 "--ww-deadline-typography": valueOrDefault(this.content.deadlineTypography, ""),
                 "--ww-deadline-padding": deadlinePadding,
@@ -2651,9 +2674,9 @@ export default {
 }
 
 .ww-kanban-card-deadline-icon {
-    width: var(--ww-deadline-icon-size);
-    height: var(--ww-deadline-icon-size);
-    flex: 0 0 var(--ww-deadline-icon-size);
+    width: var(--ww-deadline-clock-icon-size, var(--ww-deadline-icon-size));
+    height: var(--ww-deadline-clock-icon-size, var(--ww-deadline-icon-size));
+    flex: 0 0 var(--ww-deadline-clock-icon-size, var(--ww-deadline-icon-size));
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;
@@ -2669,11 +2692,19 @@ export default {
     min-width: 0;
 }
 
-.ww-kanban-card-description-indicator,
+.ww-kanban-card-description-indicator {
+    width: var(--ww-card-description-icon-box-size, var(--ww-card-meta-icon-box-size));
+    height: var(--ww-card-description-icon-box-size, var(--ww-card-meta-icon-box-size));
+    flex: 0 0 var(--ww-card-description-icon-box-size, var(--ww-card-meta-icon-box-size));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .ww-kanban-card-attachment-indicator {
-    width: var(--ww-card-meta-icon-box-size);
-    height: var(--ww-card-meta-icon-box-size);
-    flex: 0 0 var(--ww-card-meta-icon-box-size);
+    width: var(--ww-card-attachment-icon-box-size, var(--ww-card-meta-icon-box-size));
+    height: var(--ww-card-attachment-icon-box-size, var(--ww-card-meta-icon-box-size));
+    flex: 0 0 var(--ww-card-attachment-icon-box-size, var(--ww-card-meta-icon-box-size));
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2684,10 +2715,18 @@ export default {
     color: var(--ww-card-meta-icon-color);
 }
 
-.ww-kanban-card-description-icon,
+.ww-kanban-card-description-icon {
+    width: var(--ww-card-description-icon-render-size, var(--ww-card-meta-icon-render-size));
+    height: var(--ww-card-description-icon-render-size, var(--ww-card-meta-icon-render-size));
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .ww-kanban-card-attachment-icon {
-    width: var(--ww-card-meta-icon-render-size);
-    height: var(--ww-card-meta-icon-render-size);
+    width: var(--ww-card-attachment-icon-render-size, var(--ww-card-meta-icon-render-size));
+    height: var(--ww-card-attachment-icon-render-size, var(--ww-card-meta-icon-render-size));
     fill: none;
     stroke: currentColor;
     stroke-linecap: round;

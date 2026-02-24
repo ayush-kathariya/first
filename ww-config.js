@@ -94,6 +94,8 @@ export default {
                 "cardMetaGap",
                 "cardLabelMetaGap",
                 "cardMetaIconSize",
+                "cardDescriptionIconSize",
+                "cardAttachmentIconSize",
                 "dropPlaceholderColor",
                 "cardMinHeight",
                 "cardHeight",
@@ -112,6 +114,7 @@ export default {
             [
                 "deadlineFontSize",
                 "deadlineIconSize",
+                "deadlineClockIconSize",
                 "deadlineFontWeight",
                 "deadlineTypography",
                 "deadlinePadding",
@@ -1011,6 +1014,38 @@ export default {
                 tooltip: "A valid CSS size value or auto",
             },
         },
+        cardDescriptionIconSize: {
+            label: {
+                en: "Description icon size",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS size like 14px, 1rem, 18px. Keep auto to inherit Card meta icon size.",
+            },
+            bindingValidation: {
+                type: "string",
+                tooltip: "A valid CSS size value or auto",
+            },
+        },
+        cardAttachmentIconSize: {
+            label: {
+                en: "Attachment icon size",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS size like 14px, 1rem, 18px. Keep auto to inherit Card meta icon size.",
+            },
+            bindingValidation: {
+                type: "string",
+                tooltip: "A valid CSS size value or auto",
+            },
+        },
         dropPlaceholderColor: {
             label: {
                 en: "Drop placeholder color",
@@ -1241,6 +1276,22 @@ export default {
             section: "style",
             propertyHelp: {
                 tooltip: "Use CSS size like 12px, 0.8rem, 14px. Keep auto to use default size.",
+            },
+            bindingValidation: {
+                type: "string",
+                tooltip: "A valid CSS size value or auto",
+            },
+        },
+        deadlineClockIconSize: {
+            label: {
+                en: "Deadline clock icon size",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS size like 12px, 0.8rem, 14px. Keep auto to inherit Deadline icon size.",
             },
             bindingValidation: {
                 type: "string",
