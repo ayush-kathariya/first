@@ -124,7 +124,9 @@
                                                                 title="Attachment available"
                                                             >
                                                                 <svg class="ww-kanban-card-attachment-icon" viewBox="0 0 20 20" focusable="false">
-                                                                    <path d="M12.2 7.8L8.1 11.9a1.9 1.9 0 1 0 2.7 2.7l4.1-4.1a3.6 3.6 0 0 0-5.1-5.1L5.7 9.5a5.3 5.3 0 1 0 7.5 7.5l2.1-2.1"></path>
+                                                                    <path d="M7.6 12.4L12.4 7.6"></path>
+                                                                    <path d="M6.2 9.1a2.8 2.8 0 0 1 0-4L8.1 3.2a2.8 2.8 0 1 1 4 4L10.8 8.5"></path>
+                                                                    <path d="M9.2 11.5L8 12.7a2.8 2.8 0 1 0 4 4l1.9-1.9a2.8 2.8 0 0 0 0-4"></path>
                                                                 </svg>
                                                             </span>
                                                         </div>
@@ -511,7 +513,7 @@ export default {
                     this.content.addCardButtonHoverTextColor || this.content.addCardButtonTextColor || "#111827"
                 ),
                 "--ww-add-button-border-color": borderOrDefault(this.content.addCardButtonBorderColor, "1px solid rgba(15, 23, 42, 0.18)"),
-                "--ww-add-button-shadow": shadowOrDefault(this.content.addCardButtonBoxShadow, "none"),
+                "--ww-add-button-shadow": valueOrDefault(this.content.addCardButtonBoxShadow, "none"),
                 "--ww-add-button-alignment": valueOrDefault(this.content.addCardButtonJustifyContent, "flex-start"),
                 "--ww-add-button-font-size": sizeOrDefault(this.content.addCardButtonFontSize, 13),
                 "--ww-add-button-font-weight": numberOrDefault(this.content.addCardButtonFontWeight, 600),
@@ -2361,11 +2363,19 @@ export default {
     background: var(--ww-add-button-bg);
     box-shadow: var(--ww-add-button-shadow);
     cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .ww-kanban-add-card-button:hover {
     background: var(--ww-add-button-bg-hover);
     color: var(--ww-add-button-text-color-hover);
+}
+
+.ww-kanban-add-card-button:focus,
+.ww-kanban-add-card-button:focus-visible {
+    outline: none;
+    box-shadow: var(--ww-add-button-shadow);
 }
 
 .ww-kanban-add-card-button:hover .ww-kanban-add-card-icon {
@@ -2648,6 +2658,11 @@ export default {
     stroke-linecap: round;
 }
 
+.ww-kanban-card-deadline-icon circle,
+.ww-kanban-card-deadline-icon path {
+    vector-effect: non-scaling-stroke;
+}
+
 .ww-kanban-card-deadline-text {
     min-width: 0;
 }
@@ -2675,6 +2690,12 @@ export default {
     stroke: currentColor;
     stroke-width: 1.7;
     stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ww-kanban-card-description-icon path,
+.ww-kanban-card-attachment-icon path {
+    vector-effect: non-scaling-stroke;
 }
 
 .ww-kanban-card-avatars {
