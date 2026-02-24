@@ -394,6 +394,11 @@ export default {
                 .toLowerCase() === "auto";
             const metaIconRenderSize = metaIconIsAuto ? "15px" : metaIconSizeRaw;
             const metaIconBoxSize = metaIconIsAuto ? "16px" : metaIconSizeRaw;
+            const deadlineIconSizeRaw = sizeOrKeyword(this.content.deadlineIconSize, "auto");
+            const deadlineIconIsAuto = String(deadlineIconSizeRaw || "")
+                .trim()
+                .toLowerCase() === "auto";
+            const deadlineIconSize = deadlineIconIsAuto ? "12px" : deadlineIconSizeRaw;
 
             return {
                 "--wrap-stacks": "nowrap",
@@ -439,6 +444,7 @@ export default {
                 "--ww-card-meta-icon-render-size": metaIconRenderSize,
                 "--ww-card-meta-icon-box-size": metaIconBoxSize,
                 "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
+                "--ww-deadline-icon-size": deadlineIconSize,
                 "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
                 "--ww-deadline-padding-y": sizeOrDefault(this.content.deadlinePaddingVertical, 2),
                 "--ww-deadline-padding-x": sizeOrDefault(this.content.deadlinePaddingHorizontal, 7),
@@ -2579,9 +2585,9 @@ export default {
 }
 
 .ww-kanban-card-deadline-icon {
-    width: 12px;
-    height: 12px;
-    flex: 0 0 12px;
+    width: var(--ww-deadline-icon-size);
+    height: var(--ww-deadline-icon-size);
+    flex: 0 0 var(--ww-deadline-icon-size);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;

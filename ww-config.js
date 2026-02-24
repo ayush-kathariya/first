@@ -90,6 +90,7 @@ export default {
             "styleDeadlineHeading",
             [
                 "deadlineFontSize",
+                "deadlineIconSize",
                 "deadlineFontWeight",
                 "deadlinePaddingVertical",
                 "deadlinePaddingHorizontal",
@@ -1026,6 +1027,22 @@ export default {
             defaultValue: 11,
             bindable: true,
             section: "style",
+        },
+        deadlineIconSize: {
+            label: {
+                en: "Deadline icon size",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS size like 12px, 0.8rem, 14px. Keep auto to use default size.",
+            },
+            bindingValidation: {
+                type: "string",
+                tooltip: "A valid CSS size value or auto",
+            },
         },
         deadlineFontWeight: {
             label: {
