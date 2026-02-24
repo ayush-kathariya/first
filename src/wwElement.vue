@@ -67,7 +67,9 @@
                                                 loading="lazy"
                                                 draggable="false"
                                             />
-                                            <div class="ww-kanban-card-text">{{ getItemLabel(item, itemIndex) }}</div>
+                                            <div class="ww-kanban-card-text" :title="getItemLabelTitle(item, itemIndex)">
+                                                {{ getItemLabel(item, itemIndex) }}
+                                            </div>
                                             <template v-for="cardMeta in [getItemCardMeta(item, itemIndex)]" :key="`meta-${itemIndex}`">
                                                 <div v-if="cardMeta.hasAnyMeta" class="ww-kanban-card-meta">
                                                     <div
@@ -975,10 +977,10 @@ export default {
 
             return "";
         },
-        getItemLabel(item, index) {
+        resolveItemLabelText(item, index) {
             if (item === null || item === undefined) return "";
             if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") {
-                return this.applyCardLabelMaxLength(this.normalizeDisplayValue(item));
+                return this.normalizeDisplayValue(item);
             }
 
             let configuredNumericFallback = "";
@@ -986,23 +988,28 @@ export default {
                 const configuredLabel = wwLib.resolveObjectPropertyPath(item, this.content.itemLabel);
                 if (typeof configuredLabel === "string") {
                     const normalizedConfiguredLabel = this.normalizeDisplayValue(configuredLabel);
-                    if (normalizedConfiguredLabel) return this.applyCardLabelMaxLength(normalizedConfiguredLabel);
+                    if (normalizedConfiguredLabel) return normalizedConfiguredLabel;
                 } else if (typeof configuredLabel === "number" || typeof configuredLabel === "boolean") {
                     configuredNumericFallback = String(configuredLabel);
                 }
             }
 
             const inferredLabel = this.getAutoLabelFromItemObject(item);
-            if (inferredLabel) return this.applyCardLabelMaxLength(inferredLabel);
-            if (configuredNumericFallback) return this.applyCardLabelMaxLength(configuredNumericFallback);
+            if (inferredLabel) return inferredLabel;
+            if (configuredNumericFallback) return configuredNumericFallback;
 
             try {
                 const text = JSON.stringify(item);
-                const fallbackText = text.length > 120 ? `${text.slice(0, 117)}...` : text;
-                return this.applyCardLabelMaxLength(fallbackText);
+                return text.length > 120 ? `${text.slice(0, 117)}...` : text;
             } catch (e) {
-                return this.applyCardLabelMaxLength(`Item ${index + 1}`);
+                return `Item ${index + 1}`;
             }
+        },
+        getItemLabel(item, index) {
+            return this.applyCardLabelMaxLength(this.resolveItemLabelText(item, index));
+        },
+        getItemLabelTitle(item, index) {
+            return this.resolveItemLabelText(item, index);
         },
         applyCardLabelMaxLength(label) {
             const text = typeof label === "string" ? label : this.normalizeDisplayValue(label);
@@ -1059,10 +1066,10 @@ export default {
                 .trim();
             if (!normalized) return "?";
             const words = normalized.split(" ").filter(Boolean);
-            if (words.length >= 2) {
-                return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
+            if (words.length >= 1) {
+                return (words[0][0] || "?").toUpperCase();
             }
-            return normalized.slice(0, 2).toUpperCase();
+            return normalized.slice(0, 1).toUpperCase();
         },
         normalizeAvatarColor(value) {
             const text = typeof value === "string" ? value.trim() : "";
@@ -1146,15 +1153,15 @@ export default {
         },
         getVisibleCardAvatars(avatars) {
             const list = Array.isArray(avatars) ? avatars : [];
-            return list.length > 3 ? list.slice(0, 2) : list;
+            return list.length > 2 ? list.slice(0, 2) : list;
         },
         getHiddenCardAvatarCount(avatars) {
             const list = Array.isArray(avatars) ? avatars : [];
-            return list.length > 3 ? list.length - 2 : 0;
+            return list.length > 2 ? list.length - 2 : 0;
         },
         getHiddenCardAvatarTitle(avatars) {
             const list = Array.isArray(avatars) ? avatars : [];
-            if (list.length <= 3) return "";
+            if (list.length <= 2) return "";
             return list
                 .slice(2)
                 .map(avatar => this.normalizeDisplayValue(avatar?.label))
