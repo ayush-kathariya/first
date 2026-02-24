@@ -60,7 +60,28 @@ export default {
             "styleColumnHeading",
             ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
             "styleColumnHeaderHeading",
-            ["columnTitleColor", "columnTitleFontSize", "columnTitleFontWeight", "columnCountBackgroundColor", "columnCountColor", "columnCountBorderColor"],
+            [
+                "columnTitleColor",
+                "columnTitleFontSize",
+                "columnTitleFontWeight",
+                "columnTitleTypography",
+                "columnTitlePadding",
+                "columnTitleMargin",
+                "columnTitleBackgroundColor",
+                "columnTitleBorder",
+                "columnTitleBorderRadius",
+                "columnCountBackgroundColor",
+                "columnCountColor",
+                "columnCountBorderColor",
+                "columnCountFontSize",
+                "columnCountFontWeight",
+                "columnCountTypography",
+                "columnCountPadding",
+                "columnCountMargin",
+                "columnCountBorderRadius",
+                "columnCountMinWidth",
+                "columnCountMinHeight",
+            ],
             "styleCardHeading",
             [
                 "cardBackgroundColor",
@@ -92,8 +113,9 @@ export default {
                 "deadlineFontSize",
                 "deadlineIconSize",
                 "deadlineFontWeight",
-                "deadlinePaddingVertical",
-                "deadlinePaddingHorizontal",
+                "deadlineTypography",
+                "deadlinePadding",
+                "deadlineMargin",
                 "deadlineBorderRadius",
                 "deadlineBorderWidth",
                 "deadlineBorderColor",
@@ -658,6 +680,7 @@ export default {
             section: "style",
         },
         columnTitleFontSize: {
+            hidden: (content) => !!content.columnTitleTypography,
             label: {
                 en: "Column title size",
             },
@@ -667,6 +690,7 @@ export default {
             section: "style",
         },
         columnTitleFontWeight: {
+            hidden: (content) => !!content.columnTitleTypography,
             label: {
                 en: "Column title weight",
             },
@@ -674,6 +698,83 @@ export default {
             defaultValue: 600,
             bindable: true,
             section: "style",
+        },
+        columnTitleTypography: {
+            label: {
+                en: "Column title typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand, for example: 600 13px/1.3 Inter",
+            },
+        },
+        columnTitlePadding: {
+            label: {
+                en: "Column title padding",
+            },
+            type: "Spacing",
+            defaultValue: "0",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
+        },
+        columnTitleMargin: {
+            label: {
+                en: "Column title margin",
+            },
+            type: "Spacing",
+            defaultValue: "0",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "margin",
+                tooltip: "A valid CSS margin value",
+            },
+        },
+        columnTitleBackgroundColor: {
+            label: {
+                en: "Column title background",
+            },
+            type: "Text",
+            defaultValue: "transparent",
+            bindable: true,
+            section: "style",
+        },
+        columnTitleBorder: {
+            label: {
+                en: "Column title border",
+            },
+            type: "Border",
+            defaultValue: "none",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border",
+                tooltip: "A valid CSS border value",
+            },
+        },
+        columnTitleBorderRadius: {
+            label: {
+                en: "Column title border radius",
+            },
+            type: "Text",
+            defaultValue: "0",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border-radius",
+                tooltip: "A valid CSS border-radius value",
+            },
         },
         columnCountBackgroundColor: {
             label: {
@@ -706,6 +807,98 @@ export default {
                 cssSupports: "border",
                 tooltip: "A valid CSS border value",
             },
+        },
+        columnCountFontSize: {
+            hidden: (content) => !!content.columnCountTypography,
+            label: {
+                en: "Column count font size",
+            },
+            type: "Number",
+            defaultValue: 11,
+            bindable: true,
+            section: "style",
+        },
+        columnCountFontWeight: {
+            hidden: (content) => !!content.columnCountTypography,
+            label: {
+                en: "Column count font weight",
+            },
+            type: "Number",
+            defaultValue: 600,
+            bindable: true,
+            section: "style",
+        },
+        columnCountTypography: {
+            label: {
+                en: "Column count typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand, for example: 600 11px/1 Inter",
+            },
+        },
+        columnCountPadding: {
+            label: {
+                en: "Column count padding",
+            },
+            type: "Spacing",
+            defaultValue: "0",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
+        },
+        columnCountMargin: {
+            label: {
+                en: "Column count margin",
+            },
+            type: "Spacing",
+            defaultValue: "0",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "margin",
+                tooltip: "A valid CSS margin value",
+            },
+        },
+        columnCountBorderRadius: {
+            label: {
+                en: "Column count border radius",
+            },
+            type: "Text",
+            defaultValue: "999px",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "border-radius",
+                tooltip: "A valid CSS border-radius value",
+            },
+        },
+        columnCountMinWidth: {
+            label: {
+                en: "Column count min width",
+            },
+            type: "Number",
+            defaultValue: 20,
+            bindable: true,
+            section: "style",
+        },
+        columnCountMinHeight: {
+            label: {
+                en: "Column count min height",
+            },
+            type: "Number",
+            defaultValue: 20,
+            bindable: true,
+            section: "style",
         },
         cardBackgroundColor: {
             label: {
@@ -1020,6 +1213,7 @@ export default {
             },
         },
         deadlineFontSize: {
+            hidden: (content) => !!content.deadlineTypography,
             label: {
                 en: "Deadline font size",
             },
@@ -1045,6 +1239,7 @@ export default {
             },
         },
         deadlineFontWeight: {
+            hidden: (content) => !!content.deadlineTypography,
             label: {
                 en: "Deadline font weight",
             },
@@ -1053,7 +1248,48 @@ export default {
             bindable: true,
             section: "style",
         },
+        deadlineTypography: {
+            label: {
+                en: "Deadline typography",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Full CSS font shorthand for deadline text, for example: 600 11px/1.2 Inter",
+            },
+        },
+        deadlinePadding: {
+            label: {
+                en: "Deadline padding",
+            },
+            type: "Spacing",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "padding",
+                tooltip: "A valid CSS padding value",
+            },
+        },
+        deadlineMargin: {
+            label: {
+                en: "Deadline margin",
+            },
+            type: "Spacing",
+            defaultValue: "0px",
+            bindable: true,
+            section: "style",
+            bindingValidation: {
+                type: "string",
+                cssSupports: "margin",
+                tooltip: "A valid CSS margin value",
+            },
+        },
         deadlinePaddingVertical: {
+            hidden: true,
             label: {
                 en: "Deadline padding Y",
             },
@@ -1063,6 +1299,7 @@ export default {
             section: "style",
         },
         deadlinePaddingHorizontal: {
+            hidden: true,
             label: {
                 en: "Deadline padding X",
             },

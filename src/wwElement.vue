@@ -399,6 +399,11 @@ export default {
                 .trim()
                 .toLowerCase() === "auto";
             const deadlineIconSize = deadlineIconIsAuto ? "12px" : deadlineIconSizeRaw;
+            const legacyDeadlinePadding = `${sizeOrDefault(this.content.deadlinePaddingVertical, 2)} ${sizeOrDefault(
+                this.content.deadlinePaddingHorizontal,
+                7
+            )}`;
+            const deadlinePadding = valueOrDefault(this.content.deadlinePadding, legacyDeadlinePadding);
 
             return {
                 "--wrap-stacks": "nowrap",
@@ -416,13 +421,27 @@ export default {
                 "--ww-header-text-color": valueOrDefault(this.content.columnTitleColor, "#0f172a"),
                 "--ww-header-font-size": sizeOrDefault(this.content.columnTitleFontSize, 13),
                 "--ww-header-font-weight": numberOrDefault(this.content.columnTitleFontWeight, 600),
+                "--ww-header-typography": valueOrDefault(this.content.columnTitleTypography, ""),
+                "--ww-header-padding": valueOrDefault(this.content.columnTitlePadding, "0"),
+                "--ww-header-margin": valueOrDefault(this.content.columnTitleMargin, "0"),
+                "--ww-header-bg": valueOrDefault(this.content.columnTitleBackgroundColor, "transparent"),
+                "--ww-header-border": borderOrDefault(this.content.columnTitleBorder, "none"),
+                "--ww-header-radius": valueOrDefault(this.content.columnTitleBorderRadius, "0"),
                 "--ww-count-bg": valueOrDefault(this.content.columnCountBackgroundColor, "#f8fafc"),
                 "--ww-count-text-color": valueOrDefault(this.content.columnCountColor, "#111827"),
                 "--ww-count-border-color": borderOrDefault(this.content.columnCountBorderColor, "1px solid rgba(15, 23, 42, 0.28)"),
+                "--ww-count-font-size": sizeOrDefault(this.content.columnCountFontSize, 11),
+                "--ww-count-font-weight": numberOrDefault(this.content.columnCountFontWeight, 600),
+                "--ww-count-typography": valueOrDefault(this.content.columnCountTypography, ""),
+                "--ww-count-padding": valueOrDefault(this.content.columnCountPadding, "0"),
+                "--ww-count-margin": valueOrDefault(this.content.columnCountMargin, "0"),
+                "--ww-count-radius": valueOrDefault(this.content.columnCountBorderRadius, "999px"),
+                "--ww-count-min-width": sizeOrDefault(this.content.columnCountMinWidth, 20),
+                "--ww-count-min-height": sizeOrDefault(this.content.columnCountMinHeight, 20),
                 "--ww-card-bg": valueOrDefault(this.content.cardBackgroundColor, "#fbfdff"),
                 "--ww-card-text-color": valueOrDefault(this.content.cardTextColor, "#0f172a"),
                 "--ww-card-border-color": borderOrDefault(this.content.cardBorderColor, "1px solid rgba(15, 23, 42, 0.14)"),
-                "--ww-card-shadow": borderOrDefault(this.content.cardBorderShadow, "1px solid rgba(15, 23, 42, 0.14)"),
+                "--ww-card-shadow": borderOrDefault(this.content.cardBorderShadow, ""),
                 "--ww-card-hover-border-color": valueOrDefault(this.content.cardHoverBorderColor, "#3b82f6"),
                 "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
                 "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
@@ -446,6 +465,9 @@ export default {
                 "--ww-deadline-font-size": sizeOrDefault(this.content.deadlineFontSize, 11),
                 "--ww-deadline-icon-size": deadlineIconSize,
                 "--ww-deadline-font-weight": numberOrDefault(this.content.deadlineFontWeight, 600),
+                "--ww-deadline-typography": valueOrDefault(this.content.deadlineTypography, ""),
+                "--ww-deadline-padding": deadlinePadding,
+                "--ww-deadline-margin": valueOrDefault(this.content.deadlineMargin, "0px"),
                 "--ww-deadline-padding-y": sizeOrDefault(this.content.deadlinePaddingVertical, 2),
                 "--ww-deadline-padding-x": sizeOrDefault(this.content.deadlinePaddingHorizontal, 7),
                 "--ww-deadline-radius": sizeOrDefault(this.content.deadlineBorderRadius, 6),
@@ -2221,32 +2243,46 @@ export default {
     justify-content: space-between;
     gap: 8px;
     padding: 2px 2px 10px;
-    font-size: var(--ww-header-font-size);
-    font-weight: var(--ww-header-font-weight);
-    color: var(--ww-header-text-color);
     background: transparent;
 }
 
 .ww-kanban-stack-title {
+    display: block;
     min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--ww-header-text-color);
+    font-size: var(--ww-header-font-size);
+    font-weight: var(--ww-header-font-weight);
+    font: var(--ww-header-typography);
+    padding: var(--ww-header-padding);
+    margin: var(--ww-header-margin);
+    background: var(--ww-header-bg);
+    border: var(--ww-header-border);
+    border-radius: var(--ww-header-radius);
+    box-sizing: border-box;
 }
 
 .ww-kanban-stack-count {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
-    border-radius: 999px;
+    min-width: var(--ww-count-min-width);
+    min-height: var(--ww-count-min-height);
+    flex: 0 0 auto;
+    border-radius: var(--ww-count-radius);
     border: var(--ww-count-border-color);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: var(--ww-count-font-size);
+    font-weight: var(--ww-count-font-weight);
+    font: var(--ww-count-typography);
+    padding: var(--ww-count-padding);
+    margin: var(--ww-count-margin);
+    line-height: 1;
     color: var(--ww-count-text-color);
     background: var(--ww-count-bg);
+    box-sizing: border-box;
 }
 
 .ww-kanban-stack-body {
@@ -2553,9 +2589,11 @@ export default {
     align-items: center;
     gap: 4px;
     border-radius: var(--ww-deadline-radius);
-    padding: var(--ww-deadline-padding-y) var(--ww-deadline-padding-x);
+    padding: var(--ww-deadline-padding);
+    margin: var(--ww-deadline-margin);
     font-size: var(--ww-deadline-font-size);
     font-weight: var(--ww-deadline-font-weight);
+    font: var(--ww-deadline-typography);
     line-height: 1.2;
     white-space: nowrap;
     border: var(--ww-deadline-border-width) solid var(--ww-deadline-border-color);
