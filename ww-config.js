@@ -53,6 +53,9 @@ export default {
             ["handleClass"],
             "longPress",
             ["longPressDelay"],
+        ],
+        customStylePropertiesOrder: [
+            "wrapStacks",
             ["uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
             ["columnWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
             ["columnTitleColor", "columnTitleFontSize", "columnTitleFontWeight"],
@@ -239,7 +242,7 @@ export default {
             },
             bindable: true,
             defaultValue: [],
-            section: "settings",
+            section: "style",
         },
         itemKey: {
             hidden: (content, sidepanelContent, boundProps) =>
@@ -483,7 +486,7 @@ export default {
             type: "Text",
             defaultValue: "",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         boardBackgroundColor: {
             label: {
@@ -492,7 +495,7 @@ export default {
             type: "Text",
             defaultValue: "#f1f3f6",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         boardGap: {
             label: {
@@ -501,7 +504,7 @@ export default {
             type: "Number",
             defaultValue: 12,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         boardPadding: {
             label: {
@@ -510,7 +513,7 @@ export default {
             type: "Number",
             defaultValue: 8,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnWidth: {
             label: {
@@ -519,7 +522,7 @@ export default {
             type: "Text",
             defaultValue: "min(300px, 84vw)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnHeight: {
             label: {
@@ -528,7 +531,7 @@ export default {
             type: "Number",
             defaultValue: 520,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnBlockGap: {
             label: {
@@ -537,7 +540,7 @@ export default {
             type: "Number",
             defaultValue: 8,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnBackgroundColor: {
             label: {
@@ -546,7 +549,7 @@ export default {
             type: "Text",
             defaultValue: "#f3f4f6",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnBorderColor: {
             label: {
@@ -555,7 +558,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(15, 23, 42, 0.1)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnShadow: {
             label: {
@@ -564,7 +567,7 @@ export default {
             type: "Text",
             defaultValue: "none",
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Any valid CSS box-shadow value, for example: 0 8px 24px rgba(0,0,0,0.12)",
             },
@@ -576,7 +579,7 @@ export default {
             type: "Text",
             defaultValue: "#0f172a",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnTitleFontSize: {
             label: {
@@ -585,7 +588,7 @@ export default {
             type: "Number",
             defaultValue: 13,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnTitleFontWeight: {
             label: {
@@ -594,7 +597,7 @@ export default {
             type: "Number",
             defaultValue: 600,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnCountBackgroundColor: {
             label: {
@@ -603,7 +606,7 @@ export default {
             type: "Text",
             defaultValue: "#f8fafc",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnCountColor: {
             label: {
@@ -612,7 +615,7 @@ export default {
             type: "Text",
             defaultValue: "#111827",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         columnCountBorderColor: {
             label: {
@@ -621,7 +624,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(15, 23, 42, 0.28)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardBackgroundColor: {
             label: {
@@ -630,7 +633,7 @@ export default {
             type: "Text",
             defaultValue: "#fbfdff",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardTextColor: {
             label: {
@@ -639,7 +642,7 @@ export default {
             type: "Text",
             defaultValue: "#0f172a",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardBorderColor: {
             label: {
@@ -648,7 +651,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(15, 23, 42, 0.14)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardHoverBorderColor: {
             label: {
@@ -657,7 +660,7 @@ export default {
             type: "Text",
             defaultValue: "#3b82f6",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardHoverRingColor: {
             label: {
@@ -666,7 +669,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(59, 130, 246, 0.22)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardMetaIconColor: {
             label: {
@@ -675,7 +678,7 @@ export default {
             type: "Text",
             defaultValue: "#4b5563",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         dropPlaceholderColor: {
             label: {
@@ -684,7 +687,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(15, 23, 42, 0.08)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardMinHeight: {
             label: {
@@ -693,7 +696,7 @@ export default {
             type: "Number",
             defaultValue: 74,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardHeight: {
             label: {
@@ -702,7 +705,7 @@ export default {
             type: "Text",
             defaultValue: "auto",
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Supports values like auto, 120px, 50%, etc.",
             },
@@ -714,7 +717,7 @@ export default {
             type: "Number",
             defaultValue: 8,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardPadding: {
             label: {
@@ -723,7 +726,7 @@ export default {
             type: "Number",
             defaultValue: 12,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardFontSize: {
             hidden: (content) => !!content.cardLabelTypography,
@@ -733,7 +736,7 @@ export default {
             type: "Number",
             defaultValue: 13,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardFontWeight: {
             hidden: (content) => !!content.cardLabelTypography,
@@ -743,7 +746,7 @@ export default {
             type: "Number",
             defaultValue: 400,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardLabelTypography: {
             label: {
@@ -752,7 +755,7 @@ export default {
             type: "Text",
             defaultValue: "",
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Full CSS font shorthand for card label, for example: 600 14px/1.4 Inter",
             },
@@ -764,7 +767,7 @@ export default {
             type: "Number",
             defaultValue: 0,
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Maximum characters to show in card label. Set 0 to show full text.",
             },
@@ -772,7 +775,7 @@ export default {
         cardCursor: {
             label: { en: "Card cursor" },
             type: "TextSelect",
-            section: "settings",
+            section: "style",
             options: {
                 options: [
                     { value: "auto", label: "Auto", default: true },
@@ -828,7 +831,7 @@ export default {
             type: "Text",
             defaultValue: "1px solid rgba(255, 255, 255, 0.8)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardAvatarMargin: {
             label: {
@@ -837,7 +840,7 @@ export default {
             type: "Text",
             defaultValue: "0",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         cardAvatarPadding: {
             label: {
@@ -846,7 +849,7 @@ export default {
             type: "Text",
             defaultValue: "0",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineFontSize: {
             label: {
@@ -855,7 +858,7 @@ export default {
             type: "Number",
             defaultValue: 11,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineFontWeight: {
             label: {
@@ -864,7 +867,7 @@ export default {
             type: "Number",
             defaultValue: 600,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlinePaddingVertical: {
             label: {
@@ -873,7 +876,7 @@ export default {
             type: "Number",
             defaultValue: 2,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlinePaddingHorizontal: {
             label: {
@@ -882,7 +885,7 @@ export default {
             type: "Number",
             defaultValue: 7,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineBorderRadius: {
             label: {
@@ -891,7 +894,7 @@ export default {
             type: "Number",
             defaultValue: 6,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineBorderWidth: {
             label: {
@@ -900,7 +903,7 @@ export default {
             type: "Number",
             defaultValue: 0,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineBorderColor: {
             label: {
@@ -909,7 +912,7 @@ export default {
             type: "Text",
             defaultValue: "transparent",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineOverdueBackgroundColor: {
             label: {
@@ -918,7 +921,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(248, 113, 113, 0.24)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineOverdueTextColor: {
             label: {
@@ -927,7 +930,7 @@ export default {
             type: "Text",
             defaultValue: "#b91c1c",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineUpcomingBackgroundColor: {
             label: {
@@ -936,7 +939,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(148, 163, 184, 0.28)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineUpcomingTextColor: {
             label: {
@@ -945,7 +948,7 @@ export default {
             type: "Text",
             defaultValue: "#0f172a",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineTodayBackgroundColor: {
             label: {
@@ -954,7 +957,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(250, 204, 21, 0.28)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineTodayTextColor: {
             label: {
@@ -963,7 +966,7 @@ export default {
             type: "Text",
             defaultValue: "#854d0e",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineNeutralBackgroundColor: {
             label: {
@@ -972,7 +975,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(148, 163, 184, 0.22)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         deadlineNeutralTextColor: {
             label: {
@@ -981,7 +984,7 @@ export default {
             type: "Text",
             defaultValue: "#334155",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonHeight: {
             hidden: (content) => content.showAddCardButton === false,
@@ -991,7 +994,7 @@ export default {
             type: "Number",
             defaultValue: 34,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonBackgroundColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1001,7 +1004,7 @@ export default {
             type: "Text",
             defaultValue: "#f8fafc",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonHoverBackgroundColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1011,7 +1014,7 @@ export default {
             type: "Text",
             defaultValue: "#f2f5fa",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonTextColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1021,7 +1024,7 @@ export default {
             type: "Text",
             defaultValue: "#111827",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonHoverTextColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1031,7 +1034,7 @@ export default {
             type: "Text",
             defaultValue: "#111827",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonIconColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1041,7 +1044,7 @@ export default {
             type: "Text",
             defaultValue: "#111827",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonHoverIconColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1051,7 +1054,7 @@ export default {
             type: "Text",
             defaultValue: "#111827",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonBorderColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1061,7 +1064,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(15, 23, 42, 0.18)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonJustifyContent: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1081,7 +1084,7 @@ export default {
             },
             defaultValue: "flex-start",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonFontSize: {
             hidden: (content) => content.showAddCardButton === false || !!content.addCardButtonTypography,
@@ -1091,7 +1094,7 @@ export default {
             type: "Number",
             defaultValue: 13,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonFontWeight: {
             hidden: (content) => content.showAddCardButton === false || !!content.addCardButtonTypography,
@@ -1101,7 +1104,7 @@ export default {
             type: "Number",
             defaultValue: 600,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardButtonTypography: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1111,7 +1114,7 @@ export default {
             type: "Text",
             defaultValue: "",
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Full CSS font shorthand for Add Card button, for example: 600 14px/1.35 Inter",
             },
@@ -1124,7 +1127,7 @@ export default {
             type: "Text",
             defaultValue: "#000000",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardCancelHoverIconColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1134,7 +1137,7 @@ export default {
             type: "Text",
             defaultValue: "#111827",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardInputBackgroundColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1144,7 +1147,7 @@ export default {
             type: "Text",
             defaultValue: "#f8fafc",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardInputTextColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1154,7 +1157,7 @@ export default {
             type: "Text",
             defaultValue: "#0f172a",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardInputBorderColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1164,7 +1167,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(15, 23, 42, 0.16)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardInputPlaceholderColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1174,7 +1177,7 @@ export default {
             type: "Text",
             defaultValue: "#6b7280",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardInputFontSize: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1184,7 +1187,7 @@ export default {
             type: "Number",
             defaultValue: 13,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardInputMinHeight: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1194,7 +1197,7 @@ export default {
             type: "Number",
             defaultValue: 70,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitBackgroundColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1204,7 +1207,7 @@ export default {
             type: "Text",
             defaultValue: "#2563eb",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitHoverBackgroundColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1214,7 +1217,7 @@ export default {
             type: "Text",
             defaultValue: "#1d4ed8",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitTextColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1224,7 +1227,7 @@ export default {
             type: "Text",
             defaultValue: "#ffffff",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitBorderColor: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1234,7 +1237,7 @@ export default {
             type: "Text",
             defaultValue: "rgba(37, 99, 235, 0.95)",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitFontSize: {
             hidden: (content) => content.showAddCardButton === false || !!content.addCardSubmitTypography,
@@ -1244,7 +1247,7 @@ export default {
             type: "Number",
             defaultValue: 13,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitFontWeight: {
             hidden: (content) => content.showAddCardButton === false || !!content.addCardSubmitTypography,
@@ -1254,7 +1257,7 @@ export default {
             type: "Number",
             defaultValue: 600,
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitTypography: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1264,7 +1267,7 @@ export default {
             type: "Text",
             defaultValue: "",
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Full CSS font shorthand for submit button, for example: 600 13px/1.3 Inter",
             },
@@ -1277,7 +1280,7 @@ export default {
             type: "Text",
             defaultValue: "",
             bindable: true,
-            section: "settings",
+            section: "style",
             propertyHelp: {
                 tooltip: "Full CSS border value, for example: 1px solid rgba(37,99,235,.95)",
             },
@@ -1290,7 +1293,7 @@ export default {
             type: "Text",
             defaultValue: "6px",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitPadding: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1300,7 +1303,7 @@ export default {
             type: "Text",
             defaultValue: "7px 12px",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         addCardSubmitMargin: {
             hidden: (content) => content.showAddCardButton === false,
@@ -1310,7 +1313,7 @@ export default {
             type: "Text",
             defaultValue: "0",
             bindable: true,
-            section: "settings",
+            section: "style",
         },
         stacks: {
             label: {
