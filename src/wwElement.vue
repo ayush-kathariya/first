@@ -417,6 +417,7 @@ export default {
                 "--ww-card-bg": valueOrDefault(this.content.cardBackgroundColor, "#fbfdff"),
                 "--ww-card-text-color": valueOrDefault(this.content.cardTextColor, "#0f172a"),
                 "--ww-card-border-color": borderOrDefault(this.content.cardBorderColor, "1px solid rgba(15, 23, 42, 0.14)"),
+                "--ww-card-shadow": borderOrDefault(this.content.cardBorderShadow, "1px solid rgba(15, 23, 42, 0.14)"),
                 "--ww-card-hover-border-color": valueOrDefault(this.content.cardHoverBorderColor, "#3b82f6"),
                 "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
                 "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
@@ -2424,6 +2425,7 @@ export default {
     gap: 10px;
     border: var(--ww-card-border-color);
     border-radius: var(--ww-card-radius);
+    box-shadow: var(--ww-card-shadow);
     background: var(--ww-card-bg);
     color: var(--ww-card-text-color);
     padding: var(--ww-card-padding);

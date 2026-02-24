@@ -67,6 +67,7 @@ export default {
                 "cardTextColor",
                 "cardBorderColor",
                 "cardHoverBorderColor",
+                "cardBorderShadow",
                 "cardHoverRingColor",
                 "cardMetaIconColor",
                 "cardMetaGap",
@@ -736,6 +737,15 @@ export default {
                 cssSupports: "border",
                 tooltip: "A valid CSS border value",
             },
+        },
+        cardBorderShadow: {
+            label: {
+                en: "Card border shadow",
+            },
+            type: "Text",
+            defaultValue: "#3b82f6",
+            bindable: true,
+            section: "style",
         },
         cardHoverBorderColor: {
             label: {
