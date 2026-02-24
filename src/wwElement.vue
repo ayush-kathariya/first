@@ -2800,7 +2800,7 @@ export default {
     border: var(--ww-card-avatar-border);
     padding: var(--ww-card-avatar-padding);
     box-sizing: border-box;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+    // box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
     text-transform: uppercase;
     position: static !important;
     inset: auto !important;
