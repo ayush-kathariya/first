@@ -573,6 +573,7 @@ export default {
             },
             type: "Spacing",
             options: {
+                withPadding: true,
                 withMargin: false,
             },
             defaultValue: "8px",
@@ -798,11 +799,7 @@ export default {
             label: {
                 en: "Card border radius",
             },
-            type: "Spacing",
-            options: {
-                withMargin: false,
-                isCorner: true,
-            },
+            type: "Text",
             defaultValue: "8px",
             bindable: true,
             section: "style",
@@ -818,6 +815,7 @@ export default {
             },
             type: "Spacing",
             options: {
+                withPadding: true,
                 withMargin: false,
             },
             defaultValue: "12px",
@@ -836,8 +834,9 @@ export default {
             type: "Spacing",
             options: {
                 withPadding: false,
+                withMargin: true,
             },
-            defaultValue: "0",
+            defaultValue: "0px",
             bindable: true,
             section: "style",
             bindingValidation: {
@@ -963,8 +962,9 @@ export default {
             type: "Spacing",
             options: {
                 withPadding: false,
+                withMargin: true,
             },
-            defaultValue: "0",
+            defaultValue: "0px",
             bindable: true,
             section: "style",
             bindingValidation: {
@@ -979,9 +979,10 @@ export default {
             },
             type: "Spacing",
             options: {
+                withPadding: true,
                 withMargin: false,
             },
-            defaultValue: "0",
+            defaultValue: "0px",
             bindable: true,
             section: "style",
             bindingValidation: {
@@ -1030,11 +1031,7 @@ export default {
             label: {
                 en: "Deadline border radius",
             },
-            type: "Spacing",
-            options: {
-                withMargin: false,
-                isCorner: true,
-            },
+            type: "Text",
             defaultValue: "6px",
             bindable: true,
             section: "style",
@@ -1453,11 +1450,7 @@ export default {
             label: {
                 en: "Add card submit border radius",
             },
-            type: "Spacing",
-            options: {
-                withMargin: false,
-                isCorner: true,
-            },
+            type: "Text",
             defaultValue: "6px",
             bindable: true,
             section: "style",
@@ -1474,6 +1467,7 @@ export default {
             },
             type: "Spacing",
             options: {
+                withPadding: true,
                 withMargin: false,
             },
             defaultValue: "7px 12px",
@@ -1493,8 +1487,9 @@ export default {
             type: "Spacing",
             options: {
                 withPadding: false,
+                withMargin: true,
             },
-            defaultValue: "0",
+            defaultValue: "0px",
             bindable: true,
             section: "style",
             bindingValidation: {
