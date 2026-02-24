@@ -432,6 +432,18 @@ export default {
                 .trim()
                 .toLowerCase() === "auto";
             const deadlineClockIconSize = deadlineClockIconIsAuto ? deadlineIconSize : deadlineClockIconSizeRaw;
+            const avatarWidthRaw = sizeOrKeyword(this.content.cardAvatarWidth, "none");
+            const avatarHeightRaw = sizeOrKeyword(this.content.cardAvatarHeight, "none");
+            const avatarWidth = String(avatarWidthRaw || "")
+                .trim()
+                .toLowerCase() === "none"
+                ? "auto"
+                : avatarWidthRaw;
+            const avatarHeight = String(avatarHeightRaw || "")
+                .trim()
+                .toLowerCase() === "none"
+                ? "auto"
+                : avatarHeightRaw;
             const legacyDeadlinePadding = `${sizeOrDefault(this.content.deadlinePaddingVertical, 2)} ${sizeOrDefault(
                 this.content.deadlinePaddingHorizontal,
                 7
@@ -494,8 +506,8 @@ export default {
                 "--ww-card-label-max-height": valueOrDefault(this.content.cardLabelMaxHeight, "auto"),
                 "--ww-card-label-overflow": valueOrDefault(this.content.cardLabelOverflow, "unset"),
                 "--ww-card-cursor": valueOrDefault(this.content.cardCursor, "auto"),
-                "--ww-card-avatar-width": sizeOrKeyword(this.content.cardAvatarWidth, "28px"),
-                "--ww-card-avatar-height": sizeOrKeyword(this.content.cardAvatarHeight, "28px"),
+                "--ww-card-avatar-width": avatarWidth,
+                "--ww-card-avatar-height": avatarHeight,
                 "--ww-card-avatar-typography": valueOrDefault(this.content.cardAvatarTypography, ""),
                 "--ww-card-avatar-border": borderOrDefault(this.content.cardAvatarBorder, "1px solid rgba(255, 255, 255, 0.8)"),
                 "--ww-card-avatar-margin": valueOrDefault(this.content.cardAvatarMargin, "0"),

@@ -1316,16 +1316,16 @@ export default {
                 en: "Avatar width",
             },
             type: "Text",
-            defaultValue: "28px",
+            defaultValue: "none",
             bindable: true,
             section: "style",
             propertyHelp: {
-                tooltip: "Use CSS width values like 28px, 2rem, 10%.",
+                tooltip: "Use CSS width values like 28px, 2rem, 10%. Use none for automatic sizing.",
             },
             bindingValidation: {
                 type: "string",
                 cssSupports: "width",
-                tooltip: "A valid CSS width value",
+                tooltip: "A valid CSS width value or none",
             },
         },
         cardAvatarHeight: {
@@ -1333,16 +1333,16 @@ export default {
                 en: "Avatar height",
             },
             type: "Text",
-            defaultValue: "28px",
+            defaultValue: "none",
             bindable: true,
             section: "style",
             propertyHelp: {
-                tooltip: "Use CSS height values like 28px, 2rem, 10%.",
+                tooltip: "Use CSS height values like 28px, 2rem, 10%. Use none for automatic sizing.",
             },
             bindingValidation: {
                 type: "string",
                 cssSupports: "height",
-                tooltip: "A valid CSS height value",
+                tooltip: "A valid CSS height value or none",
             },
         },
         cardAvatarTypography: {
