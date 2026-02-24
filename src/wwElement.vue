@@ -449,6 +449,8 @@ export default {
                     this.content.columnMinWidth,
                     valueOrDefault(this.content.columnWidth, "min(300px, 84vw)")
                 ),
+                "--ww-stack-flex-grow": "1",
+                "--ww-stack-max-width": "none",
                 "--ww-stack-height": sizeOrDefault(this.content.columnHeight, 520),
                 "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
@@ -2235,14 +2237,22 @@ export default {
     font-family: var(--ww-font-family);
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
 }
 
 .ww-kanban::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
+    height: 10px;
+}
+
+.ww-kanban::-webkit-scrollbar-track {
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 999px;
+}
+
+.ww-kanban::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.72);
+    border-radius: 999px;
 }
 
 .ww-kanban.is-touch-dragging {
@@ -2256,9 +2266,9 @@ export default {
     --stack-block-gap: var(--ww-stack-block-gap);
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
-    width: var(--ww-stack-width);
+    flex: var(--ww-stack-flex-grow, 0) 1 var(--ww-stack-width);
     min-width: var(--ww-stack-min-width);
+    max-width: var(--ww-stack-max-width, none);
     height: var(--ww-stack-height);
     border: none;
     background: transparent;
