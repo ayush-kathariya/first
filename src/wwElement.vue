@@ -505,6 +505,7 @@ export default {
                 "--ww-card-hover-ring-color": valueOrDefault(this.content.cardHoverRingColor, "rgba(59, 130, 246, 0.22)"),
                 "--ww-card-min-height": sizeOrDefault(this.content.cardMinHeight, 74),
                 "--ww-card-height": sizeOrKeyword(this.content.cardHeight, "auto"),
+                "--ww-card-width": valueOrDefault(this.content.cardWidth, "auto"),
                 "--ww-card-radius": sizeOrDefault(this.content.cardBorderRadius, 8),
                 "--ww-card-padding": sizeOrDefault(this.content.cardPadding, 12),
                 "--ww-card-margin": valueOrDefault(this.content.cardMargin, "0"),
@@ -2612,6 +2613,7 @@ export default {
     transition: border-color 120ms ease, box-shadow 120ms ease;
     font-family: var(--ww-font-family);
     cursor: var(--ww-card-cursor);
+    width: var(--ww-card-width);
     height: auto;
     max-height: none;
     overflow: visible;

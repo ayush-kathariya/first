@@ -111,6 +111,7 @@ export default {
                 "dropPlaceholderColor",
                 "cardMinHeight",
                 "cardHeight",
+                "cardWidth",
                 "cardBorderRadius",
                 "cardPadding",
                 "cardMargin",
@@ -1161,6 +1162,23 @@ export default {
             section: "style",
             propertyHelp: {
                 tooltip: "Supports values like auto, 120px, 50%, etc.",
+            },
+        },
+        cardWidth: {
+            label: {
+                en: "Card width",
+            },
+            type: "Text",
+            defaultValue: "auto",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Supports values like auto, 240px, 100%, 60%, etc.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "width",
+                tooltip: "A valid CSS width value",
             },
         },
         cardBorderRadius: {
