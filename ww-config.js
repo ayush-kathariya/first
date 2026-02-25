@@ -60,7 +60,17 @@ export default {
             "styleBoardHeading",
             ["wrapStacks", "uiFontFamily", "boardBackgroundColor", "boardGap", "boardPadding"],
             "styleColumnHeading",
-            ["columnWidth", "columnMinWidth", "columnHeight", "columnBlockGap", "columnBackgroundColor", "columnBorderColor", "columnShadow"],
+            [
+                "columnWidth",
+                "columnMinWidth",
+                "columnHeight",
+                "columnMinHeight",
+                "columnMaxHeight",
+                "columnBlockGap",
+                "columnBackgroundColor",
+                "columnBorderColor",
+                "columnShadow",
+            ],
             "styleColumnHeaderHeading",
             [
                 "columnTitleColor",
@@ -672,6 +682,40 @@ export default {
             defaultValue: 520,
             bindable: true,
             section: "style",
+        },
+        columnMinHeight: {
+            label: {
+                en: "Column min height",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS values like 360px, 40vh, min(520px, 90vh). Empty keeps current behavior.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "min-height",
+                tooltip: "A valid CSS min-height value",
+            },
+        },
+        columnMaxHeight: {
+            label: {
+                en: "Column max height",
+            },
+            type: "Text",
+            defaultValue: "",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS values like 720px, 90vh, none. Empty keeps current behavior.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "max-height",
+                tooltip: "A valid CSS max-height value",
+            },
         },
         columnBlockGap: {
             label: {

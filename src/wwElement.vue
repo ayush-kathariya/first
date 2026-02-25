@@ -464,6 +464,14 @@ export default {
                 "--ww-stack-flex-grow": "1",
                 "--ww-stack-max-width": "none",
                 "--ww-stack-height": sizeOrDefault(this.content.columnHeight, 520),
+                "--ww-stack-min-height": valueOrDefault(
+                    this.content.columnMinHeight,
+                    sizeOrDefault(this.content.columnHeight, 520)
+                ),
+                "--ww-stack-max-height": valueOrDefault(
+                    this.content.columnMaxHeight,
+                    sizeOrDefault(this.content.columnHeight, 520)
+                ),
                 "--ww-stack-block-gap": sizeOrDefault(this.content.columnBlockGap, 8),
                 "--ww-add-card-block-height": sizeOrDefault(this.content.addCardButtonHeight, 34),
                 "--ww-panel-bg": valueOrDefault(this.content.columnBackgroundColor, "#f3f4f6"),
@@ -2313,6 +2321,8 @@ export default {
     min-width: var(--ww-stack-min-width);
     max-width: var(--ww-stack-max-width, none);
     height: var(--ww-stack-height);
+    min-height: var(--ww-stack-min-height, var(--ww-stack-height));
+    max-height: var(--ww-stack-max-height, var(--ww-stack-height));
     border: none;
     background: transparent;
     overflow: visible;
