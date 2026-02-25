@@ -907,16 +907,19 @@ export default {
             const root = this.$refs.kanbanRoot;
             if (!root) return;
 
-            const rootRect = root.getBoundingClientRect();
-            const deltaX = this.computeEdgeAutoScrollDelta(
-                clientX,
-                rootRect.left,
-                rootRect.right,
-                this.touchAutoScrollEdgeSize,
-                this.touchAutoScrollMaxStepX
-            );
-            if (deltaX !== 0) {
-                root.scrollLeft += deltaX;
+            const horizontalScrollEl = this.getHorizontalScrollContainer();
+            if (horizontalScrollEl) {
+                const horizontalRect = horizontalScrollEl.getBoundingClientRect();
+                const deltaX = this.computeEdgeAutoScrollDelta(
+                    clientX,
+                    horizontalRect.left,
+                    horizontalRect.right,
+                    this.touchAutoScrollEdgeSize,
+                    this.touchAutoScrollMaxStepX
+                );
+                if (deltaX !== 0) {
+                    horizontalScrollEl.scrollLeft += deltaX;
+                }
             }
 
             const stackBody = this.getNearestStackBody(clientX, clientY);
@@ -1825,6 +1828,31 @@ export default {
 
             return 0;
         },
+        getHorizontalScrollContainer() {
+            const root = this.$refs.kanbanRoot;
+            if (!root) return null;
+
+            if (root.scrollWidth > root.clientWidth + 2) return root;
+
+            const doc = wwLib.getFrontDocument?.() || (typeof document !== "undefined" ? document : null);
+            const win = wwLib.getFrontWindow?.() || (typeof window !== "undefined" ? window : null);
+
+            let element = root.parentElement;
+            while (element && element !== doc?.body && element !== doc?.documentElement) {
+                try {
+                    const style = win?.getComputedStyle?.(element);
+                    const overflowX = style?.overflowX;
+                    if ((overflowX === "auto" || overflowX === "scroll") && element.scrollWidth > element.clientWidth + 2) {
+                        return element;
+                    }
+                } catch (e) {
+                    // ignore style access failures
+                }
+                element = element.parentElement;
+            }
+
+            return root;
+        },
         getNearestStackBody(clientX, clientY) {
             const root = this.$refs.kanbanRoot;
             if (!root) return null;
@@ -1862,16 +1890,19 @@ export default {
             const clientX = this.touchLastClientX;
             const clientY = this.touchLastClientY;
 
-            const rootRect = root.getBoundingClientRect();
-            const deltaX = this.computeEdgeAutoScrollDelta(
-                clientX,
-                rootRect.left,
-                rootRect.right,
-                this.touchAutoScrollEdgeSize,
-                this.touchAutoScrollMaxStepX
-            );
-            if (deltaX !== 0) {
-                root.scrollLeft += deltaX;
+            const horizontalScrollEl = this.getHorizontalScrollContainer();
+            if (horizontalScrollEl) {
+                const horizontalRect = horizontalScrollEl.getBoundingClientRect();
+                const deltaX = this.computeEdgeAutoScrollDelta(
+                    clientX,
+                    horizontalRect.left,
+                    horizontalRect.right,
+                    this.touchAutoScrollEdgeSize,
+                    this.touchAutoScrollMaxStepX
+                );
+                if (deltaX !== 0) {
+                    horizontalScrollEl.scrollLeft += deltaX;
+                }
             }
 
             const stackBody = this.getNearestStackBody(clientX, clientY);
