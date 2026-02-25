@@ -462,7 +462,7 @@ export default {
                     valueOrDefault(this.content.columnWidth, "min(300px, 84vw)")
                 ),
                 "--ww-stack-flex-grow": "1",
-                "--ww-stack-max-width": "none",
+                "--ww-stack-max-width": valueOrDefault(this.content.columnMaxWidth, "none"),
                 "--ww-stack-height": sizeOrDefault(this.content.columnHeight, 520),
                 "--ww-stack-min-height": valueOrDefault(
                     this.content.columnMinHeight,

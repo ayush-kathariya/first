@@ -63,6 +63,7 @@ export default {
             [
                 "columnWidth",
                 "columnMinWidth",
+                "columnMaxWidth",
                 "columnHeight",
                 "columnMinHeight",
                 "columnMaxHeight",
@@ -673,6 +674,23 @@ export default {
                 type: "string",
                 cssSupports: "min-width",
                 tooltip: "A valid CSS min-width value",
+            },
+        },
+        columnMaxWidth: {
+            label: {
+                en: "Column max width",
+            },
+            type: "Text",
+            defaultValue: "none",
+            bindable: true,
+            section: "style",
+            propertyHelp: {
+                tooltip: "Use CSS values like 420px, 30rem, 100%, none.",
+            },
+            bindingValidation: {
+                type: "string",
+                cssSupports: "max-width",
+                tooltip: "A valid CSS max-width value",
             },
         },
         columnHeight: {
