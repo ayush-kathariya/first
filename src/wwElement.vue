@@ -1606,7 +1606,7 @@ export default {
             });
         },
         canShowAddCardForStack(stackIndex) {
-            if (this.content.showAddCardButton === false || this.isReadonly) return false;
+            if (this.content.showAddCardButton === false) return false;
             if (this.content.showOnLast === true) {
                 return stackIndex === this.renderStacks.length - 1;
             }
