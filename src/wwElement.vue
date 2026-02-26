@@ -19,7 +19,7 @@
                 >
                     <div class="ww-kanban-stack-panel">
                         <header class="ww-kanban-stack-header">
-                            <span class="ww-kanban-stack-title">{{ getStackLabel(stack) }}</span>
+                            <span class="ww-kanban-stack-title" :title="getStackLabel(stack)">{{ getStackLabel(stack) }}</span>
                             <span class="ww-kanban-stack-count">{{ stack.items.length }}</span>
                         </header>
 
